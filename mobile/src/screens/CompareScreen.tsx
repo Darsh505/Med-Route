@@ -28,8 +28,16 @@ const PROCEDURES = [
   { slug: "knee-replacement", name: "Knee Replacement (TKR)", code: "OR002", pmjayRate: "₹80,000" },
   { slug: "cabg", name: "Bypass CABG", code: "MC001", pmjayRate: "₹1,30,000" },
   { slug: "c-section", name: "C-Section LSCS", code: "OG002", pmjayRate: "₹14,000" },
+  { slug: "normal-delivery", name: "Normal Delivery", code: "OG001", pmjayRate: "₹9,000" },
   { slug: "dialysis", name: "Hemodialysis Session", code: "NP001", pmjayRate: "₹1,500" },
+  { slug: "cholecystectomy", name: "Gallbladder Lap", code: "GS003", pmjayRate: "₹22,000" },
   { slug: "cataract", name: "Cataract (Phaco IOL)", code: "OP001", pmjayRate: "₹10,000" },
+  { slug: "hip-replacement", name: "Hip Replacement (THR)", code: "OR005", pmjayRate: "₹90,000" },
+  { slug: "kidney-transplant", name: "Kidney Transplant", code: "SU001", pmjayRate: "₹2,50,000" },
+  { slug: "valve-replacement", name: "Valve Replacement", code: "MC002", pmjayRate: "₹1,50,000" },
+  { slug: "spine-surgery", name: "Spine Surgery", code: "NE003", pmjayRate: "₹75,000" },
+  { slug: "hernia-repair", name: "Hernia Mesh Repair", code: "GS001", pmjayRate: "₹25,000" },
+  { slug: "chemotherapy", name: "Chemotherapy Cycle", code: "MO001", pmjayRate: "₹18,000" },
 ];
 
 export default function CompareScreen({ navigation }: any) {

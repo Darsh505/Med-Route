@@ -79,6 +79,41 @@ const PROCEDURES_LIST: ProcedureDef[] = [
     pmjay_code: "OR005",
     pmjay_rate: 90000,
   },
+  {
+    slug: "kidney-transplant",
+    name: "Renal / Kidney Transplant",
+    specialty: "Nephrology & Renal Transplant",
+    pmjay_code: "SU001",
+    pmjay_rate: 250000,
+  },
+  {
+    slug: "valve-replacement",
+    name: "Heart Valve Replacement (MVR/AVR)",
+    specialty: "Cardiothoracic Surgery (CTVS)",
+    pmjay_code: "MC002",
+    pmjay_rate: 150000,
+  },
+  {
+    slug: "spine-surgery",
+    name: "Spine Lumbar Decompression / Fusion",
+    specialty: "Neurosurgery & Spine",
+    pmjay_code: "NE003",
+    pmjay_rate: 75000,
+  },
+  {
+    slug: "hernia-repair",
+    name: "Laparoscopic Inguinal Hernia Mesh Repair",
+    specialty: "General & Minimal Access Surgery",
+    pmjay_code: "GS001",
+    pmjay_rate: 25000,
+  },
+  {
+    slug: "chemotherapy",
+    name: "Chemotherapy Infusion Cycle",
+    specialty: "Medical Oncology",
+    pmjay_code: "MO001",
+    pmjay_rate: 18000,
+  },
 ];
 
 interface HospitalComparisonData {
