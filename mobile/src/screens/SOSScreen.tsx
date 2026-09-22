@@ -19,9 +19,10 @@ import {
   TouchableOpacity,
   Linking,
   Animated,
-  SafeAreaView,
   StatusBar,
+  Platform,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../theme/colors";
 import { spacing, borderRadius, shadows } from "../theme/spacing";
 import { locationService } from "../services/location";
@@ -77,7 +78,7 @@ export default function SOSScreen({ navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <StatusBar barStyle="light-content" backgroundColor="#B91C1C" />
 
       {/* Top Header */}
@@ -198,6 +199,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#B91C1C", // High contrast emergency red
+    paddingTop: Platform.OS === "android" ? (StatusBar.currentHeight || 0) : 0,
   },
   header: {
     flexDirection: "row",
@@ -383,6 +385,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     padding: spacing.lg,
+    paddingBottom: Platform.OS === "android" ? 24 : spacing.lg,
   },
   fallbackButton: {
     backgroundColor: "rgba(0, 0, 0, 0.35)",

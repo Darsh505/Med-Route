@@ -12,9 +12,10 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
+  Platform,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../theme/colors";
 import { spacing, borderRadius, shadows } from "../theme/spacing";
 import { MobileHospital, MOCK_HOSPITALS } from "../services/api";
@@ -52,7 +53,7 @@ export default function CompareScreen({ navigation }: any) {
   const maxBeds = Math.max(...selectedHospitals.map((h) => h.beds_total), 0);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
 
       <View style={styles.header}>
@@ -196,6 +197,7 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.background,
+    paddingTop: Platform.OS === "android" ? (StatusBar.currentHeight || 0) : 0,
   },
   header: {
     paddingHorizontal: spacing.lg,

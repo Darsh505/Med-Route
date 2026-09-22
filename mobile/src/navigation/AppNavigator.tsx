@@ -1,12 +1,13 @@
 /**
- * AppNavigator.tsx — Navigation Architecture with AI Chat and Authentication
+ * AppNavigator.tsx — Navigation Architecture with AI Chat, Authentication & Safe System Bars
  */
 
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Platform } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { colors } from "../theme/colors";
 import HomeScreen from "../screens/HomeScreen";
@@ -23,14 +24,37 @@ const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
 function BottomTabs() {
+  const insets = useSafeAreaInsets();
+  const bottomPadding = Math.max(insets.bottom, Platform.OS === "android" ? 10 : 16);
+  const tabHeight = 60 + bottomPadding;
+
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.textTertiary,
-        tabBarStyle: styles.tabBar,
-        tabBarLabelStyle: styles.tabBarLabel,
+        tabBarStyle: {
+          backgroundColor: colors.card,
+          borderTopColor: colors.borderLight,
+          borderTopWidth: 1,
+          height: tabHeight,
+          paddingBottom: bottomPadding,
+          paddingTop: 8,
+          elevation: 8,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.05,
+          shadowRadius: 4,
+        },
+        tabBarLabelStyle: {
+          fontSize: 10,
+          fontWeight: "700",
+          marginTop: 2,
+        },
+        tabBarIconStyle: {
+          marginBottom: -2,
+        },
       }}
     >
       <Tab.Screen
@@ -114,18 +138,3 @@ export default function AppNavigator() {
     </NavigationContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  tabBar: {
-    backgroundColor: colors.card,
-    borderTopColor: colors.borderLight,
-    borderTopWidth: 1,
-    height: 60,
-    paddingBottom: 8,
-    paddingTop: 6,
-  },
-  tabBarLabel: {
-    fontSize: 10,
-    fontWeight: "700",
-  },
-});

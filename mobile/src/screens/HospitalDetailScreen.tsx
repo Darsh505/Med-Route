@@ -19,11 +19,12 @@ import {
   ScrollView,
   TouchableOpacity,
   Linking,
-  SafeAreaView,
   StatusBar,
   TextInput,
   Modal,
+  Platform,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../theme/colors";
 import { spacing, borderRadius, shadows } from "../theme/spacing";
 import { api, MobileHospital, MOCK_HOSPITALS } from "../services/api";
@@ -104,7 +105,7 @@ export default function HospitalDetailScreen({ route, navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
 
       {/* Header Bar */}
@@ -401,6 +402,7 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.background,
+    paddingTop: Platform.OS === "android" ? (StatusBar.currentHeight || 0) : 0,
   },
   headerBar: {
     flexDirection: "row",

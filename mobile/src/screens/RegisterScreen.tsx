@@ -13,6 +13,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StatusBar,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../theme/colors";
@@ -54,7 +55,8 @@ export default function RegisterScreen({ navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={["top", "bottom", "left", "right"]}>
+      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardContainer}
@@ -157,6 +159,7 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.background,
+    paddingTop: Platform.OS === "android" ? (StatusBar.currentHeight || 0) : 0,
   },
   keyboardContainer: {
     flex: 1,

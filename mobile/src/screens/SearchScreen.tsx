@@ -10,9 +10,10 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
+  Platform,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../theme/colors";
 import { spacing, borderRadius, shadows } from "../theme/spacing";
 import { api, MobileHospital, MOCK_HOSPITALS } from "../services/api";
@@ -58,7 +59,7 @@ export default function SearchScreen({ route, navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
 
       {/* Header Search Box */}
@@ -157,6 +158,7 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.background,
+    paddingTop: Platform.OS === "android" ? (StatusBar.currentHeight || 0) : 0,
   },
   header: {
     paddingHorizontal: spacing.lg,

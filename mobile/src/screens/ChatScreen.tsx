@@ -14,6 +14,7 @@ import {
   Linking,
   KeyboardAvoidingView,
   Platform,
+  StatusBar,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../theme/colors";
@@ -228,6 +229,7 @@ export default function ChatScreen({ navigation }: any) {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTitleRow}>
@@ -285,7 +287,8 @@ export default function ChatScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.primary,
+    paddingTop: Platform.OS === "android" ? (StatusBar.currentHeight || 0) : 0,
   },
   header: {
     backgroundColor: colors.primary,
