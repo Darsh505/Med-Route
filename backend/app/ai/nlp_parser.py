@@ -31,13 +31,16 @@ EXAMPLE:
 
 import json
 import re
-import structlog
-from typing import Optional
+try:
+    import structlog
+    logger = structlog.get_logger()
+except ImportError:
+    import logging
+    logger = logging.getLogger("nlp_parser")
 
+from typing import Optional
 from app.ai.medical_mappings import PROCEDURE_ALIASES, LOCATION_SHORTCUTS
 from app.schemas.search import SearchFilters
-
-logger = structlog.get_logger()
 
 # ── Gemini Prompt Template ─────────────────────────────────────────
 GEMINI_EXTRACTION_PROMPT = """

@@ -106,7 +106,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 
 # ── Register Routers ──────────────────────────────────────────────
-from app.routers import auth, hospitals, search, compare, reviews, sos, admin
+from app.routers import auth, hospitals, search, compare, reviews, sos, admin, chatbot
 
 app.include_router(auth.router)
 app.include_router(hospitals.router)
@@ -115,6 +115,7 @@ app.include_router(compare.router)
 app.include_router(reviews.router)
 app.include_router(sos.router)
 app.include_router(admin.router)
+app.include_router(chatbot.router)
 
 
 # ── Health Check ──────────────────────────────────────────────────
