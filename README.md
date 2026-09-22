@@ -1,245 +1,274 @@
-# 🏥 Med Route
+# Med Route
 
-> **Find the Right Hospital. At the Right Cost. Near You.**
+An open-access healthcare discovery, transparent pricing, and emergency trauma routing platform for India.
 
-Med Route is an AI-powered hospital discovery and routing platform for Indian citizens. It helps patients find the right hospital for their medical condition — with real-time ICU telemetry, PMJAY/Ayushman Bharat coverage data, transparent cost estimates, and one-tap SOS emergency dispatch.
+Med Route addresses one of the most critical challenges in the Indian healthcare ecosystem: information asymmetry during medical decisions and emergencies. Patients and caregivers often struggle to determine which nearby hospital offers required specialties, whether treatments are covered under government schemes like Ayushman Bharat (AB-PMJAY), what out-of-pocket costs to anticipate, and whether ICU beds are actually available.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi)](https://fastapi.tiangolo.com/)
-[![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)](https://nextjs.org/)
-[![React Native](https://img.shields.io/badge/React%20Native-Expo%2052-61DAFB?logo=react)](https://expo.dev/)
+This platform bridges that gap through semantic natural language search, real-time ICU telemetry, transparent procedure pricing, interactive geospatial mapping, and an emergency SOS dispatch pipeline.
 
 ---
 
-## 🚀 Features
+## Core Capabilities
 
-| Feature | Description |
-|---|---|
-| 🔍 **AI-Powered Natural Language Search** | Type *"Find kidney treatment near Chandigarh under ₹2 lakhs"* and get ranked results |
-| 🗺️ **Geospatial Hospital Discovery** | PostGIS-powered radius search with real-time distance calculation |
-| 📊 **Transparent Cost Comparison** | Side-by-side comparison of hospitals with procedure cost ranges |
-| 🏥 **Live ICU Telemetry** | Real-time bed availability (ICU, general, emergency) |
-| 🆘 **One-Tap SOS Dispatch** | Find nearest trauma center + ambulance dispatch in seconds |
-| 🏛️ **PMJAY Integration** | Ayushman Bharat empanelment status and covered procedures |
-| ✅ **NABH Verification** | Government-verified accreditation badges |
-| 📱 **Mobile + Web** | React Native app (Android/iOS) + Next.js web platform |
-| 🔐 **Data Transparency** | Every record labeled with data provenance (SIMULATED / PMJAY_HBP / MANUAL_VERIFIED) |
+### 1. Clinical Natural Language Search and Triage
+Patients rarely search using technical medical codes; they search using symptoms or informal language (for example, *"best bypass surgery hospital under 2 lakhs"* or *"gurdey ka ilaj government hospital near Mohali"*). 
+- An integrated query parser powered by Google Gemini and a 200+ symptom rule-based fallback extracts clinical intent, target procedure, financial constraints, and geographic preferences.
+- Hospitals are scored and ranked using a transparent weighted algorithm: proximity (30%), estimated procedure cost (25%), verified user ratings (25%), and accreditation tier (20%).
 
----
+### 2. Interactive Geospatial Discovery and Tactical Mapping
+- Built on Leaflet and OpenStreetMap CartoDB Voyager tiles.
+- The web search interface supports split-view and full-radar map modes with live hospital pins color-coded by real-time ICU capacity:
+  - Green: 8 or more ICU beds available
+  - Amber: 1 to 7 ICU beds available
+  - Red: Emergency capacity / 0 ICU beds available
+- Two-way synchronization between the result directory and map markers, supporting GPS auto-centering and radius filtering.
 
-## 🏗️ Architecture
+### 3. Transparent Pricing and PMJAY 2.2 Coverage
+- Detailed tariff estimates for over 35 major surgical and diagnostic procedures, mapped to national standard packages (PMJAY HBP 2.2).
+- Clear breakdown of private package costs versus subsidized government rates, wait times, historical procedure volume, and success rates.
+- Covers over 60 verified healthcare institutions across the Tricity (Chandigarh, Mohali, Panchkula), Punjab, Haryana, and the National Capital Region (NCR).
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        Med Route Stack                       │
-├─────────────┬───────────────────────┬────────────────────────┤
-│  Web (M3)   │     Mobile (M2)       │    Admin (M4)          │
-│  Next.js 15 │  React Native Expo 52 │  Next.js /admin/*      │
-│  Vercel     │  EAS Build (APK/IPA)  │  Same deployment       │
-└──────┬──────┴──────────┬────────────┴──────────┬─────────────┘
-       │                 │                        │
-       └─────────────────▼────────────────────────┘
-                         │
-              ┌──────────▼──────────┐
-              │   FastAPI Backend   │
-              │   (M1 — Core API)   │
-              │  Gunicorn + Uvicorn │
-              │   Railway / Render  │
-              └──────────┬──────────┘
-                         │
-       ┌─────────────────┼──────────────────────┐
-       │                 │                       │
-┌──────▼──────┐  ┌───────▼────────┐   ┌─────────▼──────────┐
-│ PostgreSQL  │  │     Redis      │   │   Gemini API (M2)  │
-│  + PostGIS  │  │  (Cache+Rate)  │   │  NLP Query Parser  │
-│  (Railway)  │  │  (Upstash)     │   │                    │
-└─────────────┘  └────────────────┘   └────────────────────┘
-```
+### 4. Side-by-Side Hospital Comparison Matrix
+- Direct side-by-side evaluation of multiple facilities across 13 clinical and operational attributes:
+  - Ownership type (Government, Trust, Private, Semi-Government)
+  - Accreditation status (NABH, NABL, JCI, ISO)
+  - Emergency and ICU bed counts
+  - PMJAY cashless empanelment status
+  - Doctor-to-bed staffing and emergency contact numbers
+
+### 5. Emergency SOS Dispatch Pipeline
+- Designed for sub-second emergency response.
+- Automatically geolocates the user, identifies the closest Level 1 or Level 2 trauma facility, calculates estimated ambulance arrival time (ETA), and generates an emergency alert beacon.
+- Displays the immediate response corridor on an interactive emergency map while presenting one-tap calling to hospital trauma desks and the national 108 emergency service.
+
+### 6. Clinical Chatbot Assistant
+- Dual-engine conversational triage assistant accessible across all web and mobile screens.
+- Detects red-flag emergencies (acute myocardial infarction, FAST stroke symptoms, polytrauma) and immediately redirects the user to emergency protocols.
+- Provides specialized hospital recommendations and actionable clinical prompt categories for elective procedures.
 
 ---
 
-## 📁 Project Structure
+## System Architecture
 
 ```
-Med-Route/
-├── backend/                    # FastAPI Python API
+                                  Client Layer
+                 ┌──────────────────────────────────────────────┐
+                 │  Web Application      │  Mobile Application  │
+                 │  Next.js 16 / React 19│  React Native / Expo │
+                 │  Tailwind CSS         │  TypeScript          │
+                 └───────────────┬───────┴──────────────┬───────┘
+                                 │                      │
+                                 │ REST / WebSockets    │
+                                 ▼                      ▼
+                 ┌──────────────────────────────────────────────┐
+                 │               FastAPI Backend                │
+                 │         Python 3.12+ / Async SQLAlchemy      │
+                 └───────────────┬──────────────────────┬───────┘
+                                 │                      │
+        ┌────────────────────────┼──────────────────────┼────────────────────────┐
+        ▼                        ▼                      ▼                        ▼
+┌───────────────┐        ┌───────────────┐      ┌───────────────┐        ┌───────────────┐
+│  PostgreSQL   │        │     Redis     │      │ Google Gemini │        │ In-Memory DB  │
+│  + PostGIS    │        │ Cache & Rate  │      │ Structured    │        │ Resilience    │
+│  Spatial GiST │        │ Limiting      │      │ JSON Triage   │        │ Fallback      │
+└───────────────┘        └───────────────┘      └───────────────┘        └───────────────┘
+```
+
+---
+
+## Technology Stack
+
+### Backend
+- Framework: FastAPI (Python 3.12+)
+- Database: PostgreSQL with PostGIS spatial extension (via AsyncPG and GeoAlchemy2)
+- Caching and Rate Limiting: Redis
+- AI and NLP: Google Gemini 2.0 Flash with an offline clinical rule-based ontology engine
+- Migrations: Alembic
+- Logging: Structured JSON logging via Structlog
+
+### Web Frontend
+- Framework: Next.js 16 (App Router) with React 19
+- Styling: Vanilla Tailwind CSS configured with a clinical color system
+- Maps: Leaflet with CartoDB Voyager tiles and custom SVG markers
+- Icons and Typography: Material Symbols Outlined, Plus Jakarta Sans, Inter
+
+### Mobile Application
+- Framework: React Native with Expo (SDK 57)
+- Navigation: React Navigation 7 (Native Stack and Bottom Tabs)
+- State and Storage: AsyncStorage, SafeAreaContext
+
+---
+
+## Repository Structure
+
+```text
+med-route/
+├── backend/
 │   ├── app/
-│   │   ├── ai/                 # Gemini NLP engine + fallback parser
-│   │   ├── data_pipeline/      # ETL scripts, seed data, PMJAY scraper
-│   │   ├── models/             # SQLAlchemy 2.0 ORM models
-│   │   ├── routers/            # API route handlers
-│   │   ├── schemas/            # Pydantic request/response schemas
-│   │   ├── services/           # Business logic layer
-│   │   ├── config.py           # Pydantic BaseSettings
-│   │   ├── database.py         # Async SQLAlchemy engine
-│   │   └── main.py             # FastAPI app entry point
-│   ├── tests/                  # pytest test suite
-│   ├── alembic/                # Database migrations
-│   ├── Dockerfile              # Multi-stage production build
-│   ├── gunicorn.conf.py        # Production ASGI server config
-│   └── requirements.txt
+│   │   ├── ai/                 # Gemini parser and clinical triage rule engine
+│   │   ├── data_pipeline/      # 60+ regional hospitals and 35+ procedures seed data
+│   │   ├── models/             # SQLAlchemy 2.0 relational and spatial models
+│   │   ├── routers/            # Search, hospitals, SOS, compare, auth, admin, chat
+│   │   ├── schemas/            # Pydantic v2 validation models
+│   │   ├── services/           # Ranking, geocoding, SOS dispatch, hospital services
+│   │   ├── config.py           # Typed environment configuration
+│   │   ├── database.py         # Async database connection and session management
+│   │   └── main.py             # FastAPI entry point with resilient lifespan
+│   ├── requirements.txt
+│   └── Dockerfile
 │
-├── web/                        # Next.js 15 web application
+├── web/
 │   ├── src/
-│   │   ├── app/                # App Router pages
-│   │   │   ├── page.tsx        # Landing page
-│   │   │   ├── search/         # Search results
-│   │   │   ├── hospitals/      # Hospital detail [slug]
-│   │   │   ├── compare/        # Side-by-side comparison
-│   │   │   ├── sos/            # Emergency SOS
-│   │   │   └── admin/          # Admin dashboard
-│   │   ├── components/         # Reusable UI components
-│   │   ├── hooks/              # Custom React hooks
-│   │   ├── lib/                # API client, utilities
-│   │   └── styles/             # Global CSS design system
+│   │   ├── app/                # Next.js App Router pages
+│   │   │   ├── page.tsx        # Homepage and clinical intake
+│   │   │   ├── search/         # Geospatial search and split-view radar
+│   │   │   ├── compare/        # Side-by-side hospital comparison matrix
+│   │   │   ├── hospitals/      # Hospital detail profile [slug]
+│   │   │   ├── sos/            # Emergency SOS dispatch and beacon map
+│   │   │   ├── admin/          # Registry management and tariff audit
+│   │   │   └── auth/           # Login and registration
+│   │   ├── components/         # Leaflet maps, chatbot widget, navigation, filters
+│   │   └── styles/             # Global design tokens and theme rules
+│   ├── package.json
+│   └── tailwind.config.ts
+│
+├── mobile/
+│   ├── src/
+│   │   ├── screens/            # Home, Search, Compare, Profile, Detail, SOS
+│   │   ├── navigation/         # Bottom tab and modal stack architecture
+│   │   ├── services/           # API integration with offline resilience
+│   │   └── theme/              # Color palette and typography
+│   ├── app.json                # Expo configuration
 │   └── package.json
 │
-├── mobile/                     # React Native Expo app
-│   ├── src/
-│   │   ├── screens/            # App screens
-│   │   ├── components/         # Mobile-specific components
-│   │   └── services/           # API + SOS services
-│   └── package.json
-│
-├── docs/                       # Implementation plans + team docs
-├── UI/                         # Stitch HTML prototypes
-├── docker-compose.yml          # Full stack orchestration
-├── .env.example                # Environment variable template
+├── docker-compose.yml          # Container orchestration
 └── README.md
 ```
 
 ---
 
-## 🚀 Quick Start (Local Development)
+## Getting Started
 
 ### Prerequisites
-- Python 3.12+
-- Node.js 20+
-- Docker + Docker Compose
-- PostgreSQL with PostGIS extension *(handled by Docker)*
-
-### 1. Clone & Setup
-```bash
-git clone https://github.com/keshav-x/Med-Route.git
-cd Med-Route
-```
-
-### 2. Environment Configuration
-```bash
-cp .env.example .env
-# Edit .env with your:
-# - GEMINI_API_KEY (from Google AI Studio)
-# - JWT_SECRET (generate with: openssl rand -hex 32)
-```
-
-### 3. Start with Docker Compose
-```bash
-docker-compose up -d
-```
-
-This starts:
-- 🐘 **PostgreSQL + PostGIS** on port 5432
-- ⚡ **Redis** on port 6379
-- 🔌 **FastAPI backend** on http://localhost:8000
-- 🌐 **Next.js web app** on http://localhost:3000
-
-### 4. Database Setup
-```bash
-cd backend
-python -m alembic upgrade head
-python -m app.data_pipeline.seed_data  # Seeds 50+ hospitals
-```
-
-### 5. API Documentation
-Visit http://localhost:8000/docs for interactive Swagger UI.
+- Node.js 20 or higher
+- Python 3.12 or higher
+- Git
 
 ---
 
-## 🌐 API Overview
+### 1. Backend Setup
 
-### Search
-```http
-POST /api/search/nl
-Content-Type: application/json
+1. Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
 
-{
-  "query": "Find kidney treatment near Chandigarh under 2 lakhs",
-  "latitude": 30.7333,
-  "longitude": 76.7794
-}
-```
+2. Create and activate a Python virtual environment:
+   ```bash
+   # Windows PowerShell
+   python -m venv .venv
+   .\.venv\Scripts\Activate.ps1
 
-Response includes AI-extracted filters, ranked hospital list with transparent scoring.
+   # macOS / Linux
+   python3 -m venv .venv
+   source .venv/bin/activate
+   ```
 
-### Hospitals
-```http
-GET /api/hospitals/nearby?lat=30.73&lng=76.77&radius_km=50
-GET /api/hospitals/{slug}
-GET /api/hospitals/{id}/procedures
-```
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-### SOS Emergency
-```http
-POST /api/sos/nearest
-{
-  "latitude": 30.7333,
-  "longitude": 76.7794
-}
-```
+4. Configure environment variables (optional for local mock mode):
+   ```bash
+   cp .env.example .env
+   ```
+   *Note: If PostgreSQL is not running locally, the backend automatically activates an in-memory fallback containing all 60+ benchmark hospitals with computed Haversine distances, enabling immediate local development with zero setup.*
+
+5. Start the development server:
+   ```bash
+   uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+   ```
+   Interactive OpenAPI documentation is available at `http://localhost:8000/docs`.
 
 ---
 
-## 📊 Data Transparency
+### 2. Web Frontend Setup
 
-Every hospital record includes a `data_source_label`:
+1. Navigate to the web directory:
+   ```bash
+   cd web
+   ```
 
-| Badge | Label | Meaning |
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Start the Next.js development server:
+   ```bash
+   npm run dev
+   ```
+   Access the web interface at `http://localhost:3000`.
+
+---
+
+### 3. Mobile App Setup
+
+1. Navigate to the mobile directory:
+   ```bash
+   cd mobile
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Start the Expo development server:
+   ```bash
+   npm start
+   ```
+
+4. Run the application:
+   - On a physical device: Scan the terminal QR code using the **Expo Go** application.
+   - In the browser: Press `w` in the terminal to launch the web preview.
+   - On an Android emulator: Press `a` in the terminal.
+
+---
+
+## API Reference
+
+| Method | Endpoint | Description |
 |---|---|---|
-| 🟢 Verified | `MANUAL_VERIFIED` | Manually verified by Med Route team |
-| 🟢 Verified | `PMJAY_HBP` | From official PMJAY health data |
-| 🟡 Government | `HFR_REGISTRY` | From Health Facility Registry |
-| 🔵 Community | `USER_CONTRIBUTED` | User-submitted, awaiting verification |
-| ⚪ Demo | `SIMULATED` | Simulated data for demonstration |
+| `GET` | `/health` | Service health and environment status |
+| `GET` | `/api/hospitals` | Paginated hospital directory with city/state filters |
+| `GET` | `/api/hospitals/{slug}` | Comprehensive hospital profile, tariffs, and facilities |
+| `GET` | `/api/hospitals/nearby` | Geospatial search with radius and filter parameters |
+| `POST` | `/api/search/nl` | Semantic search with transparent ranking breakdown |
+| `GET` | `/api/search/structured` | Filter-based query by budget, accreditation, and specialty |
+| `GET` | `/api/search/autocomplete` | Type-ahead suggestions for hospital names and cities |
+| `POST` | `/api/sos/nearest` | Preview closest trauma center without creating a dispatch |
+| `POST` | `/api/sos/alert` | Trigger emergency SOS alert and notify hospital dashboard |
+| `GET` | `/api/sos/{alert_id}` | Real-time status tracker for dispatched citizen alerts |
+| `POST` | `/api/compare` | Multi-facility comparison across clinical attributes |
+| `POST` | `/api/chat` | Conversational clinical triage and hospital routing |
+| `GET` | `/api/chat/suggestions` | Curated prompts organized by clinical department |
 
 ---
 
-## 👥 Team & Roles
+## Data Provenance and Quality Labels
 
-| Member | Role | Responsibility |
-|---|---|---|
-| **M1** | Backend & Data Lead | FastAPI, PostgreSQL+PostGIS, data pipeline, Docker, deployment |
-| **M2** | AI & Mobile Lead | Gemini NLP engine, React Native app, SOS widget |
-| **M3** | Web Frontend Lead | Next.js web app, design system, all pages, maps |
-| **M4** | Admin & Docs Lead | Admin dashboard, reviews, documentation, testing |
+To maintain clinical integrity and user trust, every healthcare record in Med Route carries a transparent data source indicator:
 
----
-
-## 🗓️ Sprint Timeline
-
-**3-week sprint** starting September 22, 2026.
-
-- **Week 1**: Backend foundation + AI NLP engine
-- **Week 2**: Web frontend + mobile app + search live
-- **Week 3**: Admin, polish, Docker deployment, testing
+- `MANUAL_VERIFIED`: Verified directly by the clinical audit team with hospital administration.
+- `PMJAY_HBP`: Derived from published National Health Authority Ayushman Bharat benefit schedules.
+- `HFR_REGISTRY`: Synced with National Digital Health Mission Health Facility Registry records.
+- `USER_CONTRIBUTED`: Community-reported data pending administrative verification.
+- `SIMULATED`: Benchmark demonstration records used for testing and staging.
 
 ---
 
-## 🚢 Deployment
+## License
 
-| Service | Platform | Cost |
-|---|---|---|
-| Web Frontend | Vercel | Free |
-| Backend API | Railway | ~$5/mo |
-| PostgreSQL + PostGIS | Railway | ~$5/mo |
-| Redis | Upstash | Free |
-| Mobile Build | Expo EAS | Free |
-| AI (Gemini) | Google AI Studio | Pay-per-use |
-
----
-
-## 🙏 Acknowledgements
-
-- **PMJAY** — Pradhan Mantri Jan Arogya Yojana health benefit package data structure
-- **Health Facility Registry (HFR)** — Government of India health facility data
-- **PostGIS** — Geospatial database extension for PostgreSQL
-- **Google Gemini** — AI-powered natural language understanding
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
