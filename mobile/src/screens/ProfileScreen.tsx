@@ -1,46 +1,150 @@
 /**
- * ProfileScreen.tsx — Mobile User Profile & Transparency Settings
+ * ProfileScreen.tsx — Mobile User Profile, Auth State & System Transparency
  */
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
   Linking,
+  ActivityIndicator,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../theme/colors";
 import { spacing, borderRadius, shadows } from "../theme/spacing";
+import { authService, MobileUser } from "../services/auth";
 
 export default function ProfileScreen({ navigation }: any) {
+  const [user, setUser] = useState<MobileUser | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const loadUser = async () => {
+    setLoading(true);
+    try {
+      const u = await authService.getUser();
+      setUser(u);
+    } catch {}
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("focus", () => {
+      loadUser();
+    });
+    loadUser();
+    return unsubscribe;
+  }, [navigation]);
+
+  const handleLogout = async () => {
+    await authService.logout();
+    setUser(null);
+  };
+
+  const handleSwitchDemo = async (role: "admin" | "patient") => {
+    setLoading(true);
+    const u = await authService.demoLogin(role);
+    setUser(u);
+    setLoading(false);
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
 
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.scrollContent}
-      >
+      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
         {/* User Card */}
         <View style={styles.userCard}>
           <View style={styles.avatar}>
-            <Text style={{ fontSize: 28, color: colors.textInverse, fontWeight: "900" }}>
-              KC
+            <Text style={{ fontSize: 26, color: colors.textInverse, fontWeight: "900" }}>
+              {user ? (user.name ? user.name.slice(0, 2).toUpperCase() : "MR") : "👤"}
             </Text>
           </View>
-          <Text style={styles.userName}>Keshav Chaudhary</Text>
-          <Text style={styles.userEmail}>keshav@medroute.in</Text>
-          <View style={styles.roleBadge}>
-            <Text style={styles.roleText}>Verified Community Contributor</Text>
+          <Text style={styles.userName}>{user ? user.name : "Guest Citizen"}</Text>
+          <Text style={styles.userEmail}>
+            {user ? user.email : "Sign in to save searches, sync comparisons & audit facilities"}
+          </Text>
+
+          {user && (
+            <View
+              style={[
+                styles.roleBadge,
+                user.role === "admin" && { backgroundColor: colors.primaryLight },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.roleText,
+                  user.role === "admin" && { color: colors.primary },
+                ]}
+              >
+                {user.role === "admin" ? "🛡️ Verified Hospital Administrator" : "👤 Verified Citizen / Patient"}
+              </Text>
+            </View>
+          )}
+
+          {/* Auth Action Buttons */}
+          <View style={styles.authButtonsRow}>
+            {user ? (
+              <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+                <Text style={styles.logoutBtnText}>Sign Out</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={styles.signInBtn}
+                onPress={() => navigation.navigate("Login")}
+              >
+                <Text style={styles.signInBtnText}>Sign In / Register →</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
-        {/* Emergency Contacts Section */}
-        <Text style={styles.sectionTitle}>Emergency Dialers</Text>
+        {/* Quick Demo Role Switcher for Judges */}
+        <Text style={styles.sectionTitle}>⚡ Presentation &amp; Demo Roles</Text>
+        <View style={styles.cardSection}>
+          <View style={styles.demoButtonsContainer}>
+            <TouchableOpacity
+              style={[
+                styles.demoRoleBtn,
+                user?.role === "admin" && styles.demoRoleBtnActive,
+              ]}
+              onPress={() => handleSwitchDemo("admin")}
+            >
+              <Text
+                style={[
+                  styles.demoRoleBtnText,
+                  user?.role === "admin" && styles.demoRoleBtnTextActive,
+                ]}
+              >
+                🛡️ Switch to Admin
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.demoRoleBtn,
+                user?.role === "patient" && styles.demoRoleBtnActive,
+              ]}
+              onPress={() => handleSwitchDemo("patient")}
+            >
+              <Text
+                style={[
+                  styles.demoRoleBtnText,
+                  user?.role === "patient" && styles.demoRoleBtnTextActive,
+                ]}
+              >
+                👤 Switch to Patient
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Emergency Dialers Section */}
+        <Text style={styles.sectionTitle}>Emergency Dispatch Helplines</Text>
         <View style={styles.cardSection}>
           <TouchableOpacity
             style={styles.listItem}
@@ -53,7 +157,7 @@ export default function ProfileScreen({ navigation }: any) {
               <Text style={styles.listTitle}>National Ambulance (108)</Text>
               <Text style={styles.listSubtitle}>Toll-free emergency medical transit</Text>
             </View>
-            <Text style={styles.callArrow}>Call →</Text>
+            <Text style={styles.callArrow}>Call 108 →</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -64,34 +168,44 @@ export default function ProfileScreen({ navigation }: any) {
               <Text style={{ fontSize: 16 }}>🚨</Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.listTitle}>Emergency Helpline (112)</Text>
-              <Text style={styles.listSubtitle}>All-in-one national emergency helpline</Text>
+              <Text style={styles.listTitle}>National Unified Emergency (112)</Text>
+              <Text style={styles.listSubtitle}>All-in-one disaster &amp; acute response</Text>
             </View>
-            <Text style={styles.callArrow}>Call →</Text>
+            <Text style={styles.callArrow}>Call 112 →</Text>
           </TouchableOpacity>
         </View>
 
         {/* Data Provenance & Trust Policy */}
-        <Text style={styles.sectionTitle}>Data Provenance & Trust Standard</Text>
+        <Text style={styles.sectionTitle}>Data Provenance &amp; Trust Standard</Text>
         <View style={styles.cardSection}>
           <View style={styles.policyItem}>
-            <Text style={styles.policyBadge}>⚪ SIMULATED</Text>
+            <Text style={styles.policyBadge}>⚪ SIMULATED_GRID</Text>
             <Text style={styles.policyDesc}>
               Benchmark regional estimates modeled after real PMJAY HBP packages.
             </Text>
           </View>
 
           <View style={styles.policyItem}>
-            <Text style={[styles.policyBadge, { backgroundColor: colors.successLight, color: colors.success }]}>
+            <Text
+              style={[
+                styles.policyBadge,
+                { backgroundColor: colors.successLight, color: colors.success },
+              ]}
+            >
               🟢 MANUAL_VERIFIED
             </Text>
             <Text style={styles.policyDesc}>
-              Audited and verified by Med Route medical network coordinators.
+              Audited and verified by Med Route clinical telemetry network.
             </Text>
           </View>
 
           <View style={styles.policyItem}>
-            <Text style={[styles.policyBadge, { backgroundColor: "#FDF4FF", color: "#A21CAF" }]}>
+            <Text
+              style={[
+                styles.policyBadge,
+                { backgroundColor: "#FDF4FF", color: "#A21CAF" },
+              ]}
+            >
               🟢 PMJAY_HBP
             </Text>
             <Text style={styles.policyDesc}>
@@ -102,8 +216,8 @@ export default function ProfileScreen({ navigation }: any) {
 
         {/* App Info */}
         <View style={styles.appInfo}>
-          <Text style={styles.appVersion}>Med Route Mobile • v1.0.0 (Expo SDK 52)</Text>
-          <Text style={styles.appCopyright}>AI-Powered Hospital Discovery for India</Text>
+          <Text style={styles.appVersion}>Med Route Mobile • v1.2.0 (Expo SDK 52 / React Native 0.86)</Text>
+          <Text style={styles.appCopyright}>AI-Powered Hospital Discovery &amp; Triage for India</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -133,9 +247,9 @@ const styles = StyleSheet.create({
     ...shadows.card,
   },
   avatar: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
@@ -150,6 +264,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textSecondary,
     marginTop: 2,
+    textAlign: "center",
   },
   roleBadge: {
     backgroundColor: colors.accentLight,
@@ -163,8 +278,36 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "700",
   },
+  authButtonsRow: {
+    marginTop: 14,
+    width: "100%",
+  },
+  signInBtn: {
+    backgroundColor: colors.primary,
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: "center",
+  },
+  signInBtnText: {
+    color: colors.textInverse,
+    fontWeight: "700",
+    fontSize: 13,
+  },
+  logoutBtn: {
+    backgroundColor: colors.background,
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingVertical: 8,
+    alignItems: "center",
+  },
+  logoutBtnText: {
+    color: colors.emergency,
+    fontWeight: "700",
+    fontSize: 13,
+  },
   sectionTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "800",
     color: colors.primaryDark,
     marginBottom: spacing.sm,
@@ -179,6 +322,31 @@ const styles = StyleSheet.create({
     borderColor: colors.borderLight,
     ...shadows.card,
   },
+  demoButtonsContainer: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  demoRoleBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: colors.background,
+    borderColor: colors.border,
+    borderWidth: 1,
+    alignItems: "center",
+  },
+  demoRoleBtnActive: {
+    backgroundColor: colors.primaryLight,
+    borderColor: colors.primary,
+  },
+  demoRoleBtnText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: colors.textSecondary,
+  },
+  demoRoleBtnTextActive: {
+    color: colors.primary,
+  },
   listItem: {
     flexDirection: "row",
     alignItems: "center",
@@ -188,14 +356,14 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.borderLight,
   },
   listIcon: {
-    width: 40,
-    height: 40,
+    width: 38,
+    height: 38,
     borderRadius: borderRadius.md,
     alignItems: "center",
     justifyContent: "center",
   },
   listTitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "800",
     color: colors.textPrimary,
   },
@@ -207,7 +375,7 @@ const styles = StyleSheet.create({
   callArrow: {
     color: colors.primary,
     fontWeight: "800",
-    fontSize: 13,
+    fontSize: 12,
   },
   policyItem: {
     marginBottom: spacing.sm,

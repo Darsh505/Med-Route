@@ -8,12 +8,11 @@ AI-powered hospital discovery platform for India.
 
 Startup sequence:
 1. Load configuration from .env
-2. Connect to PostgreSQL + enable PostGIS extension
-3. Run Alembic migrations (in development)
-4. Seed database with simulated hospital data (if SEED_ON_STARTUP=true)
-5. Initialize NLP parser (Gemini or rule-based fallback)
-6. Register all API routers
-7. Start serving requests
+2. Attempt PostgreSQL connection → fall back to in-memory demo mode
+3. Load hospital seed data into memory store (always)
+4. Initialize NLP parser (Gemini or rule-based fallback)
+5. Register all API routers
+6. Start serving requests
 """
 
 import structlog
@@ -31,39 +30,50 @@ logger = structlog.get_logger()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """
-    Application lifespan — runs setup on startup, cleanup on shutdown.
-    Using the modern lifespan approach instead of deprecated @app.on_event.
-    """
+    """Application lifespan — setup on startup, cleanup on shutdown."""
     # ── STARTUP ───────────────────────────────────────────────────
-    logger.info("🚀 Med Route API starting up", env=settings.APP_ENV)
+    logger.info("[START] Med Route API starting up", env=settings.APP_ENV)
 
-    # Create tables (in production, use Alembic instead)
-    if settings.APP_ENV == "development":
-        try:
-            await create_db_and_tables()
-            logger.info("✅ Database tables created/verified")
-        except Exception as e:
-            logger.warning("⚠️ Database offline or unreachable; continuing in resilient mode", error=str(e))
+    # Try PostgreSQL, auto-fallback to in-memory mode
+    await create_db_and_tables()
 
-    # Seed database with simulated hospital data
-    if settings.SEED_ON_STARTUP:
+    # Always load in-memory store (used in demo mode or as search cache)
+    try:
+        from app.services.memory_store import memory_store
+        if not memory_store._loaded:
+            memory_store.load()
+    except Exception as e:
+        logger.warning("Memory store pre-load failed", error=str(e))
+
+    # Seed database (only if PostgreSQL is connected)
+    from app.database import USE_MEMORY_DB
+    if settings.SEED_ON_STARTUP and not USE_MEMORY_DB:
         try:
             from app.data_pipeline.seed_data import seed_hospitals
             await seed_hospitals()
-            logger.info("✅ Hospital seed data loaded")
+            logger.info("[OK] Hospital seed data loaded into PostgreSQL")
         except Exception as e:
-            logger.warning("Seed data failed (may already be seeded or DB offline)", error=str(e))
+            logger.warning("Seed data skipped (may already be seeded)", error=str(e))
 
-    logger.info("✅ Med Route API ready", version=settings.APP_VERSION)
+    # Initialize NLP Parser
+    try:
+        from app.ai.nlp_parser import get_nlp_parser
+        get_nlp_parser()
+        logger.info("[OK] NLP parser initialized")
+    except Exception as e:
+        logger.warning("NLP parser init failed, using rule-based fallback", error=str(e))
+
+    mode = "In-Memory Demo Mode" if USE_MEMORY_DB else "PostgreSQL Mode"
+    logger.info(f"[READY] Med Route API ready - {mode}", version=settings.APP_VERSION)
 
     yield  # Application runs here
 
     # ── SHUTDOWN ──────────────────────────────────────────────────
-    logger.info("👋 Med Route API shutting down gracefully")
+    logger.info("[STOP] Med Route API shutting down gracefully")
     try:
         from app.database import engine
-        await engine.dispose()
+        if engine:
+            await engine.dispose()
     except Exception as e:
         logger.warning("Error disposing database engine on shutdown", error=str(e))
 
@@ -81,7 +91,6 @@ app = FastAPI(
 
 
 # ── CORS Middleware ────────────────────────────────────────────────
-# Allows cross-origin requests from web frontend and mobile app
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -94,10 +103,6 @@ app.add_middleware(
 # ── Global Exception Handler ──────────────────────────────────────
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    """
-    Catch-all exception handler — returns standardized error format.
-    In production, logs to structured log aggregator (Datadog/Sentry).
-    """
     logger.error("Unhandled exception", path=request.url.path, error=str(exc))
     return JSONResponse(
         status_code=500,
@@ -127,20 +132,19 @@ app.include_router(chatbot.router)
 # ── Health Check ──────────────────────────────────────────────────
 @app.get("/health", tags=["System"])
 async def health_check():
-    """
-    Liveness probe — used by Docker health checks and Railway monitoring.
-    Returns 200 OK when the API is running.
-    """
+    from app.database import USE_MEMORY_DB
     return {
         "status": "ok",
         "version": settings.APP_VERSION,
         "environment": settings.APP_ENV,
+        "mode": "in-memory-demo" if USE_MEMORY_DB else "postgresql",
+        "gemini_configured": bool(settings.GEMINI_API_KEY),
     }
 
 
 @app.get("/", tags=["System"])
 async def root():
-    """API root — redirect users to docs."""
+    """API root."""
     return {
         "name": settings.APP_NAME,
         "version": settings.APP_VERSION,

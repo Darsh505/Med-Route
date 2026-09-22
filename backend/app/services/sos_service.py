@@ -1,204 +1,212 @@
-"""services/sos_service.py — SOS Emergency Dispatch Service"""
+"""services/sos_service.py — SOS Emergency Service with In-Memory Fallback"""
 
-import math
-import structlog
-from sqlalchemy.ext.asyncio import AsyncSession
+try:
+    import structlog
+    logger = structlog.get_logger()
+except ImportError:
+    import logging
+    logger = logging.getLogger("sos_service")
 
-from app.models.sos_alert import SOSAlert, SOSStatus
-from app.schemas.sos import SOSRequest, SOSNearestResponse, SOSAlertResponse
-from app.services.hospital_service import hospital_service
+from typing import Optional, Dict
+from app.services.hospital_service import hospital_service, estimate_travel_time
 
-logger = structlog.get_logger()
 
-# Connected WebSocket clients for real-time hospital staff notifications
-# In production, this should use Redis pub/sub for multi-process support
-_ws_clients: dict[str, set] = {}  # {hospital_id: {websocket_connections}}
+def _is_memory_mode() -> bool:
+    from app.database import USE_MEMORY_DB
+    return USE_MEMORY_DB
+
+
+class SOSNearestResult:
+    def __init__(self, hospital_name, hospital_phone, hospital_emergency_phone,
+                 hospital_address, latitude, longitude, distance_km, estimated_arrival_minutes,
+                 beds_icu_available, is_trauma_center, hospital_id=None):
+        self.hospital_name = hospital_name
+        self.hospital_phone = hospital_phone
+        self.hospital_emergency_phone = hospital_emergency_phone
+        self.hospital_address = hospital_address
+        self.latitude = latitude
+        self.longitude = longitude
+        self.distance_km = distance_km
+        self.estimated_arrival_minutes = estimated_arrival_minutes
+        self.beds_icu_available = beds_icu_available
+        self.is_trauma_center = is_trauma_center
+        self.hospital_id = hospital_id
+
+
+class SOSAlertResult:
+    def __init__(self, id, status, hospital_name, hospital_phone, distance_km,
+                 estimated_arrival_minutes, ambulance_number, created_at):
+        self.id = id
+        self.status = status
+        self.hospital_name = hospital_name
+        self.hospital_phone = hospital_phone
+        self.distance_km = distance_km
+        self.estimated_arrival_minutes = estimated_arrival_minutes
+        self.ambulance_number = ambulance_number
+        self.created_at = created_at
+
+
+# WebSocket registry
+_ws_connections: Dict[str, list] = {}
 
 
 class SOSService:
 
-    async def find_nearest_and_create_alert(
-        self,
-        db: AsyncSession,
-        request: SOSRequest,
-        user_id=None,
-    ) -> tuple[SOSNearestResponse, SOSAlert]:
-        """
-        Full SOS pipeline:
-        1. Find nearest trauma center using PostGIS
-        2. Create SOSAlert record
-        3. Broadcast via WebSocket to hospital staff
-        4. Return nearest hospital info to citizen
+    def register_ws(self, hospital_id: str, ws):
+        if hospital_id not in _ws_connections:
+            _ws_connections[hospital_id] = []
+        _ws_connections[hospital_id].append(ws)
 
-        Target: < 100ms end-to-end
-        """
-        # Step 1: Find nearest trauma center (PostGIS query)
-        result = None
-        try:
-            result = await hospital_service.find_nearest_trauma_center(
-                db=db,
-                lat=request.latitude,
-                lng=request.longitude,
-                radius_km=100,  # 100km SOS search radius
+    def unregister_ws(self, hospital_id: str, ws):
+        if hospital_id in _ws_connections:
+            try:
+                _ws_connections[hospital_id].remove(ws)
+            except ValueError:
+                pass
+
+    async def find_nearest_and_create_alert(self, db, request):
+        lat, lng = request.latitude, request.longitude
+
+        # Find nearest trauma center
+        result = await hospital_service.find_nearest_trauma_center(db, lat, lng)
+        if not result:
+            result = hospital_service._find_fallback_nearest_trauma(lat, lng)
+        if not result:
+            raise ValueError("No trauma center found within 100km")
+
+        hospital, dist = result
+
+        # Handle both dict and ORM object
+        if isinstance(hospital, dict):
+            h_name = hospital.get("name", "Nearest Hospital")
+            h_phone = hospital.get("phone", "108")
+            h_emer = hospital.get("emergency_phone") or hospital.get("phone", "108")
+            h_addr = hospital.get("address", "")
+            h_lat = hospital.get("latitude") or hospital.get("lat") or lat
+            h_lng = hospital.get("longitude") or hospital.get("lng") or lng
+            h_icu = hospital.get("beds_icu_available", 8)
+            h_id = str(hospital.get("id", ""))
+            h_trauma = hospital.get("is_trauma_center", True)
+        else:
+            h_name = hospital.name
+            h_phone = hospital.phone
+            h_emer = hospital.emergency_phone or hospital.phone
+            h_addr = hospital.address
+            h_lat = hospital.latitude or lat
+            h_lng = hospital.longitude or lng
+            h_icu = hospital.beds_icu_available
+            h_id = str(hospital.id)
+            h_trauma = hospital.is_trauma_center
+
+        eta = estimate_travel_time(dist)
+
+        nearest = SOSNearestResult(
+            hospital_name=h_name,
+            hospital_phone=h_phone,
+            hospital_emergency_phone=h_emer,
+            hospital_address=h_addr,
+            latitude=float(h_lat),
+            longitude=float(h_lng),
+            distance_km=dist,
+            estimated_arrival_minutes=eta,
+            beds_icu_available=h_icu,
+            is_trauma_center=h_trauma,
+            hospital_id=h_id,
+        )
+
+        # Create SOS alert
+        if _is_memory_mode():
+            from app.services.memory_store import memory_store
+            alert_dict = memory_store.create_sos_alert(
+                lat=lat, lng=lng,
+                hospital_name=h_name,
+                hospital_phone=h_phone,
+                distance_km=dist,
+                eta_minutes=eta,
+                hospital_id=h_id,
             )
-        except Exception as e:
-            logger.warning("find_nearest_trauma_center failed: %s", e)
-
-        if not result:
-            # FALLBACK: If no trauma center within 100km, find nearest ANY hospital
-            logger.warning("No trauma center found within 100km — falling back to nearest hospital")
+            from datetime import datetime, timezone
+            alert = SOSAlertResult(
+                id=alert_dict["id"],
+                status=alert_dict["status"],
+                hospital_name=h_name,
+                hospital_phone=h_phone,
+                distance_km=dist,
+                estimated_arrival_minutes=eta,
+                ambulance_number=alert_dict["ambulance_number"],
+                created_at=datetime.now(timezone.utc),
+            )
+        else:
             try:
-                result = await self._find_nearest_any(db, request.latitude, request.longitude)
+                from app.models.sos_alert import SOSAlert, SOSStatus
+                from datetime import datetime, timezone
+                alert_obj = SOSAlert(
+                    latitude=lat,
+                    longitude=lng,
+                    distance_km=dist,
+                    estimated_arrival_minutes=eta,
+                    status=SOSStatus.DISPATCHED,
+                )
+                db.add(alert_obj)
+                await db.flush()
+                await db.refresh(alert_obj)
+                alert = SOSAlertResult(
+                    id=alert_obj.id,
+                    status=alert_obj.status.value if hasattr(alert_obj.status, 'value') else alert_obj.status,
+                    hospital_name=h_name,
+                    hospital_phone=h_phone,
+                    distance_km=dist,
+                    estimated_arrival_minutes=eta,
+                    ambulance_number=alert_obj.ambulance_number or f"MR-{str(alert_obj.id)[:6].upper()}",
+                    created_at=alert_obj.created_at or datetime.now(timezone.utc),
+                )
             except Exception as e:
-                logger.warning("DB query in _find_nearest_any failed: %s", e)
+                logger.warning(f"DB SOS alert creation failed, using memory: {e}")
+                from app.services.memory_store import memory_store
+                from datetime import datetime, timezone
+                alert_dict = memory_store.create_sos_alert(
+                    lat=lat, lng=lng, hospital_name=h_name, hospital_phone=h_phone,
+                    distance_km=dist, eta_minutes=eta, hospital_id=h_id,
+                )
+                alert = SOSAlertResult(
+                    id=alert_dict["id"], status="dispatched",
+                    hospital_name=h_name, hospital_phone=h_phone,
+                    distance_km=dist, estimated_arrival_minutes=eta,
+                    ambulance_number=alert_dict["ambulance_number"],
+                    created_at=datetime.now(timezone.utc),
+                )
 
-        if not result:
-            result = hospital_service._find_fallback_nearest_trauma(request.latitude, request.longitude)
-
-        if not result:
-            raise ValueError("No hospitals found near your location. Please call 108 immediately.")
-
-        hospital, distance_km = result
-        eta_minutes = hospital_service.estimate_travel_time(distance_km)
-
-        # Step 2: Create SOSAlert record
-        alert = SOSAlert(
-            user_id=user_id,
-            latitude=request.latitude,
-            longitude=request.longitude,
-            hospital_id=getattr(hospital, "id", None),
-            distance_km=distance_km,
-            estimated_arrival_minutes=eta_minutes,
-            status=SOSStatus.SENT,
-            emergency_description=request.emergency_description,
-            patient_name=request.patient_name,
-            contact_phone=request.contact_phone,
-        )
-        try:
-            db.add(alert)
-            await db.flush()
-        except Exception as e:
-            logger.warning("Database unavailable to save SOSAlert, continuing with offline emergency alert: %s", e)
+        # Notify WebSocket clients
+        import json
+        alert_payload = json.dumps({
+            "type": "sos_alert",
+            "hospital_id": h_id,
+            "patient_lat": lat,
+            "patient_lng": lng,
+            "eta_minutes": eta,
+        })
+        for ws in _ws_connections.get(h_id, []):
             try:
-                await db.rollback()
+                await ws.send_text(alert_payload)
             except Exception:
                 pass
-            try:
-                db.expunge(alert)
-            except Exception:
-                pass
-            import uuid
-            from datetime import datetime
-            if not getattr(alert, "id", None):
-                alert.id = uuid.uuid4()
-            if not getattr(alert, "created_at", None):
-                alert.created_at = datetime.utcnow()
 
-        # Step 3: Broadcast to hospital staff dashboard (fire-and-forget)
-        try:
-            await self._broadcast_sos(getattr(hospital, "id", "default"), alert)
-        except Exception:
-            pass
+        return nearest, alert
 
-        # Step 4: Build response
-        nearest_response = SOSNearestResponse(
-            hospital_id=getattr(hospital, "id", None) or alert.id,
-            hospital_name=hospital.name,
-            hospital_phone=hospital.phone,
-            hospital_emergency_phone=hospital.emergency_phone,
-            hospital_address=hospital.address,
-            latitude=hospital.latitude,
-            longitude=hospital.longitude,
-            distance_km=distance_km,
-            estimated_arrival_minutes=eta_minutes,
-            beds_icu_available=hospital.beds_icu_available,
-            is_trauma_center=hospital.is_trauma_center,
-        )
-
-        logger.info(
-            "SOS alert created",
-            alert_id=str(alert.id),
-            hospital=hospital.name,
-            distance_km=distance_km,
-            eta=eta_minutes,
-        )
-
-        return nearest_response, alert
-
-    async def update_status(
-        self,
-        db: AsyncSession,
-        alert: SOSAlert,
-        new_status: str,
-        ambulance_number: str = None,
-        resolved_note: str = None,
-    ) -> SOSAlert:
-        """Hospital staff updates alert status."""
+    async def update_status(self, db, alert, new_status, ambulance_number=None, resolved_note=None):
+        if _is_memory_mode():
+            from app.services.memory_store import memory_store
+            alert_obj = memory_store.get_sos_alert(str(alert.id) if hasattr(alert, 'id') else str(alert))
+            if alert_obj:
+                alert_obj["status"] = new_status
+                if ambulance_number:
+                    alert_obj["ambulance_number"] = ambulance_number
+            return alert
         alert.status = new_status
         if ambulance_number:
             alert.ambulance_number = ambulance_number
-        if resolved_note:
-            alert.resolved_note = resolved_note
         await db.flush()
-
-        # Notify the citizen (in production: push notification via FCM)
-        await self._notify_citizen(alert)
         return alert
-
-    async def _find_nearest_any(self, db, lat, lng):
-        """Fallback: find nearest non-trauma hospital."""
-        from geoalchemy2.functions import ST_DWithin, ST_Distance, ST_MakePoint
-        from sqlalchemy import select
-
-        ref_point = ST_MakePoint(lng, lat)
-        distance_col = (ST_Distance(
-            __import__("app.models.hospital", fromlist=["Hospital"]).Hospital.location,
-            ref_point,
-        ) / 1000).label("distance_km")
-
-        from app.models.hospital import Hospital
-        result = await db.execute(
-            select(Hospital, distance_col)
-            .where(Hospital.is_active == True)
-            .order_by(distance_col)
-            .limit(1)
-        )
-        row = result.first()
-        return (row[0], round(row[1], 2)) if row else None
-
-    async def _broadcast_sos(self, hospital_id, alert):
-        """
-        WebSocket broadcast to hospital staff dashboard.
-        In production: use Redis pub/sub for multi-process support.
-        """
-        hospital_id_str = str(hospital_id)
-        if hospital_id_str in _ws_clients:
-            message = {
-                "type": "sos_alert",
-                "alert_id": str(alert.id),
-                "patient": alert.patient_name,
-                "location": f"{alert.latitude}, {alert.longitude}",
-                "status": alert.status,
-            }
-            import json
-            dead = set()
-            for ws in _ws_clients[hospital_id_str]:
-                try:
-                    await ws.send_text(json.dumps(message))
-                except Exception:
-                    dead.add(ws)
-            _ws_clients[hospital_id_str] -= dead
-
-    async def _notify_citizen(self, alert):
-        """Push notification to citizen app — stub for now."""
-        logger.info("Would send push notification", alert_id=str(alert.id))
-
-    def register_ws(self, hospital_id: str, ws):
-        _ws_clients.setdefault(hospital_id, set()).add(ws)
-
-    def unregister_ws(self, hospital_id: str, ws):
-        if hospital_id in _ws_clients:
-            _ws_clients[hospital_id].discard(ws)
 
 
 sos_service = SOSService()

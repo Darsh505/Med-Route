@@ -1,11 +1,5 @@
 /**
- * AppNavigator.tsx — Navigation Architecture
- * Bottom Tab Navigator per Prompt 7:
- * - 🏠 Home (active, teal)
- * - 🔍 Search
- * - ⚖️ Compare
- * - 👤 Profile
- * + Stack navigator for HospitalDetail and SOSModal
+ * AppNavigator.tsx — Navigation Architecture with AI Chat and Authentication
  */
 
 import React from "react";
@@ -18,9 +12,12 @@ import { colors } from "../theme/colors";
 import HomeScreen from "../screens/HomeScreen";
 import SearchScreen from "../screens/SearchScreen";
 import CompareScreen from "../screens/CompareScreen";
+import ChatScreen from "../screens/ChatScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import HospitalDetailScreen from "../screens/HospitalDetailScreen";
 import SOSScreen from "../screens/SOSScreen";
+import LoginScreen from "../screens/LoginScreen";
+import RegisterScreen from "../screens/RegisterScreen";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -30,7 +27,7 @@ function BottomTabs() {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.accent, // Prompt 7: "teal for active states"
+        tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.textTertiary,
         tabBarStyle: styles.tabBar,
         tabBarLabelStyle: styles.tabBarLabel,
@@ -58,6 +55,14 @@ function BottomTabs() {
         options={{
           tabBarLabel: "Compare",
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>⚖️</Text>,
+        }}
+      />
+      <Tab.Screen
+        name="Chat"
+        component={ChatScreen}
+        options={{
+          tabBarLabel: "AI Chat",
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>💬</Text>,
         }}
       />
       <Tab.Screen
@@ -95,6 +100,16 @@ export default function AppNavigator() {
             animation: "fade_from_bottom",
           }}
         />
+        <Stack.Screen
+          name="Login"
+          component={LoginScreen}
+          options={{ animation: "slide_from_bottom" }}
+        />
+        <Stack.Screen
+          name="Register"
+          component={RegisterScreen}
+          options={{ animation: "slide_from_bottom" }}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -103,23 +118,14 @@ export default function AppNavigator() {
 const styles = StyleSheet.create({
   tabBar: {
     backgroundColor: colors.card,
-    borderTopWidth: 1,
     borderTopColor: colors.borderLight,
-    height: 65,
-    paddingBottom: 10,
-    paddingTop: 8,
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    elevation: 8,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
+    borderTopWidth: 1,
+    height: 60,
+    paddingBottom: 8,
+    paddingTop: 6,
   },
   tabBarLabel: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "700",
   },
 });

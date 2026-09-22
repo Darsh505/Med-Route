@@ -72,10 +72,11 @@ async def get_hospital(slug: str, db: AsyncSession = Depends(get_db)):
             status_code=404,
             detail={"code": "HOSPITAL_NOT_FOUND", "message": f"No hospital found with slug '{slug}'"},
         )
+    data_src = hospital.get("data_source_label", "SIMULATED") if isinstance(hospital, dict) else getattr(hospital, "data_source_label", "SIMULATED")
     return APIResponse(
         data=HospitalResponse.model_validate(hospital),
         message="Hospital retrieved",
-        meta={"data_source": hospital.data_source_label},
+        meta={"data_source": data_src},
     )
 
 

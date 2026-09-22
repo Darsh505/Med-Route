@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { useAuth } from "@/context/AuthContext";
+import Link from "next/link";
 
 interface AuditRecord {
   id: string;
@@ -49,10 +51,13 @@ const INITIAL_RECORDS: AuditRecord[] = [
 ];
 
 export default function AdminPage() {
+  const { user, signIn } = useAuth();
   const [records, setRecords] = useState<AuditRecord[]>(INITIAL_RECORDS);
   const [activeFilter, setActiveFilter] = useState<"all" | "pending" | "flagged">("all");
   const [notification, setNotification] = useState("");
   const [uploadStatus, setUploadStatus] = useState("");
+
+  const isAdmin = user?.role === "admin";
 
   const approveRecord = (id: string) => {
     setRecords((prev) =>
@@ -95,6 +100,21 @@ export default function AdminPage() {
           {/* Interactive Admin Canvas Shell */}
           <div className="w-full max-w-7xl mx-auto px-gutter py-space-xl flex flex-col gap-space-xl">
             {/* Header */}
+            {!isAdmin && (
+              <div className="bg-primary-fixed/20 border border-primary/30 p-3.5 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2 text-primary font-medium">
+                  <span className="material-symbols-outlined text-base">admin_panel_settings</span>
+                  <span>Currently viewing as guest / standard user. Switch to an Admin session to enable full write permissions.</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => signIn("admin@medroute.in", "admin123456")}
+                  className="px-3 py-1.5 rounded-lg bg-primary text-on-primary font-semibold hover:bg-primary-container transition-colors shrink-0 shadow-xs"
+                >
+                  ⚡ Elevate to Admin Session
+                </button>
+              </div>
+            )}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-space-md pb-space-xs">
               <div className="flex flex-col gap-1">
                 <div className="flex items-center gap-space-sm flex-wrap">

@@ -25,8 +25,12 @@ export default function CompareScreen({ navigation }: any) {
   const [selectedHospitals, setSelectedHospitals] = useState<MobileHospital[]>([]);
 
   useEffect(() => {
+    const unsubscribe = navigation.addListener("focus", () => {
+      loadComparison();
+    });
     loadComparison();
-  }, []);
+    return unsubscribe;
+  }, [navigation]);
 
   const loadComparison = async () => {
     const ids = await storage.getCompareIds();

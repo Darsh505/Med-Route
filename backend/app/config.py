@@ -37,6 +37,10 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
     GEMINI_MODEL: str = "gemini-2.0-flash"
 
+    # ── Firebase Auth ─────────────────────────────────────────────
+    FIREBASE_PROJECT_ID: str = ""
+    FIREBASE_SERVICE_ACCOUNT_PATH: str = ""
+
     # ── Geocoding ─────────────────────────────────────────────────
     NOMINATIM_USER_AGENT: str = "medroute-app/1.0"
 

@@ -3,10 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Navbar() {
   const pathname = usePathname();
-  const [compareCount, setCompareCount] = useState(2);
+  const { user, logout } = useAuth();
+  const [compareCount, setCompareCount] = useState(0);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -15,7 +19,7 @@ export default function Navbar() {
         setCompareCount(JSON.parse(saved).length);
       }
     } catch {}
-  }, []);
+  }, [pathname]);
 
   const isSearch = pathname === "/search" || pathname === "/";
   const isCompare = pathname.startsWith("/compare");
@@ -27,7 +31,7 @@ export default function Navbar() {
         {/* Brand & Live Indicator */}
         <div className="flex items-center gap-space-lg">
           <Link className="flex items-center gap-space-sm group" href="/">
-            <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-on-primary font-bold shadow-sm">
+            <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-on-primary font-bold shadow-sm group-hover:scale-105 transition-transform">
               🏥
             </div>
             <div className="flex flex-col">
@@ -48,7 +52,7 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Center Nav Pills */}
+        {/* Center Nav Pills (Desktop) */}
         <nav className="hidden md:flex items-center gap-space-xs p-1 bg-surface-container-low rounded-xl">
           <Link
             href="/search"
@@ -70,9 +74,11 @@ export default function Navbar() {
             }`}
           >
             <span>Compare</span>
-            <span className="font-label-sm text-label-sm bg-secondary-container text-on-secondary-container px-1.5 py-0.5 rounded-full font-bold">
-              {compareCount}
-            </span>
+            {compareCount > 0 && (
+              <span className="font-label-sm text-label-sm bg-secondary-container text-on-secondary-container px-1.5 py-0.5 rounded-full font-bold">
+                {compareCount}
+              </span>
+            )}
           </Link>
 
           <Link
@@ -88,31 +94,160 @@ export default function Navbar() {
         </nav>
 
         {/* Right Tools & Telemetry */}
-        <div className="flex items-center gap-space-md">
+        <div className="flex items-center gap-2 sm:gap-space-md">
+          {/* SOS 108 Emergency Button */}
           <Link
             href="/sos"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-error text-on-error rounded-lg font-label-md font-bold text-label-md shadow-sm hover:bg-error-container hover:text-on-error-container transition-all"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-error text-on-error rounded-lg font-label-md font-bold text-label-md shadow-sm hover:bg-error-container hover:text-on-error-container transition-all"
           >
-            <span className="material-symbols-outlined text-[16px]">e911_emergency</span>
+            <span className="material-symbols-outlined text-[16px] animate-pulse">e911_emergency</span>
             <span>SOS 108</span>
           </Link>
 
           <div className="hidden lg:flex items-center gap-space-xs px-space-sm py-1 rounded-full bg-surface-container-low">
             <span className="font-label-sm text-label-sm text-on-surface-variant font-medium">
-              Audited Telemetry:
+              Audited:
             </span>
             <span className="font-label-sm text-label-sm text-secondary font-bold">99.98%</span>
           </div>
 
-          <Link
-            href="/auth/login"
-            className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-sm text-on-primary hover:bg-primary-container transition-colors"
-            title="Account"
+          {/* User Auth Section */}
+          {user ? (
+            <div className="relative">
+              <button
+                onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                className="flex items-center gap-2 p-1 pl-2 rounded-full bg-surface-container-low hover:bg-surface-container-high transition-colors border border-surface-container-high"
+              >
+                <span className="text-xs font-semibold text-primary max-w-[90px] truncate hidden sm:inline">
+                  {user.name || user.email.split("@")[0]}
+                </span>
+                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary font-bold text-xs shadow-xs">
+                  {user.name ? user.name[0].toUpperCase() : "U"}
+                </div>
+              </button>
+
+              {userDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-56 bg-surface-container-lowest rounded-xl shadow-xl border border-surface-container-high py-2 z-50 animate-fadeIn">
+                  <div className="px-4 py-2 border-b border-surface-container-high">
+                    <p className="text-xs font-bold text-on-surface">{user.name || "MedRoute User"}</p>
+                    <p className="text-[11px] text-on-surface-variant truncate">{user.email}</p>
+                    <span className="inline-block mt-1 text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary-fixed text-primary font-semibold">
+                      {user.role}
+                    </span>
+                  </div>
+
+                  {user.role === "admin" && (
+                    <Link
+                      href="/admin"
+                      onClick={() => setUserDropdownOpen(false)}
+                      className="flex items-center gap-2 px-4 py-2 text-xs text-on-surface hover:bg-surface-container-low transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-sm">shield_person</span>
+                      <span>Admin Dashboard</span>
+                    </Link>
+                  )}
+
+                  <Link
+                    href="/compare"
+                    onClick={() => setUserDropdownOpen(false)}
+                    className="flex items-center gap-2 px-4 py-2 text-xs text-on-surface hover:bg-surface-container-low transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-sm">compare_arrows</span>
+                    <span>Saved Comparisons</span>
+                  </Link>
+
+                  <button
+                    onClick={async () => {
+                      setUserDropdownOpen(false);
+                      await logout();
+                    }}
+                    className="w-full text-left flex items-center gap-2 px-4 py-2 text-xs text-error hover:bg-error-container/20 transition-colors border-t border-surface-container-high mt-1"
+                  >
+                    <span className="material-symbols-outlined text-sm">logout</span>
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link
+              href="/auth/login"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-label-md font-semibold text-xs transition-colors shadow-xs"
+            >
+              <span className="material-symbols-outlined text-sm">login</span>
+              <span className="hidden sm:inline">Sign In</span>
+            </Link>
+          )}
+
+          {/* Mobile Hamburger Toggle */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-1.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high"
+            aria-label="Toggle navigation"
           >
-            <span className="material-symbols-outlined text-[18px]">person</span>
-          </Link>
+            <span className="material-symbols-outlined text-2xl">
+              {mobileMenuOpen ? "close" : "menu"}
+            </span>
+          </button>
         </div>
       </div>
+
+      {/* Mobile Drawer Menu */}
+      {mobileMenuOpen && (
+        <div className="md:hidden bg-surface-container-lowest border-b border-surface-container-high px-gutter py-4 flex flex-col gap-3 shadow-lg">
+          <Link
+            href="/search"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-low font-label-md font-semibold text-on-surface"
+          >
+            <span className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary text-base">search</span>
+              <span>Find Hospitals</span>
+            </span>
+            <span className="text-xs text-outline">Search &amp; Triage →</span>
+          </Link>
+
+          <Link
+            href="/compare"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-low font-label-md font-semibold text-on-surface"
+          >
+            <span className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary text-base">compare_arrows</span>
+              <span>Compare Facilities</span>
+            </span>
+            {compareCount > 0 && (
+              <span className="text-xs bg-secondary text-white px-2 py-0.5 rounded-full font-bold">
+                {compareCount}
+              </span>
+            )}
+          </Link>
+
+          <Link
+            href="/admin"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-low font-label-md font-semibold text-on-surface"
+          >
+            <span className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary text-base">admin_panel_settings</span>
+              <span>Admin Portal</span>
+            </span>
+            <span className="text-xs text-outline">Manage Registry →</span>
+          </Link>
+
+          <Link
+            href="/sos"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center justify-between p-2.5 rounded-lg bg-error-container text-on-error-container font-label-md font-bold"
+          >
+            <span className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-error text-base">emergency</span>
+              <span>Emergency SOS 108</span>
+            </span>
+            <span className="text-xs">Immediate Dispatch →</span>
+          </Link>
+        </div>
+      )}
     </header>
   );
 }

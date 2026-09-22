@@ -128,3 +128,21 @@ class SearchResultMeta(BaseModel):
     confidence: float
     extracted_filters: SearchFilters
     data_source: str = "SIMULATED"
+
+
+class SearchMeta(BaseModel):
+    """Simplified meta object returned by search_service."""
+    query: str
+    ai_provider: str = "clinical_rules"
+    parsed_intent: str = "hospital_search"
+    total_found: int = 0
+    radius_km: float = 50.0
+
+    def model_dump(self, **kwargs):
+        return {
+            "query": self.query,
+            "ai_provider": self.ai_provider,
+            "parsed_intent": self.parsed_intent,
+            "total_found": self.total_found,
+            "radius_km": self.radius_km,
+        }

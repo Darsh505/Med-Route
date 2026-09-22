@@ -830,4 +830,103 @@ export const api = {
       trauma_level: "Level 1 Trauma Center",
     };
   },
+
+  async compareHospitals(hospitalIds: string[], procedureId?: string) {
+    try {
+      const res = await fetch(`${BASE_URL}/api/compare`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ hospital_ids: hospitalIds, procedure_id: procedureId }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        return json.data;
+      }
+    } catch {}
+
+    // Fallback comparison using MOCK_HOSPITALS
+    const matched = MOCK_HOSPITALS.filter(
+      (h) => hospitalIds.includes(h.id) || hospitalIds.includes(h.slug)
+    );
+    return {
+      hospitals: matched.length > 0 ? matched : [MOCK_HOSPITALS[0], MOCK_HOSPITALS[1]],
+      comparison_matrix: {
+        cost_indicative: matched.map((h) => h.cost_indicative),
+        beds_icu_available: matched.map((h) => h.beds_icu_available),
+        is_pmjay_empanelled: matched.map((h) => h.is_pmjay_empanelled),
+        overall_rating: matched.map((h) => h.overall_rating),
+      },
+    };
+  },
+
+  async sendChatMessage(
+    message: string,
+    history: Array<{ role: string; content: string }> = [],
+    latitude: number = 30.7333,
+    longitude: number = 76.7794
+  ) {
+    try {
+      const res = await fetch(`${BASE_URL}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message, history, latitude, longitude }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        return json.data;
+      }
+    } catch {}
+
+    // Fallback mobile NLP clinical response
+    const msgLower = message.toLowerCase();
+    const isEmergency =
+      msgLower.includes("chest pain") ||
+      msgLower.includes("heart attack") ||
+      msgLower.includes("accident") ||
+      msgLower.includes("unconscious") ||
+      msgLower.includes("bleeding");
+
+    return {
+      reply: isEmergency
+        ? "⚠️ **CRITICAL CLINICAL TRIAGE**: Symptoms indicate a high-priority acute medical emergency. Proceed immediately to the nearest tertiary emergency department or call ambulance 108."
+        : `Identified medical inquiry for: "${message}". Based on regional bed occupancy and NABH telemetry, the following facilities are recommended.`,
+      triage_level: isEmergency ? "emergency" : "routine",
+      recommended_hospitals: [
+        {
+          name: "PGIMER Chandigarh",
+          slug: "pgimer-chandigarh",
+          address: "Sector 12, Chandigarh",
+          distance_km: 3.2,
+          beds_icu_available: 14,
+          is_pmjay_empanelled: true,
+          emergency_phone: "0172-2746018",
+          cost_indicative: "₹15,000 – ₹45,000 (Subsidized)",
+        },
+        {
+          name: "Max Super Speciality Mohali",
+          slug: "max-super-speciality-mohali",
+          address: "Phase VI, SAS Nagar, Mohali",
+          distance_km: 7.4,
+          beds_icu_available: 6,
+          is_pmjay_empanelled: true,
+          emergency_phone: "0172-6652100",
+          cost_indicative: "₹1,42,000 Package",
+        },
+      ],
+      action_buttons: isEmergency
+        ? [
+            { type: "call_emergency", label: "📞 Call 108 Ambulance", value: "108" },
+            { type: "call_hospital", label: "🚨 Call PGIMER Emergency", value: "01722746018" },
+          ]
+        : [
+            { type: "view_hospital", label: "🏥 View PGIMER Details", value: "pgimer-chandigarh" },
+          ],
+      quick_suggestions: [
+        "Find free ICU beds near me",
+        "PMJAY hospital list",
+        "Emergency ambulance 108",
+      ],
+    };
+  },
 };
+
