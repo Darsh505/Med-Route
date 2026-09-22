@@ -81,6 +81,7 @@ class HospitalResponse(BaseModel):
     # Contact
     phone: str = "0172-2755555"
     emergency_phone: Optional[str] = None
+    ambulance_phone: Optional[str] = None
     email: Optional[str] = None
     website: Optional[str] = None
 
@@ -112,6 +113,10 @@ class HospitalResponse(BaseModel):
     verified: bool = True
     data_source_label: str = "SIMULATED"
 
+    # Clinical assessment & Highlights
+    pros: list[str] = []
+    cons: list[str] = []
+
     # Computed at query time
     distance_km: Optional[float] = None
     ranking_score: Optional[float] = None
@@ -121,6 +126,7 @@ class HospitalResponse(BaseModel):
     hospital_procedures: list[HospitalProcedureResponse] = []
     facilities: list[FacilityResponse] = []
     departments: list[DepartmentResponse] = []
+    reviews: list[dict] = []
 
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
@@ -150,6 +156,11 @@ class HospitalListItem(BaseModel):
     image_url: Optional[str] = None
     verified: bool = True
     data_source_label: str = "SIMULATED"
+    phone: Optional[str] = None
+    emergency_phone: Optional[str] = None
+    ambulance_phone: Optional[str] = None
+    pros: list[str] = []
+    cons: list[str] = []
     distance_km: Optional[float] = None
     ranking_score: Optional[float] = None
     cost_range: Optional[dict] = None  # {"min": 50000, "max": 200000} for searched procedure

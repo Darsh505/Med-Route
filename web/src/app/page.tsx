@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { useLocation } from "@/context/LocationContext";
 
 const CATEGORIES = [
   { emoji: "❤️", label: "Cardiology", slug: "cardiac" },
@@ -17,45 +18,91 @@ const CATEGORIES = [
   { emoji: "🩺", label: "General Care", slug: "general" },
 ];
 
-const FEATURED_HOSPITALS = [
+const ALL_FEATURED_HOSPITALS = [
+  {
+    name: "Civil Hospital Hoshiarpur",
+    slug: "civil-hospital-hoshiarpur",
+    city: "Hoshiarpur",
+    type: "Government District Apex",
+    location: "Civil Lines, Hoshiarpur · 1.8 km away",
+    description: "24x7 Level-2 Trauma & Emergency triage, Jan Aushadhi round-the-clock pharmacy.",
+    accreditation: "NQAS Accredited",
+    cost: "100% Free / PMJAY",
+    pmjay: "100% Cashless",
+    icu: "07 Beds Available",
+    ambulance_phone: "01882-220108",
+    pros: ["100% Cashless PMJAY", "24x7 Level-2 Trauma triage"],
+  },
+  {
+    name: "Ivy Hospital Hoshiarpur",
+    slug: "ivy-hospital-hoshiarpur",
+    city: "Hoshiarpur",
+    type: "Private Super-Specialty",
+    location: "Rama Mandi - Bypass Road, Hoshiarpur · 3.4 km away",
+    description: "NABH super-specialty center with advanced flat-panel digital Cath Lab and 24x7 emergency triage.",
+    accreditation: "NABH Accredited",
+    cost: "₹85,000 – ₹1,80,000",
+    pmjay: "Empanelled",
+    icu: "08 Beds Available",
+    ambulance_phone: "01882-506108",
+    pros: ["NABH Cath Lab & 24x7 Angioplasty", "32-bed modern critical care ICU"],
+  },
   {
     name: "PGIMER Chandigarh",
     slug: "pgimer-chandigarh",
+    city: "Chandigarh",
     type: "Government Apex",
     location: "Sector 12, Chandigarh · 3.2 km away (11 min)",
-    description: "Public tertiary research institute with dedicated round-the-clock cath labs.",
+    description: "Public tertiary research institute with dedicated round-the-clock cath labs and Level-1 trauma.",
     accreditation: "NABH",
     cost: "₹15,000 – ₹45,000",
     pmjay: "PMJAY Cashless",
     icu: "14 Beds Available",
+    ambulance_phone: "0172-2747585",
+    pros: ["Level-1 Emergency Trauma Center", "Highly subsidized surgical tariffs"],
   },
   {
     name: "Max Super Speciality Hospital",
     slug: "max-super-speciality-mohali",
+    city: "Mohali",
     type: "Private Accredited",
     location: "Phase VI, Mohali · 7.4 km away (18 min)",
-    description: "24/7 Primary Angioplasty Cath Unit with transparent audited pricing.",
+    description: "24/7 Primary Angioplasty Cath Unit with transparent audited pricing and JCI protocols.",
     accreditation: "NABH / JCI",
     cost: "₹1,42,000",
     pmjay: "All-Inclusive",
     icu: "06 Beds Available",
+    ambulance_phone: "0172-5212000",
+    pros: ["JCI & NABH dual clinical accreditations", "Full multi-organ emergency team"],
   },
   {
-    name: "Fortis Hospital Mohali",
-    slug: "fortis-hospital-mohali",
-    type: "Private Accredited",
-    location: "Sector 62, Mohali · 8.1 km away (19 min)",
-    description: "Comprehensive cardiac intervention unit with insurance cashless support.",
-    accreditation: "NABH",
-    cost: "₹1,55,000",
-    pmjay: "Standard",
-    icu: "09 Beds Available",
+    name: "AIIMS New Delhi",
+    slug: "aiims-new-delhi",
+    city: "Delhi",
+    type: "National Apex",
+    location: "Ansari Nagar, New Delhi · Pan-India Apex",
+    description: "India's highest national medical apex center with world-renowned surgical & trauma divisions.",
+    accreditation: "NABH / NABL",
+    cost: "₹15,000 – ₹60,000",
+    pmjay: "PMJAY Cashless",
+    icu: "28 Beds Available",
+    ambulance_phone: "011-26593456",
+    pros: ["Apex Level 1 JPNA Trauma Centre", "Subsidized robotic & transplant surgeries"],
   },
 ];
 
 export default function LandingPage() {
   const router = useRouter();
+  const { selectedCity, isAutoDetected } = useLocation();
   const [query, setQuery] = useState("");
+
+  const featuredList = selectedCity
+    ? [...ALL_FEATURED_HOSPITALS].sort((a, b) => {
+        if (a.city.toLowerCase() === selectedCity.toLowerCase()) return -1;
+        if (b.city.toLowerCase() === selectedCity.toLowerCase()) return 1;
+        return 0;
+      })
+    : ALL_FEATURED_HOSPITALS;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,7 +119,16 @@ export default function LandingPage() {
           <div className="w-full max-w-7xl mx-auto px-gutter py-space-xl flex flex-col gap-space-xl">
             {/* Minimal Hero Header */}
             <header className="flex flex-col gap-space-xs max-w-3xl pt-space-md">
-              <div className="flex items-center gap-space-sm">
+              <div className="flex items-center gap-space-sm flex-wrap">
+                <Link
+                  href="/location"
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-high hover:bg-surface-container-highest border border-surface-container-highest/60 text-primary font-label-sm font-semibold transition-all shadow-xs"
+                >
+                  <span className="material-symbols-outlined text-[16px] text-secondary">near_me</span>
+                  <span>Care near <strong>{selectedCity}</strong></span>
+                  <span className="text-on-surface-variant font-normal text-xs">({isAutoDetected ? "Auto-detected" : "Selected"})</span>
+                  <span className="material-symbols-outlined text-[14px] text-outline">arrow_drop_down</span>
+                </Link>
                 <span className="px-2.5 py-0.5 rounded-full bg-surface-container-high text-primary font-label-sm uppercase tracking-wider font-semibold">
                   Transparent Clinical Discovery
                 </span>
@@ -227,7 +283,7 @@ export default function LandingPage() {
               </div>
 
               <div className="flex flex-col gap-space-md">
-                {FEATURED_HOSPITALS.map((hosp) => (
+                {featuredList.map((hosp) => (
                   <article
                     key={hosp.slug}
                     className="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm hover:shadow-md transition-shadow flex flex-col md:flex-row items-start md:items-center justify-between gap-space-lg border border-surface-container-high/30"
@@ -250,6 +306,18 @@ export default function LandingPage() {
                       <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
                         {hosp.description}
                       </p>
+                      {hosp.pros && (
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {hosp.pros.map((pro, idx) => (
+                            <span
+                              key={idx}
+                              className="font-label-xs text-[11px] bg-secondary-container/40 text-secondary px-2 py-0.5 rounded flex items-center gap-1 font-medium"
+                            >
+                              <span className="text-[10px]">✓</span> {pro}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex flex-row md:flex-col items-baseline md:items-start gap-space-xs">
@@ -276,7 +344,15 @@ export default function LandingPage() {
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-space-sm w-full md:w-auto pt-space-xs md:pt-0">
+                    <div className="flex items-center gap-space-sm w-full md:w-auto pt-space-xs md:pt-0 flex-wrap">
+                      <a
+                        href={`tel:${hosp.ambulance_phone || "108"}`}
+                        className="flex-1 md:flex-none px-space-md py-space-xs bg-error/10 hover:bg-error/20 text-error rounded-lg font-label-md text-label-md font-bold transition-colors text-center flex items-center justify-center gap-1 border border-error/20"
+                        title={`Call hospital ambulance: ${hosp.ambulance_phone || "108"}`}
+                      >
+                        <span className="material-symbols-outlined text-[16px]">ambulance</span>
+                        <span>Ambulance</span>
+                      </a>
                       <Link
                         href={`/compare?ids=hosp-1,${hosp.slug}`}
                         className="flex-1 md:flex-none px-space-md py-space-xs bg-surface-container-low hover:bg-surface-container-high text-on-surface rounded-lg font-label-md text-label-md transition-colors text-center"
@@ -287,7 +363,7 @@ export default function LandingPage() {
                         href={`/hospitals/${hosp.slug}`}
                         className="flex-1 md:flex-none px-space-md py-space-xs bg-primary hover:bg-primary-container text-on-primary rounded-lg font-label-md text-label-md transition-colors text-center shadow-sm"
                       >
-                        Contact Hospital
+                        Details
                       </Link>
                     </div>
                   </article>

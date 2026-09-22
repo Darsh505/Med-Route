@@ -19,6 +19,7 @@ import HospitalDetailScreen from "../screens/HospitalDetailScreen";
 import SOSScreen from "../screens/SOSScreen";
 import LoginScreen from "../screens/LoginScreen";
 import RegisterScreen from "../screens/RegisterScreen";
+import SelectLocationScreen from "../screens/SelectLocationScreen";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -132,6 +133,11 @@ export default function AppNavigator() {
         <Stack.Screen
           name="Register"
           component={RegisterScreen}
+          options={{ animation: "slide_from_bottom" }}
+        />
+        <Stack.Screen
+          name="SelectLocation"
+          component={SelectLocationScreen}
           options={{ animation: "slide_from_bottom" }}
         />
       </Stack.Navigator>

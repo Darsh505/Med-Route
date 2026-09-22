@@ -25,6 +25,7 @@ import { colors } from "../theme/colors";
 import { spacing, borderRadius, shadows } from "../theme/spacing";
 import { api, MobileHospital, MOCK_HOSPITALS } from "../services/api";
 import { storage } from "../services/storage";
+import { locationService } from "../services/location";
 import HospitalCard from "../components/HospitalCard";
 import FloatingSOSButton from "../components/FloatingSOSButton";
 
@@ -41,15 +42,31 @@ const CATEGORIES = [
 
 export default function HomeScreen({ navigation }: any) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentCity, setCurrentCity] = useState("Hoshiarpur");
+  const [isAuto, setIsAuto] = useState(true);
   const [hospitals, setHospitals] = useState<MobileHospital[]>(MOCK_HOSPITALS);
   const [compareIds, setCompareIds] = useState<string[]>([]);
 
   useEffect(() => {
     loadData();
-  }, []);
+
+    // Re-fetch when screen is focused (e.g. returning from SelectLocationScreen)
+    const unsubscribe = navigation.addListener("focus", () => {
+      loadData();
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   const loadData = async () => {
-    const list = await api.getNearbyHospitals();
+    const loc = await locationService.getSelectedCity();
+    setCurrentCity(loc.city);
+    setIsAuto(loc.isAuto);
+
+    const list = await api.getNearbyHospitals(
+      loc.coords.latitude,
+      loc.coords.longitude,
+      loc.city
+    );
     setHospitals(list);
     const savedCompare = await storage.getCompareIds();
     setCompareIds(savedCompare);
@@ -86,7 +103,15 @@ export default function HomeScreen({ navigation }: any) {
             </View>
             <View>
               <Text style={styles.logoTitle}>Med Route</Text>
-              <Text style={styles.logoSubtitle}>Chandigarh Tricity Node</Text>
+              <TouchableOpacity
+                style={styles.locationPill}
+                onPress={() => navigation.navigate("SelectLocation")}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.locationPillText}>
+                  📍 {currentCity} {isAuto ? "(Auto)" : ""} ▾
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -257,6 +282,22 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: colors.textSecondary,
     fontWeight: "500",
+  },
+  locationPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.accentLight,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: borderRadius.sm,
+    marginTop: 2,
+    borderWidth: 1,
+    borderColor: colors.accentBorder,
+  },
+  locationPillText: {
+    fontSize: 11,
+    color: colors.accentDark,
+    fontWeight: "700",
   },
   topBarRight: {
     flexDirection: "row",

@@ -19,6 +19,10 @@ export interface MobileHospital {
   trauma_level?: string;
   phone: string;
   emergency_phone?: string;
+  ambulance_phone?: string;
+  pros?: string[];
+  cons?: string[];
+  reviews?: any[];
   beds_total: number;
   beds_icu: number;
   beds_icu_available: number;
@@ -32,6 +36,160 @@ export interface MobileHospital {
 }
 
 export const MOCK_HOSPITALS: MobileHospital[] = [
+  {
+    id: "hosp-hoshiarpur-1",
+    name: "Civil Hospital Hoshiarpur",
+    slug: "civil-hospital-hoshiarpur",
+    type: "Government",
+    city: "Hoshiarpur",
+    state: "Punjab",
+    address: "Civil Lines, Near Session Court, Hoshiarpur",
+    distance_km: 1.8,
+    overall_rating: 4.6,
+    total_reviews: 164,
+    accreditation: "NQAS Accredited",
+    is_pmjay_empanelled: true,
+    is_trauma_center: true,
+    trauma_level: "Level 2",
+    phone: "01882-222102",
+    emergency_phone: "01882-220108",
+    ambulance_phone: "01882-220108",
+    pros: ["100% Cashless under PMJAY / Ayushman Bharat", "24x7 Level-2 Trauma & Emergency triage", "In-house Jan Aushadhi round-the-clock pharmacy"],
+    cons: ["Peak morning OPD wait times (30–45 mins)", "Neurosurgical poly-trauma referred to tertiary centers"],
+    beds_total: 250,
+    beds_icu: 24,
+    beds_icu_available: 7,
+    beds_ventilator: 12,
+    ranking_score: 93,
+    data_source_label: "VERIFIED",
+    cost_indicative: "100% Free / PMJAY",
+    specialties: ["Trauma", "Orthopedics", "General Surgery", "Pediatrics", "Critical Care"],
+    latitude: 31.5305,
+    longitude: 75.9125,
+  },
+  {
+    id: "hosp-hoshiarpur-2",
+    name: "Ivy Hospital Hoshiarpur",
+    slug: "ivy-hospital-hoshiarpur",
+    type: "Private",
+    city: "Hoshiarpur",
+    state: "Punjab",
+    address: "Rama Mandi - Hoshiarpur Bypass Road, Hoshiarpur",
+    distance_km: 3.4,
+    overall_rating: 4.7,
+    total_reviews: 128,
+    accreditation: "NABH Accredited",
+    is_pmjay_empanelled: true,
+    is_trauma_center: true,
+    trauma_level: "Level 2",
+    phone: "01882-506000",
+    emergency_phone: "01882-506108",
+    ambulance_phone: "01882-506108",
+    pros: ["NABH accredited Cath Lab with 24x7 Primary Angioplasty", "Dedicated 32-bed critical care ICU", "Rapid polytrauma and cardiac triage"],
+    cons: ["Higher private tariffs without insurance pre-authorization", "Weekend super-specialist consultations require advance notice"],
+    beds_total: 160,
+    beds_icu: 32,
+    beds_icu_available: 8,
+    beds_ventilator: 16,
+    ranking_score: 94,
+    data_source_label: "VERIFIED",
+    cost_indicative: "₹85,000 – ₹1,80,000",
+    specialties: ["Cardiology", "Critical Care", "Orthopedics", "Oncology", "Urology"],
+    latitude: 31.5432,
+    longitude: 75.8941,
+  },
+  {
+    id: "hosp-hoshiarpur-3",
+    name: "Rayat Bahra Hospital Hoshiarpur",
+    slug: "rayat-bahra-hospital-hoshiarpur",
+    type: "Trust",
+    city: "Hoshiarpur",
+    state: "Punjab",
+    address: "Bohan, Chandigarh-Hoshiarpur Highway, Hoshiarpur",
+    distance_km: 6.2,
+    overall_rating: 4.5,
+    total_reviews: 96,
+    accreditation: "ISO & NABH Candidate",
+    is_pmjay_empanelled: true,
+    is_trauma_center: true,
+    trauma_level: "Level 2",
+    phone: "01882-276100",
+    emergency_phone: "01882-276108",
+    ambulance_phone: "01882-276108",
+    pros: ["Subsidized charitable tariffs for rural & highway patients", "Modern high-dependency critical care unit", "Highway trauma response team"],
+    cons: ["Located 6km outside city core on highway", "Super-specialty neurology visits limited to alternating days"],
+    beds_total: 120,
+    beds_icu: 18,
+    beds_icu_available: 5,
+    beds_ventilator: 8,
+    ranking_score: 90,
+    data_source_label: "VERIFIED",
+    cost_indicative: "₹35,000 – ₹90,000",
+    specialties: ["General Medicine", "Emergency Surgery", "Critical Care", "Obstetrics"],
+    latitude: 31.4925,
+    longitude: 75.9478,
+  },
+  {
+    id: "hosp-hoshiarpur-4",
+    name: "Apex Hospital & Trauma Center Hoshiarpur",
+    slug: "apex-hospital-hoshiarpur",
+    type: "Private",
+    city: "Hoshiarpur",
+    state: "Punjab",
+    address: "Mall Road, Model Town, Hoshiarpur",
+    distance_km: 2.1,
+    overall_rating: 4.6,
+    total_reviews: 112,
+    accreditation: "NABH Accredited",
+    is_pmjay_empanelled: true,
+    is_trauma_center: true,
+    trauma_level: "Level 2",
+    phone: "01882-244000",
+    emergency_phone: "01882-244108",
+    ambulance_phone: "01882-244108",
+    pros: ["Central location in Model Town with instant emergency admission", "State-of-the-art orthopedic joint replacement theater", "Dedicated trauma resuscitation unit"],
+    cons: ["Constrained campus parking during evening OPD", "Private single rooms fill up rapidly"],
+    beds_total: 80,
+    beds_icu: 14,
+    beds_icu_available: 4,
+    beds_ventilator: 6,
+    ranking_score: 91,
+    data_source_label: "VERIFIED",
+    cost_indicative: "₹65,000 – ₹1,50,000",
+    specialties: ["Orthopedics", "Trauma", "Joint Replacement", "Spine Surgery", "ICU Care"],
+    latitude: 31.5218,
+    longitude: 75.9189,
+  },
+  {
+    id: "hosp-hoshiarpur-5",
+    name: "Smt. Parvati Devi Heart & Super Specialty",
+    slug: "parvati-devi-heart-hoshiarpur",
+    type: "Private",
+    city: "Hoshiarpur",
+    state: "Punjab",
+    address: "Near Sutheri Baji, Circular Road, Hoshiarpur",
+    distance_km: 2.5,
+    overall_rating: 4.8,
+    total_reviews: 145,
+    accreditation: "NABH Accredited",
+    is_pmjay_empanelled: false,
+    is_trauma_center: false,
+    phone: "01882-238800",
+    emergency_phone: "01882-238108",
+    ambulance_phone: "01882-238108",
+    pros: ["Premier cardiac intervention unit with primary PCI track record", "Experienced senior cardiologists with <40 min door-to-balloon time", "Advanced non-invasive cardiac diagnostics (ECHO, TMT, Holter)"],
+    cons: ["Non-empanelled in PMJAY (private payment & TPAs only)", "Focused strictly on cardiology/cardiac emergencies"],
+    beds_total: 50,
+    beds_icu: 16,
+    beds_icu_available: 5,
+    beds_ventilator: 8,
+    ranking_score: 95,
+    data_source_label: "VERIFIED",
+    cost_indicative: "₹1,20,000 – ₹2,40,000",
+    specialties: ["Interventional Cardiology", "Cardiac Intensive Care", "Pacemaker", "Angioplasty"],
+    latitude: 31.5362,
+    longitude: 75.9082,
+  },
   {
     id: "hosp-1",
     name: "PGIMER Chandigarh",
@@ -735,9 +893,12 @@ export const MOCK_HOSPITALS: MobileHospital[] = [
 ];
 
 export const api = {
-  async getNearbyHospitals(lat = 30.7333, lng = 76.7794): Promise<MobileHospital[]> {
+  async getNearbyHospitals(lat = 31.5305, lng = 75.9125, city?: string): Promise<MobileHospital[]> {
     try {
-      const res = await fetch(`${BASE_URL}/api/hospitals/nearby?lat=${lat}&lng=${lng}&radius_km=50`);
+      const url = city
+        ? `${BASE_URL}/api/hospitals?city=${encodeURIComponent(city)}`
+        : `${BASE_URL}/api/hospitals/nearby?lat=${lat}&lng=${lng}&radius_km=50`;
+      const res = await fetch(url);
       if (res.ok) {
         const json = await res.json();
         if (json.data && json.data.length > 0) {
@@ -745,18 +906,28 @@ export const api = {
         }
       }
     } catch {}
+
+    if (city) {
+      const cityMatches = MOCK_HOSPITALS.filter(
+        (h) => h.city.toLowerCase() === city.toLowerCase()
+      );
+      if (cityMatches.length > 0) {
+        return cityMatches;
+      }
+    }
     return MOCK_HOSPITALS;
   },
 
-  async searchHospitals(query: string, category?: string): Promise<MobileHospital[]> {
+  async searchHospitals(query: string, category?: string, city?: string): Promise<MobileHospital[]> {
     try {
       const res = await fetch(`${BASE_URL}/api/search/nl`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           query: query || category || "hospital",
-          latitude: 30.7333,
-          longitude: 76.7794,
+          latitude: 31.5305,
+          longitude: 75.9125,
+          city,
         }),
       });
       if (res.ok) {
@@ -768,7 +939,12 @@ export const api = {
     } catch {}
 
     const q = (query || category || "").toLowerCase().trim();
-    if (!q) return MOCK_HOSPITALS;
+    let list = MOCK_HOSPITALS;
+    if (city) {
+      const cityFiltered = list.filter((h) => h.city.toLowerCase() === city.toLowerCase());
+      if (cityFiltered.length > 0) list = cityFiltered;
+    }
+    if (!q) return list;
 
     return MOCK_HOSPITALS.filter((h) => {
       const matchName = h.name.toLowerCase().includes(q);

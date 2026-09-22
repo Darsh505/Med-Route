@@ -4,10 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useLocation } from "@/context/LocationContext";
 
 export default function Navbar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const { selectedCity, isAutoDetected } = useLocation();
   const [compareCount, setCompareCount] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
@@ -47,9 +49,22 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-space-xs pl-space-sm">
             <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
             <span className="font-label-sm text-label-sm text-secondary uppercase font-semibold tracking-wider">
-              Live Regional Grid
+              Live Grid
             </span>
           </div>
+
+          <Link
+            href="/location"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container-low hover:bg-surface-container-high border border-surface-container-high text-xs font-semibold text-primary transition-all group shadow-xs"
+            title="Switch Location (Auto-Selected Every Time)"
+          >
+            <span className="material-symbols-outlined text-[15px] text-error">location_on</span>
+            <span className="font-bold">{selectedCity}</span>
+            <span className="text-[9px] text-secondary font-extrabold uppercase bg-secondary-container px-1 py-0.2 rounded-full">
+              {isAutoDetected ? "Auto" : "Set"}
+            </span>
+            <span className="material-symbols-outlined text-[14px] text-on-surface-variant group-hover:translate-y-0.5 transition-transform">expand_more</span>
+          </Link>
         </div>
 
         {/* Center Nav Pills (Desktop) */}
@@ -195,6 +210,18 @@ export default function Navbar() {
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
         <div className="md:hidden bg-surface-container-lowest border-b border-surface-container-high px-gutter py-4 flex flex-col gap-3 shadow-lg">
+          <Link
+            href="/location"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-low font-label-md font-semibold text-primary border border-surface-container-high"
+          >
+            <span className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-error text-base">location_on</span>
+              <span className="font-bold">Location: {selectedCity}</span>
+            </span>
+            <span className="text-xs text-secondary font-bold">Change City →</span>
+          </Link>
+
           <Link
             href="/search"
             onClick={() => setMobileMenuOpen(false)}

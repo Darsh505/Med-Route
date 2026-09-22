@@ -18,6 +18,7 @@ import { colors } from "../theme/colors";
 import { spacing, borderRadius, shadows } from "../theme/spacing";
 import { api, MobileHospital, MOCK_HOSPITALS } from "../services/api";
 import { storage } from "../services/storage";
+import { locationService } from "../services/location";
 import HospitalCard from "../components/HospitalCard";
 import FloatingSOSButton from "../components/FloatingSOSButton";
 
@@ -27,21 +28,34 @@ export default function SearchScreen({ route, navigation }: any) {
 
   const [query, setQuery] = useState(initialQuery || initialCategory);
   const [selectedFilter, setSelectedFilter] = useState("all");
+  const [currentCity, setCurrentCity] = useState("Hoshiarpur");
   const [hospitals, setHospitals] = useState<MobileHospital[]>(MOCK_HOSPITALS);
   const [compareIds, setCompareIds] = useState<string[]>([]);
 
   useEffect(() => {
-    performSearch(query);
-    loadCompare();
-  }, [query]);
+    initLocationAndSearch();
+
+    const unsubscribe = navigation.addListener("focus", () => {
+      initLocationAndSearch();
+    });
+    return unsubscribe;
+  }, [navigation, query]);
+
+  const initLocationAndSearch = async () => {
+    const loc = await locationService.getSelectedCity();
+    setCurrentCity(loc.city);
+    await performSearch(query, loc.city);
+    await loadCompare();
+  };
 
   const loadCompare = async () => {
     const ids = await storage.getCompareIds();
     setCompareIds(ids);
   };
 
-  const performSearch = async (q: string) => {
-    const results = await api.searchHospitals(q);
+  const performSearch = async (q: string, city?: string) => {
+    const targetCity = city || currentCity;
+    const results = await api.searchHospitals(q, undefined, targetCity);
     setHospitals(results);
   };
 
@@ -64,6 +78,17 @@ export default function SearchScreen({ route, navigation }: any) {
 
       {/* Header Search Box */}
       <View style={styles.header}>
+        <View style={styles.headerTop}>
+          <TouchableOpacity
+            style={styles.locationButton}
+            onPress={() => navigation.navigate("SelectLocation")}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.locationButtonText}>📍 {currentCity} ▾</Text>
+          </TouchableOpacity>
+          <Text style={styles.resultsBadge}>{filteredHospitals.length} facilities</Text>
+        </View>
+
         <View style={styles.searchBar}>
           <Text style={{ fontSize: 16, marginRight: 6 }}>🔍</Text>
           <TextInput
@@ -164,6 +189,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
     paddingBottom: spacing.sm,
+  },
+  headerTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: spacing.xs + 2,
+  },
+  locationButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.accentLight,
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: 4,
+    borderRadius: borderRadius.sm,
+    borderWidth: 1,
+    borderColor: colors.accentBorder,
+  },
+  locationButtonText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: colors.accentDark,
+  },
+  resultsBadge: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: colors.textTertiary,
   },
   searchBar: {
     flexDirection: "row",

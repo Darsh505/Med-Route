@@ -6,6 +6,7 @@ import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SearchMap from "@/components/SearchMap";
+import { useLocation } from "@/context/LocationContext";
 
 interface HospitalItem {
   id: string;
@@ -31,10 +32,100 @@ interface HospitalItem {
   pmjay_label?: string;
   description?: string;
   phone?: string;
+  ambulance_phone?: string;
+  pros?: string[];
+  cons?: string[];
   specialties?: string[];
 }
 
 export const BENCHMARK_HOSPITALS: HospitalItem[] = [
+  {
+    id: "hosp-hoshiarpur-1",
+    latitude: 31.5305,
+    longitude: 75.9125,
+    name: "Civil Hospital Hoshiarpur",
+    slug: "civil-hospital-hoshiarpur",
+    type: "Government",
+    city: "Hoshiarpur",
+    state: "Punjab",
+    address: "Civil Lines, Near Session Court, Hoshiarpur",
+    distance_km: 1.8,
+    overall_rating: 4.6,
+    total_reviews: 164,
+    accreditation: "NQAS Accredited",
+    is_pmjay_empanelled: true,
+    is_trauma_center: true,
+    trauma_level: "Level 2",
+    beds_total: 250,
+    beds_icu: 24,
+    beds_icu_available: 7,
+    cost_range: "Free / PMJAY",
+    pmjay_label: "100% Cashless",
+    description: "Primary government district headquarters hospital with 24x7 Level-2 Trauma triage, Jan Aushadhi pharmacy, and Mother & Child wing.",
+    phone: "01882-222102",
+    ambulance_phone: "01882-220108",
+    pros: ["100% Cashless under PMJAY / Ayushman Bharat", "24x7 Level-2 Trauma & Emergency triage", "In-house Jan Aushadhi round-the-clock pharmacy"],
+    cons: ["Peak morning OPD wait times (30–45 mins)", "Neurosurgical poly-trauma referred to tertiary centers"],
+    specialties: ["Trauma", "Orthopedics", "General Surgery", "Pediatrics", "Critical Care"],
+  },
+  {
+    id: "hosp-hoshiarpur-2",
+    latitude: 31.5432,
+    longitude: 75.8941,
+    name: "Ivy Hospital Hoshiarpur",
+    slug: "ivy-hospital-hoshiarpur",
+    type: "Private",
+    city: "Hoshiarpur",
+    state: "Punjab",
+    address: "Rama Mandi - Hoshiarpur Bypass Road, Hoshiarpur",
+    distance_km: 3.4,
+    overall_rating: 4.7,
+    total_reviews: 128,
+    accreditation: "NABH Accredited",
+    is_pmjay_empanelled: true,
+    is_trauma_center: true,
+    trauma_level: "Level 2",
+    beds_total: 160,
+    beds_icu: 32,
+    beds_icu_available: 8,
+    cost_range: "₹85,000 – ₹1,80,000",
+    pmjay_label: "Empanelled",
+    description: "NABH super-specialty center with advanced flat-panel digital Cath Lab, modular OTs, and 24x7 interventional cardiology.",
+    phone: "01882-506000",
+    ambulance_phone: "01882-506108",
+    pros: ["NABH accredited Cath Lab with 24x7 Primary Angioplasty", "Dedicated 32-bed critical care ICU", "Rapid polytrauma and cardiac triage"],
+    cons: ["Higher private tariffs without insurance pre-authorization", "Weekend super-specialist consultations require advance notice"],
+    specialties: ["Cardiology", "Critical Care", "Orthopedics", "Oncology", "Urology"],
+  },
+  {
+    id: "hosp-hoshiarpur-3",
+    latitude: 31.5120,
+    longitude: 75.9380,
+    name: "Rayat Bahra Multispecialty Hospital Hoshiarpur",
+    slug: "rayat-bahra-multispecialty-hospital-hoshiarpur",
+    type: "Private",
+    city: "Hoshiarpur",
+    state: "Punjab",
+    address: "Chandigarh-Hoshiarpur Highway, Bohan, Hoshiarpur",
+    distance_km: 5.2,
+    overall_rating: 4.5,
+    total_reviews: 95,
+    accreditation: "NABH",
+    is_pmjay_empanelled: true,
+    is_trauma_center: true,
+    trauma_level: "Level 2",
+    beds_total: 180,
+    beds_icu: 28,
+    beds_icu_available: 9,
+    cost_range: "₹45,000 – ₹1,20,000",
+    pmjay_label: "Empanelled",
+    description: "Comprehensive highway multi-specialty hospital featuring 12 hemodialysis stations and rapid emergency highway ambulance response.",
+    phone: "01882-275500",
+    ambulance_phone: "01882-275108",
+    pros: ["Highway location with zero city traffic delays for ambulances", "Modern 12-station hemodialysis unit", "Extensive empanelment under PMJAY and ECHS"],
+    cons: ["Located 6 km outside city core on Chandigarh Highway", "Oncology surgical schedules require advance notice"],
+    specialties: ["Nephrology", "Dialysis", "Trauma", "General Surgery"],
+  },
   {
     id: "hosp-1",
     latitude: 30.765,
@@ -59,6 +150,9 @@ export const BENCHMARK_HOSPITALS: HospitalItem[] = [
     pmjay_label: "PMJAY Cashless",
     description: "Public tertiary research institute with dedicated round-the-clock cath labs and emergency trauma.",
     phone: "0172-2755555",
+    ambulance_phone: "0172-2746018",
+    pros: ["Premier Level-1 trauma and research institute of North India", "Lowest package tariffs with maximum surgical success", "220+ ICU beds with dedicated ECMO and multi-organ transplant"],
+    cons: ["High footfall queues for non-emergency elective care", "Vast campus layout requires directional assistance"],
     specialties: ["Cardiology", "Orthopedics", "Nephrology", "Trauma", "Neurology"],
   },
   {
@@ -549,8 +643,6 @@ export const BENCHMARK_HOSPITALS: HospitalItem[] = [
     beds_total: 310,
     beds_icu: 80,
     beds_icu_available: 11,
-    cost_range: "₹1,90,000 – ₹4,50,000",
-    pmjay_label: "Private Cardiac",
     description: "Pioneering cardiac care center with advanced electrophysiology and pediatric heart surgeries.",
     phone: "011-47135000",
     specialties: ["Cardiology", "Cardiac Surgery", "Pediatric Heart"],
@@ -560,25 +652,36 @@ export const BENCHMARK_HOSPITALS: HospitalItem[] = [
 function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { selectedCity, coords } = useLocation();
 
   const initialQuery = searchParams.get("q") || searchParams.get("category") || "";
 
   const [query, setQuery] = useState(
     initialQuery ||
-      "My elderly father needs urgent cardiology angioplasty under ₹1.5 Lakh in Mohali with cashless PMJAY"
+      "My elderly father needs urgent cardiology angioplasty under ₹1.5 Lakh with cashless PMJAY"
   );
   const [selectedCondition, setSelectedCondition] = useState("All Conditions");
-  const [selectedLocation, setSelectedLocation] = useState("All Locations");
+  const [selectedLocation, setSelectedLocation] = useState(
+    selectedCity ? `Current: ${selectedCity}` : "All Locations"
+  );
   const [selectedBudget, setSelectedBudget] = useState("All Tariffs");
   const [hospitals, setHospitals] = useState<HospitalItem[]>(BENCHMARK_HOSPITALS);
   const [compareIds, setCompareIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [viewMode, setViewMode] = useState<"split" | "list" | "map">("split");
   const [selectedHospitalId, setSelectedHospitalId] = useState<string | null>(null);
-  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>({
-    lat: 30.7333,
-    lng: 76.7794,
-  });
+  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(
+    coords || {
+      lat: 31.5305,
+      lng: 75.9125,
+    }
+  );
+
+  useEffect(() => {
+    if (coords) {
+      setUserCoords(coords);
+    }
+  }, [coords]);
 
   useEffect(() => {
     try {
@@ -590,7 +693,7 @@ function SearchContent() {
   // Filter hospitals whenever query, condition, location, or budget changes
   useEffect(() => {
     applyFilters(query, selectedCondition, selectedLocation, selectedBudget);
-  }, [selectedCondition, selectedLocation, selectedBudget]);
+  }, [selectedCondition, selectedLocation, selectedBudget, selectedCity]);
 
   const applyFilters = (q: string, condition: string, location: string, budget: string) => {
     const qLower = q.toLowerCase().trim();
@@ -598,11 +701,21 @@ function SearchContent() {
 
     // Location filter
     if (location !== "All Locations") {
-      if (location.includes("Mohali")) list = list.filter((h) => h.city === "Mohali");
-      else if (location.includes("Chandigarh")) list = list.filter((h) => h.city === "Chandigarh");
-      else if (location.includes("Panchkula")) list = list.filter((h) => h.city === "Panchkula");
-      else if (location.includes("Ludhiana")) list = list.filter((h) => h.city === "Ludhiana");
-      else if (location.includes("Delhi")) list = list.filter((h) => h.city === "Delhi" || h.city === "Gurugram");
+      if (location.startsWith("Current:") && selectedCity) {
+        list = list.filter((h) => h.city?.toLowerCase() === selectedCity.toLowerCase());
+      } else if (location.includes("Hoshiarpur")) {
+        list = list.filter((h) => h.city === "Hoshiarpur");
+      } else if (location.includes("Mohali")) {
+        list = list.filter((h) => h.city === "Mohali");
+      } else if (location.includes("Chandigarh")) {
+        list = list.filter((h) => h.city === "Chandigarh");
+      } else if (location.includes("Panchkula")) {
+        list = list.filter((h) => h.city === "Panchkula");
+      } else if (location.includes("Ludhiana")) {
+        list = list.filter((h) => h.city === "Ludhiana");
+      } else if (location.includes("Delhi")) {
+        list = list.filter((h) => h.city === "Delhi" || h.city === "Gurugram");
+      }
     }
 
     // Condition filter
@@ -823,12 +936,18 @@ function SearchContent() {
                       onChange={(e) => setSelectedLocation(e.target.value)}
                       className="w-full bg-transparent p-space-sm font-body-sm text-body-sm text-on-surface appearance-none focus:outline-none cursor-pointer pr-8"
                     >
-                      <option>All Locations</option>
-                      <option>Mohali (+ 15 km)</option>
-                      <option>Chandigarh (+ 10 km)</option>
-                      <option>Panchkula (+ 15 km)</option>
-                      <option>Ludhiana (+ 30 km)</option>
-                      <option>Delhi / NCR</option>
+                      <option value="All Locations">All Locations (Pan-India)</option>
+                      {selectedCity && (
+                        <option value={`Current: ${selectedCity}`}>
+                          📍 {selectedCity} (Active)
+                        </option>
+                      )}
+                      <option value="Hoshiarpur">Hoshiarpur, Punjab (+ 15 km)</option>
+                      <option value="Mohali">Mohali (+ 15 km)</option>
+                      <option value="Chandigarh">Chandigarh (+ 10 km)</option>
+                      <option value="Panchkula">Panchkula (+ 15 km)</option>
+                      <option value="Ludhiana">Ludhiana (+ 30 km)</option>
+                      <option value="Delhi">Delhi / NCR</option>
                     </select>
                     <span className="material-symbols-outlined text-outline absolute right-space-sm top-2.5 pointer-events-none text-[18px]">
                       location_on
@@ -967,7 +1086,14 @@ function SearchContent() {
                               </span>
                             </div>
 
-                            <div className="flex gap-2 pt-1">
+                            <div className="flex gap-2 pt-1 flex-wrap">
+                              <a
+                                href={`tel:${target.ambulance_phone || target.phone || "108"}`}
+                                className="py-1.5 px-2.5 bg-error/10 hover:bg-error/20 text-error rounded-lg text-xs font-bold text-center flex items-center justify-center gap-1 border border-error/20"
+                              >
+                                <span className="material-symbols-outlined text-[14px]">ambulance</span>
+                                <span>Ambulance</span>
+                              </a>
                               <button
                                 onClick={() => toggleCompare(target.slug)}
                                 className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold text-center border transition-all ${
@@ -1041,6 +1167,19 @@ function SearchContent() {
                             {hosp.address}
                           </p>
 
+                          {hosp.pros && hosp.pros.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 pt-0.5">
+                              {hosp.pros.slice(0, 2).map((pro, idx) => (
+                                <span
+                                  key={idx}
+                                  className="font-label-xs text-[11px] bg-secondary-container/40 text-secondary px-2 py-0.5 rounded flex items-center gap-1 font-medium"
+                                >
+                                  <span className="text-[10px]">✓</span> {pro}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+
                           <div className="flex flex-wrap items-center justify-between gap-space-sm pt-space-xs border-t border-surface-container-high/20">
                             <div>
                               <span className="font-label-xs text-xs text-on-surface-variant block">
@@ -1054,7 +1193,16 @@ function SearchContent() {
                               </span>
                             </div>
 
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <a
+                                href={`tel:${hosp.ambulance_phone || hosp.phone || "108"}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="px-2.5 py-1.5 bg-error/10 hover:bg-error/20 text-error rounded-lg font-label-sm text-xs font-bold transition-colors flex items-center gap-1 border border-error/20"
+                                title={`Call hospital ambulance: ${hosp.ambulance_phone || "108"}`}
+                              >
+                                <span className="material-symbols-outlined text-[14px]">ambulance</span>
+                                <span>Ambulance</span>
+                              </a>
                               <button
                                 type="button"
                                 onClick={(e) => {
@@ -1129,6 +1277,18 @@ function SearchContent() {
                           <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
                             {hosp.description}
                           </p>
+                          {hosp.pros && hosp.pros.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 pt-1.5">
+                              {hosp.pros.slice(0, 2).map((pro, idx) => (
+                                <span
+                                  key={idx}
+                                  className="font-label-xs text-[11px] bg-secondary-container/40 text-secondary px-2 py-0.5 rounded flex items-center gap-1 font-medium"
+                                >
+                                  <span className="text-[10px]">✓</span> {pro}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
 
                         <div className="flex flex-row md:flex-col items-baseline md:items-start gap-space-xs">
@@ -1155,7 +1315,15 @@ function SearchContent() {
                           </span>
                         </div>
 
-                        <div className="flex items-center gap-space-sm w-full md:w-auto pt-space-xs md:pt-0">
+                        <div className="flex items-center gap-space-sm w-full md:w-auto pt-space-xs md:pt-0 flex-wrap">
+                          <a
+                            href={`tel:${hosp.ambulance_phone || hosp.phone || "108"}`}
+                            className="flex-1 md:flex-none px-space-md py-space-xs bg-error/10 hover:bg-error/20 text-error rounded-lg font-label-md text-label-md font-bold transition-colors text-center flex items-center justify-center gap-1 border border-error/20"
+                            title={`Call hospital ambulance: ${hosp.ambulance_phone || "108"}`}
+                          >
+                            <span className="material-symbols-outlined text-[16px]">ambulance</span>
+                            <span>Ambulance ({hosp.ambulance_phone || "108"})</span>
+                          </a>
                           <button
                             type="button"
                             onClick={() => toggleCompare(hosp.slug)}

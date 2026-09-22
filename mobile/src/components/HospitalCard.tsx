@@ -5,7 +5,7 @@
  */
 
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Linking } from "react-native";
 import { colors } from "../theme/colors";
 import { borderRadius, shadows, spacing } from "../theme/spacing";
 import { MobileHospital } from "../services/api";
@@ -24,6 +24,11 @@ export default function HospitalCard({
   isInCompare = false,
 }: HospitalCardProps) {
   const isGovt = hospital.type === "Government";
+
+  const handleCallAmbulance = () => {
+    const phone = hospital.ambulance_phone || hospital.emergency_phone || "108";
+    Linking.openURL(`tel:${phone}`);
+  };
 
   return (
     <TouchableOpacity
@@ -76,6 +81,19 @@ export default function HospitalCard({
         ) : null}
       </View>
 
+      {/* Clinical Pros Badges */}
+      {hospital.pros && hospital.pros.length > 0 && (
+        <View style={styles.prosContainer}>
+          {hospital.pros.slice(0, 2).map((pro, idx) => (
+            <View key={idx} style={styles.proChip}>
+              <Text style={styles.proChipText} numberOfLines={1}>
+                ✓ {pro}
+              </Text>
+            </View>
+          ))}
+        </View>
+      )}
+
       {/* ICU Telemetry Row */}
       <View style={styles.telemetryRow}>
         <View style={styles.telemetryItem}>
@@ -108,11 +126,19 @@ export default function HospitalCard({
       {/* Action Buttons Row */}
       <View style={styles.actionsRow}>
         <TouchableOpacity
+          style={styles.ambulanceButton}
+          onPress={handleCallAmbulance}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.ambulanceButtonText}>🚑 Ambulance</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
           style={styles.primaryButton}
           onPress={onPress}
           activeOpacity={0.85}
         >
-          <Text style={styles.primaryButtonText}>View Details →</Text>
+          <Text style={styles.primaryButtonText}>Details →</Text>
         </TouchableOpacity>
 
         {onCompare && (
@@ -127,7 +153,7 @@ export default function HospitalCard({
                 isInCompare && styles.compareButtonTextActive,
               ]}
             >
-              {isInCompare ? "✓ Added" : "+ Compare"}
+              {isInCompare ? "✓" : "+"}
             </Text>
           </TouchableOpacity>
         )}
@@ -271,6 +297,21 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: spacing.sm,
   },
+  ambulanceButton: {
+    backgroundColor: colors.emergencyLight,
+    borderWidth: 1,
+    borderColor: colors.emergencyBorder,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: borderRadius.md,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  ambulanceButtonText: {
+    color: colors.emergency,
+    fontWeight: "700",
+    fontSize: 12,
+  },
   primaryButton: {
     flex: 1,
     backgroundColor: colors.primary,
@@ -285,7 +326,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   compareButton: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: borderRadius.md,
     borderWidth: 1,
@@ -305,5 +346,23 @@ const styles = StyleSheet.create({
   },
   compareButtonTextActive: {
     color: colors.accentDark,
+  },
+  prosContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+    marginBottom: spacing.sm,
+  },
+  proChip: {
+    backgroundColor: colors.accentLight,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: borderRadius.sm,
+    maxWidth: "100%",
+  },
+  proChipText: {
+    color: colors.accentDark,
+    fontSize: 11,
+    fontWeight: "600",
   },
 });

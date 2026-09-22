@@ -16,19 +16,20 @@ router = APIRouter(tags=["Reviews"])
 
 @router.get("/api/hospitals/{hospital_id}/reviews", response_model=APIResponse[ReviewListResponse])
 async def list_reviews(
-    hospital_id: uuid.UUID,
+    hospital_id: str,
     page: int = Query(default=1, ge=1),
     per_page: int = Query(default=10, ge=1, le=50),
     db: AsyncSession = Depends(get_db),
 ):
     """List reviews for a hospital. Sorted by helpful_count, then date."""
     reviews, total = await review_service.list_reviews(db, hospital_id, page, per_page)
-    avg = sum(r.rating_overall for r in reviews) / len(reviews) if reviews else 0
+    avg = sum(r.get("rating_overall", getattr(r, "rating_overall", 5)) for r in reviews) / len(reviews) if reviews else 0
 
     # Rating breakdown
     breakdown = {i: 0 for i in range(1, 6)}
     for r in reviews:
-        breakdown[r.rating_overall] = breakdown.get(r.rating_overall, 0) + 1
+        val = r.get("rating_overall", getattr(r, "rating_overall", 5)) if isinstance(r, dict) else getattr(r, "rating_overall", 5)
+        breakdown[val] = breakdown.get(val, 0) + 1
 
     return APIResponse(
         data=ReviewListResponse(
@@ -43,7 +44,7 @@ async def list_reviews(
 
 @router.post("/api/hospitals/{hospital_id}/reviews", response_model=APIResponse[ReviewResponse], status_code=201)
 async def create_review(
-    hospital_id: uuid.UUID,
+    hospital_id: str,
     data: ReviewCreateRequest,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),

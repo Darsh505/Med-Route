@@ -18,12 +18,28 @@ export const borderRadius = {
   xs: 4,
   sm: 8,
   md: 12,
+  lg: 16,
   card: 16,     // Prompt 7 requirement: "Cards have 16px corner radius"
   xl: 20,
   pill: 9999,
+  full: 9999,
 };
 
 export const shadows = {
+  xs: {
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  sm: {
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
+  },
   card: {
     shadowColor: "#0F172A",
     shadowOffset: { width: 0, height: 2 },
