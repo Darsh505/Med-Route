@@ -1007,31 +1007,56 @@ export const api = {
     };
   },
 
-  async compareHospitals(hospitalIds: string[], procedureId?: string) {
+  async compareHospitals(hospitalIds: string[], procedureId: string = "angioplasty") {
     try {
-      const res = await fetch(`${BASE_URL}/api/compare`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ hospital_ids: hospitalIds, procedure_id: procedureId }),
-      });
+      const idsParam = hospitalIds.join(",");
+      const res = await fetch(`${BASE_URL}/api/compare?ids=${encodeURIComponent(idsParam)}&procedure=${encodeURIComponent(procedureId)}`);
       if (res.ok) {
         const json = await res.json();
-        return json.data;
+        if (json.data && json.data.hospitals) {
+          return json.data;
+        }
       }
     } catch {}
 
-    // Fallback comparison using MOCK_HOSPITALS
+    // Fallback comparison using MOCK_HOSPITALS with procedure details
     const matched = MOCK_HOSPITALS.filter(
       (h) => hospitalIds.includes(h.id) || hospitalIds.includes(h.slug)
     );
+    const selected = matched.length > 0 ? matched : [MOCK_HOSPITALS[0], MOCK_HOSPITALS[1]];
+
     return {
-      hospitals: matched.length > 0 ? matched : [MOCK_HOSPITALS[0], MOCK_HOSPITALS[1]],
-      comparison_matrix: {
-        cost_indicative: matched.map((h) => h.cost_indicative),
-        beds_icu_available: matched.map((h) => h.beds_icu_available),
-        is_pmjay_empanelled: matched.map((h) => h.is_pmjay_empanelled),
-        overall_rating: matched.map((h) => h.overall_rating),
+      procedure: {
+        slug: procedureId,
+        name: procedureId === "knee-replacement" ? "Total Knee Replacement (TKR)" : "Coronary Angioplasty (1 DES Stent)",
+        pmjay_code: procedureId === "knee-replacement" ? "OR002" : "MC004",
+        pmjay_rate: procedureId === "knee-replacement" ? 80000 : 65000,
+        inclusions: [
+          "Standard surgical intervention & surgeon team fees",
+          "Pre-op tests & post-op hospital stay",
+          "Routine generic discharge medications",
+        ],
+        exclusions: [
+          "Additional implants/stents beyond standard package",
+          "Advanced robotic guidance surcharges",
+        ],
       },
+      hospitals: selected.map((h) => ({
+        ...h,
+        procedure_tariff_display: h.type === "Government" ? "100% Free (PMJAY)" : (h.cost_indicative || "₹1,45,000 Package"),
+        pmjay_tariff_display: h.is_pmjay_empanelled ? "100% Cashless (PMJAY)" : "Not Empanelled",
+        implant_included: procedureId === "knee-replacement" ? "Cobalt-Chromium Knee Implant" : "1 US-FDA DES Stent Included",
+        icu_days_included: "2 Days ICU Stay Included",
+        inclusions: [
+          "1 Drug-Eluting Stent or Approved Prosthesis",
+          "Cardiac ICU / HDU Care for 48 hours",
+          "Pre-op ECG, ECHO & blood diagnostic panel",
+        ],
+        exclusions: [
+          "Extra stents / high-end imaging (IVUS/OCT)",
+          "Extended stay past package duration",
+        ],
+      })),
     };
   },
 

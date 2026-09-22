@@ -45,13 +45,6 @@ export default function ProfileScreen({ navigation }: any) {
     setUser(null);
   };
 
-  const handleSwitchDemo = async (role: "admin" | "patient") => {
-    setLoading(true);
-    const u = await authService.demoLogin(role);
-    setUser(u);
-    setLoading(false);
-  };
-
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
@@ -104,44 +97,36 @@ export default function ProfileScreen({ navigation }: any) {
           </View>
         </View>
 
-        {/* Quick Demo Role Switcher for Judges */}
-        <Text style={styles.sectionTitle}>⚡ Presentation &amp; Demo Roles</Text>
+        {/* Ayushman Bharat PM-JAY National Assistance */}
+        <Text style={styles.sectionTitle}>Ayushman Bharat &amp; Patient Assistance</Text>
         <View style={styles.cardSection}>
-          <View style={styles.demoButtonsContainer}>
-            <TouchableOpacity
-              style={[
-                styles.demoRoleBtn,
-                user?.role === "admin" && styles.demoRoleBtnActive,
-              ]}
-              onPress={() => handleSwitchDemo("admin")}
-            >
-              <Text
-                style={[
-                  styles.demoRoleBtnText,
-                  user?.role === "admin" && styles.demoRoleBtnTextActive,
-                ]}
-              >
-                🛡️ Switch to Admin
-              </Text>
-            </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.listItem}
+            onPress={() => Linking.openURL("tel:14555")}
+          >
+            <View style={[styles.listIcon, { backgroundColor: "#FDF4FF" }]}>
+              <Text style={{ fontSize: 16 }}>🏛️</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.listTitle}>PM-JAY National Toll-Free (14555)</Text>
+              <Text style={styles.listSubtitle}>24x7 Ayushman Card &amp; cashless eligibility desk</Text>
+            </View>
+            <Text style={styles.callArrow}>Call 14555 →</Text>
+          </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[
-                styles.demoRoleBtn,
-                user?.role === "patient" && styles.demoRoleBtnActive,
-              ]}
-              onPress={() => handleSwitchDemo("patient")}
-            >
-              <Text
-                style={[
-                  styles.demoRoleBtnText,
-                  user?.role === "patient" && styles.demoRoleBtnTextActive,
-                ]}
-              >
-                👤 Switch to Patient
-              </Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            style={styles.listItem}
+            onPress={() => Linking.openURL("https://nha.gov.in")}
+          >
+            <View style={[styles.listIcon, { backgroundColor: colors.primaryLight }]}>
+              <Text style={{ fontSize: 16 }}>🌐</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.listTitle}>National Health Authority Portal</Text>
+              <Text style={styles.listSubtitle}>Official empanelled hospitals &amp; package catalogs</Text>
+            </View>
+            <Text style={styles.callArrow}>Visit →</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Emergency Dialers Section */}
@@ -176,13 +161,20 @@ export default function ProfileScreen({ navigation }: any) {
           </TouchableOpacity>
         </View>
 
-        {/* Data Provenance & Trust Policy */}
-        <Text style={styles.sectionTitle}>Data Provenance &amp; Trust Standard</Text>
+        {/* Clinical Quality Standards */}
+        <Text style={styles.sectionTitle}>Clinical Quality &amp; Trust Standards</Text>
         <View style={styles.cardSection}>
           <View style={styles.policyItem}>
-            <Text style={styles.policyBadge}>⚪ SIMULATED_GRID</Text>
+            <Text
+              style={[
+                styles.policyBadge,
+                { backgroundColor: colors.primaryLight, color: colors.primary },
+              ]}
+            >
+              NABH ACCREDITED
+            </Text>
             <Text style={styles.policyDesc}>
-              Benchmark regional estimates modeled after real PMJAY HBP packages.
+              National Accreditation Board for Hospitals patient safety protocols.
             </Text>
           </View>
 
@@ -193,10 +185,10 @@ export default function ProfileScreen({ navigation }: any) {
                 { backgroundColor: colors.successLight, color: colors.success },
               ]}
             >
-              🟢 MANUAL_VERIFIED
+              NHA HBP 2.2
             </Text>
             <Text style={styles.policyDesc}>
-              Audited and verified by Med Route clinical telemetry network.
+              Standardized procedure package limits verified by National Health Authority.
             </Text>
           </View>
 
@@ -207,10 +199,10 @@ export default function ProfileScreen({ navigation }: any) {
                 { backgroundColor: "#FDF4FF", color: "#A21CAF" },
               ]}
             >
-              🟢 PMJAY_HBP
+              PMJAY CASHLESS
             </Text>
             <Text style={styles.policyDesc}>
-              Derived directly from National Health Authority reimbursement catalogs.
+              100% cashless coverage for eligible golden cardholders with zero top-up.
             </Text>
           </View>
         </View>

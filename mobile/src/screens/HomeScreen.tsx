@@ -46,6 +46,7 @@ export default function HomeScreen({ navigation }: any) {
   const [isAuto, setIsAuto] = useState(true);
   const [hospitals, setHospitals] = useState<MobileHospital[]>(MOCK_HOSPITALS);
   const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [icuOnly, setIcuOnly] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -210,19 +211,46 @@ export default function HomeScreen({ navigation }: any) {
           ))}
         </ScrollView>
 
+        {/* PMJAY Cashless & Out-of-Pocket Estimator Banner */}
+        <TouchableOpacity
+          style={styles.estimatorBanner}
+          onPress={() => navigation.navigate("Compare")}
+          activeOpacity={0.88}
+        >
+          <View style={styles.estimatorIcon}>
+            <Text style={{ fontSize: 20 }}>💰</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.estimatorTitle}>
+              Out-of-Pocket &amp; PMJAY Estimator
+            </Text>
+            <Text style={styles.estimatorSubtitle}>
+              Check package tariffs against official ₹5 Lakh cashless ceilings &amp; implant inclusions.
+            </Text>
+          </View>
+          <Text style={styles.estimatorArrow}>Compare →</Text>
+        </TouchableOpacity>
+
         {/* Nearby Hospitals Section */}
         <View style={styles.sectionHeader}>
           <View>
             <Text style={styles.sectionTitle}>Nearby Hospitals</Text>
-            <Text style={styles.sectionSubtitle}>Verified critical care & live ICU capacity</Text>
+            <Text style={styles.sectionSubtitle}>Verified critical care &amp; live ICU telemetry</Text>
           </View>
-          <TouchableOpacity onPress={() => navigation.navigate("Search")}>
-            <Text style={styles.seeAllText}>View All ({hospitals.length})</Text>
+          <TouchableOpacity
+            style={[styles.icuFilterBtn, icuOnly && styles.icuFilterBtnActive]}
+            onPress={() => setIcuOnly(!icuOnly)}
+            activeOpacity={0.8}
+          >
+            <View style={[styles.liveDotSmall, { backgroundColor: icuOnly ? "#FFFFFF" : colors.success }]} />
+            <Text style={[styles.icuFilterText, icuOnly && styles.icuFilterTextActive]}>
+              {icuOnly ? "ICU Free Only ✓" : "🟢 Free ICU Beds"}
+            </Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.hospitalsList}>
-          {hospitals.map((hosp) => (
+          {(icuOnly ? hospitals.filter((h) => h.beds_icu_available > 0) : hospitals).map((hosp) => (
             <HospitalCard
               key={hosp.id}
               hospital={hosp}
@@ -425,5 +453,68 @@ const styles = StyleSheet.create({
   },
   hospitalsList: {
     marginTop: spacing.sm,
+  },
+  estimatorBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    backgroundColor: "#F0FDF4",
+    borderWidth: 1,
+    borderColor: "#BBF7D0",
+    borderRadius: borderRadius.card,
+    padding: spacing.md,
+    marginTop: spacing.md,
+    ...shadows.card,
+  },
+  estimatorIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: borderRadius.md,
+    backgroundColor: "#DCFCE7",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  estimatorTitle: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#166534",
+  },
+  estimatorSubtitle: {
+    fontSize: 10,
+    color: "#15803D",
+    marginTop: 2,
+  },
+  estimatorArrow: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#166534",
+  },
+  icuFilterBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: borderRadius.pill,
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+  },
+  icuFilterBtnActive: {
+    backgroundColor: colors.success,
+    borderColor: colors.success,
+  },
+  liveDotSmall: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+  },
+  icuFilterText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: colors.textPrimary,
+  },
+  icuFilterTextActive: {
+    color: "#FFFFFF",
   },
 });

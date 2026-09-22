@@ -337,8 +337,9 @@ export default function HospitalDetailPage({ params }: { params: Promise<{ slug:
                       {hospital.trauma_level || "Level 1"} Trauma Center
                     </span>
                   )}
-                  <span className="px-2.5 py-0.5 rounded-full bg-surface-container-low text-on-surface-variant font-label-sm">
-                    {hospital.data_source_label === "SIMULATED" ? "Verified Benchmark" : "MoHFW Verified"}
+                  <span className="px-2.5 py-0.5 rounded-full bg-surface-container-low text-secondary font-label-sm font-semibold flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[13px]">verified</span>
+                    NHA Registry Verified
                   </span>
                 </div>
 

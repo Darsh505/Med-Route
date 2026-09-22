@@ -88,23 +88,12 @@ export default function Navbar() {
                 : "text-on-surface-variant hover:text-on-surface"
             }`}
           >
-            <span>Compare</span>
+            <span>Compare Tariffs &amp; ICU</span>
             {compareCount > 0 && (
               <span className="font-label-sm text-label-sm bg-secondary-container text-on-secondary-container px-1.5 py-0.5 rounded-full font-bold">
                 {compareCount}
               </span>
             )}
-          </Link>
-
-          <Link
-            href="/admin"
-            className={`px-space-md py-space-xs font-body-sm text-body-sm transition-colors rounded-lg ${
-              isAdmin
-                ? "bg-surface-container-high text-on-surface font-semibold shadow-sm"
-                : "text-on-surface-variant hover:text-on-surface"
-            }`}
-          >
-            Admin Portal
           </Link>
         </nav>
 
@@ -241,25 +230,13 @@ export default function Navbar() {
           >
             <span className="flex items-center gap-2">
               <span className="material-symbols-outlined text-primary text-base">compare_arrows</span>
-              <span>Compare Facilities</span>
+              <span>Compare Tariffs &amp; ICU</span>
             </span>
             {compareCount > 0 && (
               <span className="text-xs bg-secondary text-white px-2 py-0.5 rounded-full font-bold">
                 {compareCount}
               </span>
             )}
-          </Link>
-
-          <Link
-            href="/admin"
-            onClick={() => setMobileMenuOpen(false)}
-            className="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-low font-label-md font-semibold text-on-surface"
-          >
-            <span className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary text-base">admin_panel_settings</span>
-              <span>Admin Portal</span>
-            </span>
-            <span className="text-xs text-outline">Manage Registry →</span>
           </Link>
 
           <Link

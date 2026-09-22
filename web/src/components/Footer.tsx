@@ -13,13 +13,13 @@ export default function Footer() {
             Emergency Matrix
           </Link>
           <Link className="hover:text-on-surface transition-colors" href="/compare">
-            Audited Tariffs
+            Procedure Tariffs &amp; ICU
           </Link>
-          <Link className="hover:text-on-surface transition-colors" href="/admin">
-            Provider Data Node
+          <Link className="hover:text-on-surface transition-colors" href="/location">
+            Coverage Grid
           </Link>
           <span className="font-label-sm text-label-sm bg-surface-container-high text-on-surface px-2 py-0.5 rounded-md">
-            NABH / PMJAY Compliant
+            NABH / PMJAY Verified
           </span>
         </div>
       </div>

@@ -60,6 +60,7 @@ export default function SearchScreen({ route, navigation }: any) {
   };
 
   const filteredHospitals = hospitals.filter((h) => {
+    if (selectedFilter === "icu") return h.beds_icu_available > 0;
     if (selectedFilter === "govt") return h.type === "Government";
     if (selectedFilter === "private") return h.type === "Private";
     if (selectedFilter === "pmjay") return h.is_pmjay_empanelled;
@@ -115,10 +116,11 @@ export default function SearchScreen({ route, navigation }: any) {
         >
           {[
             { id: "all", label: "All Types" },
-            { id: "govt", label: "Government" },
-            { id: "private", label: "Private" },
+            { id: "icu", label: "🟢 Free ICU Beds" },
             { id: "pmjay", label: "PMJAY Empanelled" },
             { id: "trauma", label: "Trauma Center" },
+            { id: "govt", label: "Government" },
+            { id: "private", label: "Private" },
           ].map((f) => (
             <TouchableOpacity
               key={f.id}
@@ -143,7 +145,7 @@ export default function SearchScreen({ route, navigation }: any) {
         <Text style={styles.resultsCount}>
           {filteredHospitals.length} verified hospitals found
         </Text>
-        <Text style={styles.provenanceTag}>⚪ Benchmark Verified</Text>
+        <Text style={[styles.provenanceTag, { color: colors.success }]}>🟢 Live Grid Verified</Text>
       </View>
 
       {/* Hospital List */}

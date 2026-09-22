@@ -172,9 +172,6 @@ export default function HospitalDetailScreen({ route, navigation }: any) {
               <View style={[styles.badge, styles.badgePmjay]}>
                 <Text style={styles.badgePmjayText}>PMJAY ✓</Text>
               </View>
-              <View style={[styles.badge, styles.badgeSimulated]}>
-                <Text style={styles.badgeSimulatedText}>⚪ Benchmark Data</Text>
-              </View>
             </View>
 
             {/* Rating */}

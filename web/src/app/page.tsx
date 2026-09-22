@@ -95,14 +95,19 @@ export default function LandingPage() {
   const router = useRouter();
   const { selectedCity, isAutoDetected } = useLocation();
   const [query, setQuery] = useState("");
+  const [icuOnly, setIcuOnly] = useState(false);
 
-  const featuredList = selectedCity
+  const baseList = selectedCity
     ? [...ALL_FEATURED_HOSPITALS].sort((a, b) => {
         if (a.city.toLowerCase() === selectedCity.toLowerCase()) return -1;
         if (b.city.toLowerCase() === selectedCity.toLowerCase()) return 1;
         return 0;
       })
     : ALL_FEATURED_HOSPITALS;
+
+  const featuredList = icuOnly
+    ? baseList.filter((h) => !h.icu.startsWith("00"))
+    : baseList;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -271,15 +276,69 @@ export default function LandingPage() {
               </div>
             </section>
 
+            {/* Procedure Tariff & PMJAY Cashless Coverage Matrix Banner */}
+            <div className="p-space-lg rounded-2xl bg-gradient-to-r from-emerald-500/10 via-surface-container to-cyan-500/10 border border-emerald-500/20 flex flex-col md:flex-row items-start md:items-center justify-between gap-space-md shadow-xs">
+              <div className="flex items-center gap-space-md">
+                <div className="w-12 h-12 rounded-xl bg-secondary text-on-secondary flex items-center justify-center text-2xl font-bold shadow-sm shrink-0">
+                  ⚖️
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-label-sm text-label-sm bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded font-bold uppercase">
+                      Procedure-Level Decision Matrix
+                    </span>
+                    <span className="font-label-sm text-secondary font-bold">AB-PMJAY HBP 2.2</span>
+                  </div>
+                  <h3 className="font-headline-md text-headline-md text-primary font-bold mt-0.5">
+                    Compare Hospital Tariffs vs. PMJAY Cashless Limits
+                  </h3>
+                  <p className="font-body-sm text-body-sm text-on-surface-variant">
+                    Compare Angioplasty, Knee Replacement, CABG bypass, C-Section, and Dialysis with itemized stent/implant inclusions and live ICU telemetry.
+                  </p>
+                </div>
+              </div>
+
+              <Link
+                href="/compare"
+                className="px-space-lg py-space-sm bg-primary hover:bg-primary-container text-on-primary font-label-md text-label-md font-bold rounded-xl transition-all shadow-sm shrink-0"
+              >
+                Open Procedure Matrix →
+              </Link>
+            </div>
+
             {/* Featured Hospitals Section */}
             <section className="flex flex-col gap-space-md">
-              <div className="flex items-center justify-between pt-space-xs">
-                <h2 className="font-headline-md text-headline-md text-on-surface font-semibold">
-                  Featured Hospitals &amp; Critical Care
-                </h2>
-                <span className="font-body-sm text-body-sm text-on-surface-variant">
-                  Updated real-time telemetry
-                </span>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-space-xs">
+                <div>
+                  <h2 className="font-headline-md text-headline-md text-on-surface font-semibold">
+                    Featured Hospitals &amp; Critical Care
+                  </h2>
+                  <span className="font-body-sm text-body-sm text-on-surface-variant">
+                    Verified facilities near {selectedCity || "Tricity & Punjab"}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIcuOnly(!icuOnly)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all shadow-xs cursor-pointer ${
+                      icuOnly
+                        ? "bg-secondary text-on-secondary shadow-sm scale-102"
+                        : "bg-surface-container-low hover:bg-surface-container-high text-on-surface border border-surface-container-high"
+                    }`}
+                  >
+                    <span className={`w-2 h-2 rounded-full ${icuOnly ? "bg-white" : "bg-secondary"} animate-pulse`} />
+                    <span>{icuOnly ? "Live ICU Beds Free Only ✓" : "🟢 Free ICU Beds Only"}</span>
+                  </button>
+
+                  <Link
+                    href="/compare"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-surface-container-low hover:bg-surface-container-high text-primary border border-surface-container-high transition-colors"
+                  >
+                    <span>Compare All</span>
+                  </Link>
+                </div>
               </div>
 
               <div className="flex flex-col gap-space-md">

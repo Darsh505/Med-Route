@@ -665,6 +665,7 @@ function SearchContent() {
     selectedCity ? `Current: ${selectedCity}` : "All Locations"
   );
   const [selectedBudget, setSelectedBudget] = useState("All Tariffs");
+  const [icuOnly, setIcuOnly] = useState(false);
   const [hospitals, setHospitals] = useState<HospitalItem[]>(BENCHMARK_HOSPITALS);
   const [compareIds, setCompareIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -690,14 +691,19 @@ function SearchContent() {
     } catch {}
   }, []);
 
-  // Filter hospitals whenever query, condition, location, or budget changes
+  // Filter hospitals whenever query, condition, location, budget, or icuOnly changes
   useEffect(() => {
-    applyFilters(query, selectedCondition, selectedLocation, selectedBudget);
-  }, [selectedCondition, selectedLocation, selectedBudget, selectedCity]);
+    applyFilters(query, selectedCondition, selectedLocation, selectedBudget, icuOnly);
+  }, [selectedCondition, selectedLocation, selectedBudget, selectedCity, icuOnly]);
 
-  const applyFilters = (q: string, condition: string, location: string, budget: string) => {
+  const applyFilters = (q: string, condition: string, location: string, budget: string, onlyIcu: boolean = icuOnly) => {
     const qLower = q.toLowerCase().trim();
     let list = BENCHMARK_HOSPITALS;
+
+    // ICU Only filter
+    if (onlyIcu) {
+      list = list.filter((h) => h.beds_icu_available > 0);
+    }
 
     // Location filter
     if (location !== "All Locations") {
@@ -975,6 +981,40 @@ function SearchContent() {
                     </span>
                   </div>
                 </div>
+              </div>
+
+              {/* Fast Action Row: Live ICU Toggle & Procedure Compare */}
+              <div className="flex items-center justify-between flex-wrap gap-2 pt-space-sm border-t border-surface-container-high/40 mt-space-sm">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => setIcuOnly(!icuOnly)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all shadow-xs cursor-pointer ${
+                      icuOnly
+                        ? "bg-secondary text-on-secondary shadow-sm scale-102"
+                        : "bg-surface-container-low hover:bg-surface-container-high text-on-surface border border-surface-container-high"
+                    }`}
+                  >
+                    <span className={`w-2 h-2 rounded-full ${icuOnly ? "bg-white" : "bg-secondary"} animate-pulse`} />
+                    <span>{icuOnly ? "Live ICU Beds Free Only ✓" : "🟢 Available ICU Beds Only"}</span>
+                  </button>
+
+                  <Link
+                    href="/compare"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-surface-container-low hover:bg-surface-container-high text-primary border border-surface-container-high transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[15px]">compare_arrows</span>
+                    <span>Procedure Tariffs &amp; PMJAY Matrix →</span>
+                  </Link>
+                </div>
+
+                <a
+                  href="tel:108"
+                  className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-error/10 hover:bg-error/20 text-error text-xs font-bold transition-colors border border-error/20"
+                >
+                  <span className="material-symbols-outlined text-[15px]">ambulance</span>
+                  <span>Ambulance 108</span>
+                </a>
               </div>
             </section>
 
