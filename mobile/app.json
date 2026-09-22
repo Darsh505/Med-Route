@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "Med Route",
+    "slug": "med-route",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#1B4D89",
+      "resizeMode": "contain"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "in.medroute.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Med Route needs your location to find the nearest emergency trauma center and hospitals."
+      }
+    },
+    "android": {
+      "package": "in.medroute.app",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "android.permission.CALL_PHONE"
+      ],
+      "adaptiveIcon": {
+        "backgroundColor": "#1B4D89",
+        "foregroundImage": "./assets/android-icon-foreground.png"
+      }
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow Med Route to use your location to locate the nearest emergency trauma center."
+        }
+      ]
+    ]
+  }
+}
