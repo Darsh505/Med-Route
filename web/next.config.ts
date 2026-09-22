@@ -13,7 +13,11 @@ const nextConfig: NextConfig = {
 
   // Allow images from common hospital image domains
   images: {
-    domains: ["localhost", "medroute.in", "images.unsplash.com"],
+    remotePatterns: [
+      { protocol: "http", hostname: "localhost" },
+      { protocol: "https", hostname: "medroute.in" },
+      { protocol: "https", hostname: "images.unsplash.com" },
+    ],
   },
 
   // Enable compression
