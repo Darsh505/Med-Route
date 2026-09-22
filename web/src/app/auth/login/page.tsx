@@ -6,11 +6,10 @@ import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/context/AuthContext";
-import { isFirebaseConfigured } from "@/lib/firebase";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { signIn, signInWithGoogle, user } = useAuth();
+  const { signIn, signInWithGoogle } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -36,8 +35,9 @@ export default function LoginPage() {
           router.push("/");
         }
       }, 700);
-    } catch (err: any) {
-      setErrorMessage(err.message || "Failed to sign in. Please verify your credentials.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to sign in. Please verify your credentials.";
+      setErrorMessage(msg);
     } finally {
       setIsLoading(false);
     }
@@ -50,8 +50,9 @@ export default function LoginPage() {
       await signInWithGoogle();
       setSuccessMessage("Signed in with Google. Redirecting...");
       setTimeout(() => router.push("/"), 700);
-    } catch (err: any) {
-      setErrorMessage(err.message || "Google sign-in could not be completed.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Google sign-in could not be completed.";
+      setErrorMessage(msg);
     } finally {
       setIsGoogleLoading(false);
     }

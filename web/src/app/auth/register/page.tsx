@@ -48,8 +48,9 @@ export default function RegisterPage() {
           router.push("/");
         }
       }, 900);
-    } catch (err: any) {
-      setErrorMessage(err.message || "Registration failed. Please check your details.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Registration failed. Please check your details.";
+      setErrorMessage(msg);
     } finally {
       setIsLoading(false);
     }
@@ -62,8 +63,9 @@ export default function RegisterPage() {
       await signInWithGoogle();
       setSuccessMessage("Signed in with Google. Redirecting...");
       setTimeout(() => router.push("/"), 700);
-    } catch (err: any) {
-      setErrorMessage(err.message || "Google sign-in could not be completed.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Google sign-in could not be completed.";
+      setErrorMessage(msg);
     } finally {
       setIsGoogleLoading(false);
     }

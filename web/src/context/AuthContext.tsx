@@ -15,9 +15,19 @@ import {
   ReactNode,
 } from "react";
 import {
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
+  signInWithPopup,
+  GoogleAuthProvider,
+  signOut,
+  sendPasswordResetEmail,
+  User as FirebaseSdkUser,
+} from "firebase/auth";
+import {
   auth,
   isFirebaseConfigured,
-  FirebaseUser,
 } from "@/lib/firebase";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -51,57 +61,53 @@ const AuthContext = createContext<AuthContextType>({
   resetPassword: async () => {},
 });
 
+// ── Firebase Error Translation ────────────────────────────────────
+function _translateFirebaseError(e: { code?: string; message?: string }): Error {
+  const map: Record<string, string> = {
+    "auth/invalid-credential": "Invalid email or password",
+    "auth/user-not-found": "No account found with this email",
+    "auth/wrong-password": "Incorrect password",
+    "auth/email-already-in-use": "An account with this email already exists",
+    "auth/weak-password": "Password must be at least 6 characters",
+    "auth/invalid-email": "Please enter a valid email address",
+    "auth/too-many-requests": "Too many attempts. Please try again later",
+    "auth/user-disabled": "This account has been disabled",
+    "auth/popup-closed-by-user": "Sign-in popup was closed",
+  };
+  return new Error((e.code && map[e.code]) || e.message || "Authentication failed");
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<MedRouteUser | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // 1. Try local session first (instant load)
-    try {
-      const storedUser = localStorage.getItem("medroute_user");
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
-        setLoading(false);
-      }
-    } catch {}
-
-    // 2. If Firebase is configured, attach listener
-    if (isFirebaseConfigured && auth) {
+  const [user, setUser] = useState<MedRouteUser | null>(() => {
+    if (typeof window !== "undefined") {
       try {
-        const { onAuthStateChanged } = require("firebase/auth");
-        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: any) => {
-          if (firebaseUser) {
-            await _syncFirebaseUser(firebaseUser);
-          } else {
-            // Only clear if user was logged in via Firebase
-            const stored = localStorage.getItem("medroute_user");
-            if (stored) {
-              const parsed = JSON.parse(stored);
-              if (parsed.is_firebase) {
-                setUser(null);
-                localStorage.removeItem("medroute_user");
-                localStorage.removeItem("medroute_token");
-              }
-            }
-          }
-          setLoading(false);
-        });
-        return () => unsubscribe();
-      } catch {
-        setLoading(false);
-      }
-    } else {
-      setLoading(false);
+        const storedUser = localStorage.getItem("medroute_user");
+        if (storedUser) return JSON.parse(storedUser);
+      } catch {}
     }
-  }, []);
+    return null;
+  });
+  const [loading, setLoading] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const storedUser = localStorage.getItem("medroute_user");
+        if (storedUser) return false;
+      } catch {}
+    }
+    return Boolean(isFirebaseConfigured && auth);
+  });
+
+  const _setLocalUser = (userData: MedRouteUser) => {
+    setUser(userData);
+    localStorage.setItem("medroute_user", JSON.stringify(userData));
+  };
 
   // ── Helper: Sync Firebase user with backend ───────────────────
-  const _syncFirebaseUser = async (firebaseUser: any) => {
+  const _syncFirebaseUser = async (firebaseUser: FirebaseSdkUser) => {
     try {
       const token = await firebaseUser.getIdToken();
       localStorage.setItem("medroute_token", token);
 
-      // Verify token with backend to get role
       const res = await fetch(`${API_URL}/api/auth/firebase/verify`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -140,23 +146,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const _setLocalUser = (userData: MedRouteUser) => {
-    setUser(userData);
-    localStorage.setItem("medroute_user", JSON.stringify(userData));
-  };
+  useEffect(() => {
+    if (!isFirebaseConfigured || !auth) {
+      return;
+    }
+
+    try {
+      const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+        if (firebaseUser) {
+          await _syncFirebaseUser(firebaseUser);
+        } else {
+          const stored = localStorage.getItem("medroute_user");
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (parsed.is_firebase) {
+              setUser(null);
+              localStorage.removeItem("medroute_user");
+              localStorage.removeItem("medroute_token");
+            }
+          }
+        }
+        setLoading(false);
+      });
+      return () => unsubscribe();
+    } catch {
+      // Error attaching listener
+    }
+  }, []);
 
   // ── Sign In ────────────────────────────────────────────────────
   const signIn = async (email: string, password: string) => {
-    // Try Firebase first if configured
     if (isFirebaseConfigured && auth) {
       try {
-        const { signInWithEmailAndPassword } = require("firebase/auth");
         const result = await signInWithEmailAndPassword(auth, email, password);
         await _syncFirebaseUser(result.user);
         return;
-      } catch (e: any) {
-        if (e.code && !e.code.includes("network")) {
-          throw _translateFirebaseError(e);
+      } catch (e: unknown) {
+        const err = e as { code?: string; message?: string };
+        if (err.code && !err.code.includes("network")) {
+          throw _translateFirebaseError(err);
         }
       }
     }
@@ -207,25 +235,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = async (email: string, password: string, name: string, role = "patient") => {
     if (isFirebaseConfigured && auth) {
       try {
-        const { createUserWithEmailAndPassword, updateProfile } = require("firebase/auth");
         const result = await createUserWithEmailAndPassword(auth, email, password);
         await updateProfile(result.user, { displayName: name });
         await _syncFirebaseUser(result.user);
-        // Also register in backend
         await fetch(`${API_URL}/api/auth/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ full_name: name, name, email, password, role }),
         }).catch(() => {});
         return;
-      } catch (e: any) {
-        if (e.code && !e.code.includes("network")) {
-          throw _translateFirebaseError(e);
+      } catch (e: unknown) {
+        const err = e as { code?: string; message?: string };
+        if (err.code && !err.code.includes("network")) {
+          throw _translateFirebaseError(err);
         }
       }
     }
 
-    // Local registration
     try {
       const res = await fetch(`${API_URL}/api/auth/register`, {
         method: "POST",
@@ -238,7 +264,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } catch {}
 
-    // Fallback register
     localStorage.setItem("medroute_token", "registered_demo_token_" + Date.now());
     _setLocalUser({
       uid: "u-" + Date.now(),
@@ -253,19 +278,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signInWithGoogle = async () => {
     if (isFirebaseConfigured && auth) {
       try {
-        const { signInWithPopup, GoogleAuthProvider } = require("firebase/auth");
         const provider = new GoogleAuthProvider();
         const result = await signInWithPopup(auth, provider);
         await _syncFirebaseUser(result.user);
         return;
-      } catch (e: any) {
-        if (e.code !== "auth/popup-closed-by-user") {
-          throw _translateFirebaseError(e);
+      } catch (e: unknown) {
+        const err = e as { code?: string };
+        if (err.code !== "auth/popup-closed-by-user") {
+          throw _translateFirebaseError(err);
         }
       }
     }
 
-    // Demo Google user
     const googleUser: MedRouteUser = {
       uid: "google-demo-" + Date.now(),
       email: "google.user@example.com",
@@ -281,7 +305,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     if (isFirebaseConfigured && auth) {
       try {
-        const { signOut } = require("firebase/auth");
         await signOut(auth);
       } catch {}
     }
@@ -294,11 +317,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const resetPassword = async (email: string) => {
     if (isFirebaseConfigured && auth) {
       try {
-        const { sendPasswordResetEmail } = require("firebase/auth");
         await sendPasswordResetEmail(auth, email);
         return;
-      } catch (e: any) {
-        throw _translateFirebaseError(e);
+      } catch (e: unknown) {
+        const err = e as { code?: string; message?: string };
+        throw _translateFirebaseError(err);
       }
     }
     await new Promise((r) => setTimeout(r, 600));
@@ -312,19 +335,3 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 }
 
 export const useAuth = () => useContext(AuthContext);
-
-// ── Firebase Error Translation ────────────────────────────────────
-function _translateFirebaseError(e: any): Error {
-  const map: Record<string, string> = {
-    "auth/invalid-credential": "Invalid email or password",
-    "auth/user-not-found": "No account found with this email",
-    "auth/wrong-password": "Incorrect password",
-    "auth/email-already-in-use": "An account with this email already exists",
-    "auth/weak-password": "Password must be at least 6 characters",
-    "auth/invalid-email": "Please enter a valid email address",
-    "auth/too-many-requests": "Too many attempts. Please try again later",
-    "auth/user-disabled": "This account has been disabled",
-    "auth/popup-closed-by-user": "Sign-in popup was closed",
-  };
-  return new Error(map[e.code] || e.message || "Authentication failed");
-}

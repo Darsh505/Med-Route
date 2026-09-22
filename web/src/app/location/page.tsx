@@ -159,7 +159,7 @@ export default function LocationPage() {
               ].map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveRegion(tab.id as any)}
+                  onClick={() => setActiveRegion(tab.id as "all" | "north" | "south" | "west" | "east")}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
                     activeRegion === tab.id
                       ? "bg-primary text-on-primary shadow-xs"
@@ -262,7 +262,7 @@ export default function LocationPage() {
           {filteredCities.length === 0 && (
             <div className="p-12 text-center bg-surface-container-lowest rounded-2xl border border-surface-container-high mt-6">
               <span className="text-4xl">🔍</span>
-              <h3 className="text-lg font-bold text-primary mt-2">No city matched "{searchQuery}"</h3>
+              <h3 className="text-lg font-bold text-primary mt-2">No city matched &ldquo;{searchQuery}&rdquo;</h3>
               <p className="text-xs text-on-surface-variant mt-1">
                 Try searching for Hoshiarpur, Chandigarh, Delhi, Mumbai, or use Auto-Detect GPS.
               </p>

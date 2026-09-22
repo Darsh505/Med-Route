@@ -493,85 +493,116 @@ function calculateDistanceKm(lat1: number, lng1: number, lat2: number, lng2: num
   return R * c;
 }
 
+function findNearestCity(lat: number, lng: number): CityInfo {
+  let nearest = INDIAN_CITIES[0];
+  let minDistance = Infinity;
+
+  for (const city of INDIAN_CITIES) {
+    const dist = calculateDistanceKm(lat, lng, city.lat, city.lng);
+    if (dist < minDistance) {
+      minDistance = dist;
+      nearest = city;
+    }
+  }
+  return nearest;
+}
+
 export function LocationProvider({ children }: { children: React.ReactNode }) {
   // Default: Hoshiarpur, Punjab (featured default as requested)
   const defaultCity = INDIAN_CITIES[0];
 
-  const [selectedCity, setSelectedCity] = useState<string>(defaultCity.name);
-  const [selectedState, setSelectedState] = useState<string>(defaultCity.state);
-  const [coords, setCoords] = useState<{ lat: number; lng: number }>({
-    lat: defaultCity.lat,
-    lng: defaultCity.lng,
+  const [selectedCity, setSelectedCity] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const savedCity = localStorage.getItem("medroute_selected_city");
+        if (savedCity) {
+          const found = INDIAN_CITIES.find(
+            (c) => c.name.toLowerCase() === savedCity.toLowerCase()
+          );
+          if (found) return found.name;
+        }
+      } catch {}
+    }
+    return defaultCity.name;
   });
-  const [isAutoDetected, setIsAutoDetected] = useState<boolean>(true);
 
-  // Auto-select on initial load from localStorage or browser GPS
+  const [selectedState, setSelectedState] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const savedCity = localStorage.getItem("medroute_selected_city");
+        if (savedCity) {
+          const found = INDIAN_CITIES.find(
+            (c) => c.name.toLowerCase() === savedCity.toLowerCase()
+          );
+          if (found) return found.state;
+        }
+      } catch {}
+    }
+    return defaultCity.state;
+  });
+
+  const [coords, setCoords] = useState<{ lat: number; lng: number }>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const savedCity = localStorage.getItem("medroute_selected_city");
+        const savedLat = localStorage.getItem("medroute_selected_lat");
+        const savedLng = localStorage.getItem("medroute_selected_lng");
+        if (savedCity) {
+          const found = INDIAN_CITIES.find(
+            (c) => c.name.toLowerCase() === savedCity.toLowerCase()
+          );
+          if (found) {
+            return {
+              lat: savedLat ? parseFloat(savedLat) : found.lat,
+              lng: savedLng ? parseFloat(savedLng) : found.lng,
+            };
+          }
+        }
+      } catch {}
+    }
+    return { lat: defaultCity.lat, lng: defaultCity.lng };
+  });
+
+  const [isAutoDetected, setIsAutoDetected] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const savedCity = localStorage.getItem("medroute_selected_city");
+        if (savedCity) return false;
+      } catch {}
+    }
+    return true;
+  });
+
+  // Auto-select on initial load from browser GPS if no saved preference
   useEffect(() => {
     try {
       const savedCity = localStorage.getItem("medroute_selected_city");
-      const savedLat = localStorage.getItem("medroute_selected_lat");
-      const savedLng = localStorage.getItem("medroute_selected_lng");
+      if (savedCity) return;
+    } catch {}
 
-      if (savedCity) {
-        const found = INDIAN_CITIES.find(
-          (c) => c.name.toLowerCase() === savedCity.toLowerCase()
-        );
-        if (found) {
-          setSelectedCity(found.name);
-          setSelectedState(found.state);
-          setCoords({
-            lat: savedLat ? parseFloat(savedLat) : found.lat,
-            lng: savedLng ? parseFloat(savedLng) : found.lng,
-          });
-          setIsAutoDetected(false);
-          return;
-        }
-      }
-
-      // If no saved preference, attempt non-blocking geolocation in background
-      if (typeof window !== "undefined" && "geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            const userLat = pos.coords.latitude;
-            const userLng = pos.coords.longitude;
-            const nearest = findNearestCity(userLat, userLng);
-            setSelectedCity(nearest.name);
-            setSelectedState(nearest.state);
-            setCoords({ lat: userLat, lng: userLng });
-            setIsAutoDetected(true);
+    if (typeof window !== "undefined" && "geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const userLat = pos.coords.latitude;
+          const userLng = pos.coords.longitude;
+          const nearest = findNearestCity(userLat, userLng);
+          setSelectedCity(nearest.name);
+          setSelectedState(nearest.state);
+          setCoords({ lat: userLat, lng: userLng });
+          setIsAutoDetected(true);
+          try {
             localStorage.setItem("medroute_selected_city", nearest.name);
             localStorage.setItem("medroute_selected_lat", userLat.toString());
             localStorage.setItem("medroute_selected_lng", userLng.toString());
-          },
-          () => {
-            // Geolocation blocked or denied: auto-select default Hoshiarpur
-            setSelectedCity(defaultCity.name);
-            setSelectedState(defaultCity.state);
-            setCoords({ lat: defaultCity.lat, lng: defaultCity.lng });
-            setIsAutoDetected(true);
-          },
-          { timeout: 4000 }
-        );
-      }
-    } catch {
-      // Fallback
-      setSelectedCity(defaultCity.name);
+          } catch {}
+        },
+        () => {
+          // Geolocation unavailable: default Hoshiarpur already in state
+        },
+        { timeout: 4000 }
+      );
     }
   }, []);
-
-  const findNearestCity = (lat: number, lng: number): CityInfo => {
-    let nearest = INDIAN_CITIES[0];
-    let minDistance = Infinity;
-
-    for (const city of INDIAN_CITIES) {
-      const dist = calculateDistanceKm(lat, lng, city.lat, city.lng);
-      if (dist < minDistance) {
-        minDistance = dist;
-        nearest = city;
-      }
-    }
-    return nearest;
-  };
 
   const selectCity = (cityName: string, newCoords?: { lat: number; lng: number }) => {
     const found = INDIAN_CITIES.find(

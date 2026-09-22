@@ -92,6 +92,7 @@ export default function HospitalMapLeaflet({
         <div style="font-size: 12px; color: #41474e; margin-bottom: 8px;">
           📍 ${address}
         </div>
+        ${phone ? `<div style="font-size: 12px; color: #00334f; margin-bottom: 8px; font-weight: 500;">📞 ${phone}</div>` : ""}
         <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px;">
           ${
             bedsIcuAvailable !== undefined
@@ -144,7 +145,7 @@ export default function HospitalMapLeaflet({
         mapInstanceRef.current = null;
       }
     };
-  }, [latitude, longitude, hospitalName, address, bedsIcuAvailable, isPmjay]);
+  }, [latitude, longitude, hospitalName, address, bedsIcuAvailable, isPmjay, phone]);
 
   return (
     <div

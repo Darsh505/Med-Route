@@ -27,6 +27,12 @@ interface MessageItem {
   timestamp: string;
 }
 
+let messageCounter = 0;
+function getNextMessageId(prefix: string): string {
+  messageCounter += 1;
+  return `${prefix}-${messageCounter}`;
+}
+
 const INITIAL_MESSAGES: MessageItem[] = [
   {
     id: "m-welcome",
@@ -68,7 +74,7 @@ export default function ChatbotWidget() {
     setInput("");
 
     const userMessage: MessageItem = {
-      id: "u-" + Date.now(),
+      id: getNextMessageId("u"),
       role: "user",
       content: text,
       timestamp: "Just now",
@@ -100,7 +106,7 @@ export default function ChatbotWidget() {
         const json = await res.json();
         const data = json.data;
         const aiMessage: MessageItem = {
-          id: "a-" + Date.now(),
+          id: getNextMessageId("a"),
           role: "assistant",
           content: data.reply,
           triage_level: data.triage_level,

@@ -49,7 +49,7 @@ export interface HospitalOption {
   trauma_level: string;
 }
 
-export const ALL_HOSPITALS: HospitalOption[] = (rawHospitals as any[]).map((h) => ({
+export const ALL_HOSPITALS: HospitalOption[] = (rawHospitals as unknown as HospitalOption[]).map((h) => ({
   ...h,
   id: h.id || `hosp-${h.slug}`,
   pmjay: h.is_pmjay_empanelled ?? h.pmjay ?? true,
@@ -170,7 +170,7 @@ export function getGroupedHospitals(): HospitalRegionGroup[] {
   }
 
   return Object.entries(groups)
-    .filter(([_, list]) => list.length > 0)
+    .filter(([, list]) => list.length > 0)
     .map(([region, hospitals]) => ({
       region,
       hospitals: hospitals.sort((a, b) => a.name.localeCompare(b.name)),

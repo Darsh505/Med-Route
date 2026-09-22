@@ -39,6 +39,9 @@ export default function SearchMapLeaflet({
   const markersRef = useRef<{ [id: string]: L.Marker }>({});
   const userMarkerRef = useRef<L.LayerGroup | null>(null);
   const [isLocating, setIsLocating] = useState(false);
+  const initialCenterRef = useRef<[number, number]>(
+    userCoords ? [userCoords.lat, userCoords.lng] : [30.725, 76.765]
+  );
 
   // Initialize Map
   useEffect(() => {
@@ -49,10 +52,7 @@ export default function SearchMapLeaflet({
       mapInstanceRef.current = null;
     }
 
-    // Default center: Tricity Chandigarh/Mohali centroid
-    const defaultCenter: [number, number] = userCoords
-      ? [userCoords.lat, userCoords.lng]
-      : [30.725, 76.765];
+    const defaultCenter = initialCenterRef.current;
 
     const map = L.map(mapContainerRef.current, {
       center: defaultCenter,
@@ -246,7 +246,7 @@ export default function SearchMapLeaflet({
       if (userCoords) bounds.extend([userCoords.lat, userCoords.lng]);
       map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
     }
-  }, [hospitals, selectedHospitalId, userCoords]);
+  }, [hospitals, selectedHospitalId, userCoords, onSelectHospital]);
 
   // Handle User Location Marker
   useEffect(() => {

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useState, useMemo, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -46,7 +46,6 @@ const REGIONAL_CLUSTERS = [
 
 function SearchContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const { selectedCity, coords } = useLocation();
 
   const initialQuery = searchParams.get("q") || searchParams.get("category") || "";
@@ -62,97 +61,90 @@ function SearchContent() {
   const [selectedBudgetMax, setSelectedBudgetMax] = useState<number | null>(null);
   const [customBudgetInput, setCustomBudgetInput] = useState<string>("");
   const [icuOnly, setIcuOnly] = useState(false);
-  const [hospitals, setHospitals] = useState<HospitalOption[]>(ALL_HOSPITALS);
-  const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [apiHospitals, setApiHospitals] = useState<HospitalOption[] | null>(null);
+  const [compareIds, setCompareIds] = useState<string[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("medroute_compare_ids");
+        if (saved) return JSON.parse(saved);
+      } catch {}
+    }
+    return [];
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [viewMode, setViewMode] = useState<"split" | "list" | "map">("split");
   const [selectedHospitalId, setSelectedHospitalId] = useState<string | null>(null);
   const [activeReviewHospital, setActiveReviewHospital] = useState<HospitalOption | null>(null);
-  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(
-    coords || {
-      lat: 31.5305,
-      lng: 75.9125,
-    }
-  );
 
-  useEffect(() => {
-    if (coords) {
-      setUserCoords(coords);
-    }
-  }, [coords]);
+  const [customCoords, setCustomCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const userCoords = customCoords || coords || {
+    lat: 31.5305,
+    lng: 75.9125,
+  };
 
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("medroute_compare_ids");
-      if (saved) setCompareIds(JSON.parse(saved));
-    } catch {}
-  }, []);
-
-  // Filter hospitals whenever query, condition, location, budget, or icuOnly changes
-  useEffect(() => {
-    applyFilters(query, selectedCondition, selectedLocation, selectedBudgetMax, icuOnly);
-  }, [selectedCondition, selectedLocation, selectedBudgetMax, selectedCity, icuOnly]);
-
-  const applyFilters = (
-    q: string,
-    condition: string,
-    location: string,
-    budgetMax: number | null,
-    onlyIcu: boolean = icuOnly
-  ) => {
-    const qLower = q.toLowerCase().trim();
-    let list = ALL_HOSPITALS;
+  const hospitals = useMemo(() => {
+    const qLower = query.toLowerCase().trim();
+    let list = apiHospitals || ALL_HOSPITALS;
 
     // ICU Only filter
-    if (onlyIcu) {
+    if (icuOnly) {
       list = list.filter((h) => h.beds_icu_available > 0);
     }
 
     // Location filter
-    if (location !== "All") {
-      if (location.startsWith("Current:") && selectedCity) {
+    if (selectedLocation !== "All") {
+      if (selectedLocation.startsWith("Current:") && selectedCity) {
         list = list.filter((h) => h.city?.toLowerCase() === selectedCity.toLowerCase());
-      } else if (location === "Delhi") {
-        list = list.filter((h) => h.city?.toLowerCase().includes("delhi") || h.city?.toLowerCase().includes("gurugram") || h.city?.toLowerCase().includes("noida"));
+      } else if (selectedLocation === "Delhi") {
+        list = list.filter(
+          (h) =>
+            h.city?.toLowerCase().includes("delhi") ||
+            h.city?.toLowerCase().includes("gurugram") ||
+            h.city?.toLowerCase().includes("noida")
+        );
       } else {
-        list = list.filter((h) => h.city?.toLowerCase().includes(location.toLowerCase()) || h.state?.toLowerCase().includes(location.toLowerCase()));
+        list = list.filter(
+          (h) =>
+            h.city?.toLowerCase().includes(selectedLocation.toLowerCase()) ||
+            h.state?.toLowerCase().includes(selectedLocation.toLowerCase())
+        );
       }
     }
 
     // Condition / Specialty filter (Simplified Terms)
-    if (condition !== "All") {
+    if (selectedCondition !== "All") {
       list = list.filter((h) => {
         const specs = (h.specialties || []).map((s) => s.toLowerCase()).join(" ");
-        if (condition === "card") return specs.includes("card") || specs.includes("heart");
-        if (condition === "ortho") return specs.includes("ortho") || specs.includes("bone") || specs.includes("joint") || specs.includes("knee");
-        if (condition === "nephr") return specs.includes("nephr") || specs.includes("dialysis") || specs.includes("kidney") || specs.includes("renal");
-        if (condition === "onco") return specs.includes("onco") || specs.includes("cancer") || specs.includes("chemo");
-        if (condition === "surg") return specs.includes("surg") || specs.includes("gallbladder") || specs.includes("hernia");
-        if (condition === "gyn") return specs.includes("gyn") || specs.includes("obst") || specs.includes("matern") || specs.includes("delivery");
-        if (condition === "eye") return specs.includes("eye") || specs.includes("cataract") || specs.includes("ophth");
-        if (condition === "trauma") return specs.includes("trauma") || specs.includes("critical") || specs.includes("icu") || specs.includes("emergency");
+        if (selectedCondition === "card") return specs.includes("card") || specs.includes("heart");
+        if (selectedCondition === "ortho") return specs.includes("ortho") || specs.includes("bone") || specs.includes("joint") || specs.includes("knee");
+        if (selectedCondition === "nephr") return specs.includes("nephr") || specs.includes("dialysis") || specs.includes("kidney") || specs.includes("renal");
+        if (selectedCondition === "onco") return specs.includes("onco") || specs.includes("cancer") || specs.includes("chemo");
+        if (selectedCondition === "surg") return specs.includes("surg") || specs.includes("gallbladder") || specs.includes("hernia");
+        if (selectedCondition === "gyn") return specs.includes("gyn") || specs.includes("obst") || specs.includes("matern") || specs.includes("delivery");
+        if (selectedCondition === "eye") return specs.includes("eye") || specs.includes("cataract") || specs.includes("ophth");
+        if (selectedCondition === "trauma") return specs.includes("trauma") || specs.includes("critical") || specs.includes("icu") || specs.includes("emergency");
         return true;
       });
     }
 
     // Budget filter (Out-of-Pocket Cap & PMJAY)
-    if (budgetMax !== null) {
-      if (budgetMax === -1) {
+    if (selectedBudgetMax !== null) {
+      if (selectedBudgetMax === -1) {
         // PM-JAY Cashless only
         list = list.filter((h) => h.is_pmjay_empanelled);
       } else {
         // Procedure or Base Package under BudgetMax
         list = list.filter((h) => {
-          if (h.type?.toLowerCase() === "government") return true; // Govt hospitals are always accessible under any budget
+          if (h.type?.toLowerCase() === "government") return true;
           const basePkg = h.base_package_inr || 85000;
-          return basePkg <= budgetMax;
+          return basePkg <= selectedBudgetMax;
         });
       }
     }
 
     // Query text match if present (ignore boilerplate text)
     if (qLower && !qLower.includes("urgent cardiology stent")) {
-      list = list.filter((h) => {
+      const filtered = list.filter((h) => {
         const matchName = h.name.toLowerCase().includes(qLower);
         const matchCity = h.city.toLowerCase().includes(qLower);
         const matchState = h.state.toLowerCase().includes(qLower);
@@ -161,17 +153,17 @@ function SearchContent() {
         const matchDesc = (h.description || "").toLowerCase().includes(qLower);
         return matchName || matchCity || matchState || matchType || matchSpecialty || matchDesc;
       });
+      if (filtered.length > 0) return filtered;
     }
 
-    setHospitals(list.length > 0 ? list : ALL_HOSPITALS);
-  };
+    return list.length > 0 ? list : ALL_HOSPITALS;
+  }, [apiHospitals, query, selectedCondition, selectedLocation, selectedCity, selectedBudgetMax, icuOnly]);
 
   const handleCustomBudgetSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const val = parseInt(customBudgetInput.replace(/\D/g, ""), 10);
     if (!isNaN(val) && val > 0) {
       setSelectedBudgetMax(val);
-      applyFilters(query, selectedCondition, selectedLocation, val, icuOnly);
     }
   };
 
@@ -197,30 +189,40 @@ function SearchContent() {
         const json = await res.json();
         if (json.data && json.data.length > 0) {
           // Merge rich reviews & packages from ALL_HOSPITALS matching returned IDs
-          const enriched = json.data.map((h: any) => {
-            const fullMatch = ALL_HOSPITALS.find((item) => item.id === h.id || item.slug === h.slug);
+          const enriched: HospitalOption[] = (json.data as Record<string, unknown>[]).map((h) => {
+            const hId = (h.id as string) || "";
+            const hSlug = (h.slug as string) || "";
+            const fullMatch =
+              ALL_HOSPITALS.find((item) => item.id === hId || item.slug === hSlug) || ALL_HOSPITALS[0];
             return {
               ...fullMatch,
               ...h,
-              latitude: h.latitude || fullMatch?.latitude || 30.7333,
-              longitude: h.longitude || fullMatch?.longitude || 76.7794,
-              cost_range: h.cost_indicative || fullMatch?.cost_range || "₹15,000 – ₹1,20,000",
-              pmjay_label: h.is_pmjay_empanelled ? "PMJAY Cashless" : "Standard",
-              description: h.description || fullMatch?.description || `${h.type} healthcare institution with verified emergency infrastructure.`,
-              reviews: fullMatch?.reviews || [],
-              pros: fullMatch?.pros || h.pros || [],
-              cons: fullMatch?.cons || h.cons || [],
+              id: hId || fullMatch.id,
+              name: (h.name as string) || fullMatch.name,
+              slug: hSlug || fullMatch.slug,
+              city: (h.city as string) || fullMatch.city,
+              state: (h.state as string) || fullMatch.state,
+              type: (h.type as "Government" | "Private" | "Trust") || fullMatch.type,
+              latitude: typeof h.latitude === "number" ? h.latitude : fullMatch.latitude,
+              longitude: typeof h.longitude === "number" ? h.longitude : fullMatch.longitude,
+              cost_range: (h.cost_indicative as string) || (h.cost_range as string) || fullMatch.cost_range,
+              pmjay: Boolean(h.is_pmjay_empanelled ?? fullMatch.pmjay),
+              is_pmjay_empanelled: Boolean(h.is_pmjay_empanelled ?? fullMatch.is_pmjay_empanelled),
+              description: (h.description as string) || fullMatch.description,
+              reviews: fullMatch.reviews || [],
+              pros: (h.pros as string[]) || fullMatch.pros || [],
+              cons: (h.cons as string[]) || fullMatch.cons || [],
             };
           });
-          setHospitals(enriched);
+          setApiHospitals(enriched);
         } else {
-          applyFilters(query, selectedCondition, selectedLocation, selectedBudgetMax);
+          setApiHospitals(null);
         }
       } else {
-        applyFilters(query, selectedCondition, selectedLocation, selectedBudgetMax);
+        setApiHospitals(null);
       }
     } catch {
-      applyFilters(query, selectedCondition, selectedLocation, selectedBudgetMax);
+      setApiHospitals(null);
     } finally {
       setIsLoading(false);
     }
@@ -280,7 +282,6 @@ function SearchContent() {
                     value={query}
                     onChange={(e) => {
                       setQuery(e.target.value);
-                      applyFilters(e.target.value, selectedCondition, selectedLocation, selectedBudgetMax);
                     }}
                     placeholder="Describe patient requirements in plain words (e.g. Heart bypass under 2 lakhs in Mohali, or Knee replacement under ₹1 Lakh)..."
                   />
@@ -319,7 +320,6 @@ function SearchContent() {
                         else if (chip.includes("₹1 Lakh")) setSelectedBudgetMax(100000);
                         else if (chip.includes("PMJAY")) setSelectedBudgetMax(-1);
                         else if (chip.includes("ICU")) setIcuOnly(true);
-                        applyFilters(chip, selectedCondition, selectedLocation, selectedBudgetMax);
                       }}
                       className="font-label-sm text-label-sm bg-surface-container-high hover:bg-surface-container-highest text-primary px-2.5 py-1 rounded-md font-medium transition-colors"
                     >
@@ -573,7 +573,7 @@ function SearchContent() {
                     selectedHospitalId={selectedHospitalId}
                     onSelectHospital={(id) => setSelectedHospitalId(id)}
                     userCoords={userCoords}
-                    onLocateMe={(coords) => setUserCoords(coords)}
+                    onLocateMe={(c) => setCustomCoords(c)}
                   />
 
                   {/* Floating Active Hospital Drawer in Map Mode */}
@@ -762,7 +762,7 @@ function SearchContent() {
                                 <span>⭐ {hosp.reviews[0].rating_overall}/5 • {hosp.reviews[0].treatment_category}</span>
                               </div>
                               <p className="italic text-on-surface line-clamp-2">
-                                "{hosp.reviews[0].comment}"
+                                &ldquo;{hosp.reviews[0].comment}&rdquo;
                               </p>
                               <span className="text-[11px] text-outline font-medium">
                                 — {hosp.reviews[0].author_name} ({hosp.reviews[0].created_at})
@@ -844,7 +844,7 @@ function SearchContent() {
                         document.getElementById(`card-${id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
                       }}
                       userCoords={userCoords}
-                      onLocateMe={(coords) => setUserCoords(coords)}
+                      onLocateMe={(c) => setCustomCoords(c)}
                     />
                   </div>
                 </div>
@@ -906,7 +906,7 @@ function SearchContent() {
                           {hosp.reviews && hosp.reviews.length > 0 && (
                             <div className="bg-surface-container-low/70 rounded-lg p-2 text-xs border border-surface-container-high/40 mt-1">
                               <span className="text-primary font-semibold">💬 Patient Quote: </span>
-                              <span className="italic text-on-surface">"{hosp.reviews[0].comment}"</span>
+                              <span className="italic text-on-surface">&ldquo;{hosp.reviews[0].comment}&rdquo;</span>
                               <span className="text-outline text-[11px] block mt-0.5">— {hosp.reviews[0].author_name} ({hosp.reviews[0].treatment_category})</span>
                             </div>
                           )}
@@ -1081,7 +1081,7 @@ function SearchContent() {
                         )}
 
                         <p className="text-xs text-on-surface-variant leading-relaxed">
-                          "{rev.comment}"
+                          &ldquo;{rev.comment}&rdquo;
                         </p>
 
                         <div className="flex items-center justify-between text-[11px] text-outline pt-1 border-t border-surface-container-high/30 mt-1">

@@ -111,69 +111,78 @@ export default function HospitalDetailPage({ params }: { params: Promise<{ slug:
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
 
   useEffect(() => {
-    fetchHospital();
-  }, [slug]);
+    let isMounted = true;
+    async function fetchHospitalData() {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-  const fetchHospital = async () => {
-    setIsLoading(true);
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
-    try {
-      const res = await fetch(`${API_URL}/api/hospitals/${slug}`);
-      if (res.ok) {
-        const json = await res.json();
-        const data = json.data;
-        setHospital({
-          ...data,
-          ambulance_phone: data.ambulance_phone || data.emergency_phone || "108",
-          pros: data.pros || [
-            "100% Cashless treatment under PMJAY / Ayushman Bharat",
-            "24x7 Multi-specialty clinical emergency coverage & ICU telemetry",
-            "Transparent package tariffs aligned with national healthcare standards"
-          ],
-          cons: data.cons || [
-            "Morning OPD peak hours can experience waiting times",
-            "Elective surgeries require prior administrative scheduling"
-          ],
-          procedures:
-            data.procedures?.map((p: any) => ({
-              name: p.procedure?.name || "Medical Procedure",
-              category: p.procedure?.category || "General",
-              cost_min: p.cost_min || 0,
-              cost_max: p.cost_max || 0,
-              cost_avg: p.cost_avg || 0,
-              pmjay_covered: p.pmjay_covered || false,
-              pmjay_package_rate: p.pmjay_package_rate,
-              success_rate: p.success_rate || 92,
-              wait_time_days: p.wait_time_days || 3,
-              volume_per_year: p.volume_per_year || 150,
-            })) || getMockProcedures(),
-          facilities: data.facilities || getMockFacilities(),
-          departments: data.departments || getMockDepartments(),
-          reviews: (data.reviews && data.reviews.length > 0)
-            ? data.reviews.map((r: any) => ({
-                id: r.id || `rev-${Date.now()}`,
-                author_name: r.author_name || r.user_name || "Verified Patient",
-                rating: r.rating_overall || 5,
-                cost_transparency_rating: r.rating_cost_transparency || 5,
-                treatment_category: r.treatment_category || r.treatment_type || "Emergency Care",
-                title: r.title || "Clinical Experience",
-                content: r.comment || r.content || "Patient provided positive feedback regarding clinical attention and facilities.",
-                helpful_count: r.helpful_count || 10,
-                created_at: r.created_at || "Recent Visit",
-                would_recommend: r.would_recommend ?? true,
-              }))
-            : getMockReviews(),
-        });
-      } else {
-        setHospital(getMockHospital(slug));
+      try {
+        const res = await fetch(`${API_URL}/api/hospitals/${slug}`);
+        if (res.ok) {
+          const json = await res.json();
+          const data = json.data;
+          if (isMounted) {
+            setHospital({
+              ...data,
+              ambulance_phone: data.ambulance_phone || data.emergency_phone || "108",
+              pros: data.pros || [
+                "100% Cashless treatment under PMJAY / Ayushman Bharat",
+                "24x7 Multi-specialty clinical emergency coverage & ICU telemetry",
+                "Transparent package tariffs aligned with national healthcare standards"
+              ],
+              cons: data.cons || [
+                "Morning OPD peak hours can experience waiting times",
+                "Elective surgeries require prior administrative scheduling"
+              ],
+              procedures:
+                data.procedures?.map((p: Record<string, unknown>) => ({
+                  name: (p.procedure as { name?: string })?.name || "Medical Procedure",
+                  category: (p.procedure as { category?: string })?.category || "General",
+                  cost_min: Number(p.cost_min) || 0,
+                  cost_max: Number(p.cost_max) || 0,
+                  cost_avg: Number(p.cost_avg) || 0,
+                  pmjay_covered: Boolean(p.pmjay_covered),
+                  pmjay_package_rate: typeof p.pmjay_package_rate === "number" ? p.pmjay_package_rate : undefined,
+                  success_rate: Number(p.success_rate) || 92,
+                  wait_time_days: Number(p.wait_time_days) || 3,
+                  volume_per_year: Number(p.volume_per_year) || 150,
+                })) || getMockProcedures(),
+              facilities: data.facilities || getMockFacilities(),
+              departments: data.departments || getMockDepartments(),
+              reviews: (data.reviews && data.reviews.length > 0)
+                ? data.reviews.map((r: Record<string, unknown>, idx: number) => ({
+                    id: (r.id as string) || `rev-${idx}`,
+                    author_name: (r.author_name as string) || (r.user_name as string) || "Verified Patient",
+                    rating: Number(r.rating_overall) || 5,
+                    cost_transparency_rating: Number(r.rating_cost_transparency) || 5,
+                    treatment_category: (r.treatment_category as string) || (r.treatment_type as string) || "Emergency Care",
+                    title: (r.title as string) || "Clinical Experience",
+                    content: (r.comment as string) || (r.content as string) || "Patient provided positive feedback regarding clinical attention and facilities.",
+                    helpful_count: Number(r.helpful_count) || 10,
+                    created_at: (r.created_at as string) || "Recent Visit",
+                    would_recommend: r.would_recommend !== false,
+                  }))
+                : getMockReviews(),
+            });
+          }
+        } else if (isMounted) {
+          setHospital(getMockHospital(slug));
+        }
+      } catch {
+        if (isMounted) {
+          setHospital(getMockHospital(slug));
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
-    } catch {
-      setHospital(getMockHospital(slug));
-    } finally {
-      setIsLoading(false);
     }
-  };
+
+    fetchHospitalData();
+    return () => {
+      isMounted = false;
+    };
+  }, [slug]);
 
   const toggleCompare = () => {
     if (!hospital) return;
@@ -520,7 +529,7 @@ export default function HospitalDetailPage({ params }: { params: Promise<{ slug:
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => setActiveTab(tab.id as "procedures" | "facilities" | "departments" | "reviews")}
                 className={`px-space-md py-2 rounded-lg font-label-md font-semibold transition-all whitespace-nowrap ${
                   activeTab === tab.id
                     ? "bg-primary text-on-primary shadow-sm"

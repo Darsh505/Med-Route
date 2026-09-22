@@ -2,30 +2,43 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useSyncExternalStore } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useLocation } from "@/context/LocationContext";
+
+function getCompareCountSnapshot(): number {
+  if (typeof window === "undefined") return 0;
+  try {
+    const saved = localStorage.getItem("medroute_compare_ids");
+    return saved ? JSON.parse(saved).length : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function subscribeToStorage(callback: () => void) {
+  window.addEventListener("storage", callback);
+  window.addEventListener("medroute_compare_change", callback);
+  return () => {
+    window.removeEventListener("storage", callback);
+    window.removeEventListener("medroute_compare_change", callback);
+  };
+}
 
 export default function Navbar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const { selectedCity, isAutoDetected } = useLocation();
-  const [compareCount, setCompareCount] = useState(0);
+  const compareCount = useSyncExternalStore(subscribeToStorage, getCompareCountSnapshot, () => 0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("medroute_compare_ids");
-      if (saved) {
-        setCompareCount(JSON.parse(saved).length);
-      }
-    } catch {}
+    window.dispatchEvent(new Event("medroute_compare_change"));
   }, [pathname]);
 
   const isSearch = pathname === "/search" || pathname === "/";
   const isCompare = pathname.startsWith("/compare");
-  const isAdmin = pathname.startsWith("/admin");
 
   return (
     <header className="fixed top-0 w-full z-50 bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.03)] border-b border-surface-container-high/40">

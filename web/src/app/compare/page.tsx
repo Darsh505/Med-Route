@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { ALL_HOSPITALS, getGroupedHospitals, getHospitalBySlug, HospitalOption } from "@/data/hospitalsData";
+import { ALL_HOSPITALS, getGroupedHospitals, getHospitalBySlug, ReviewItem } from "@/data/hospitalsData";
 
 interface ProcedureDef {
   slug: string;
@@ -148,7 +148,7 @@ interface HospitalComparisonData {
   exclusions: string[];
   pros?: string[];
   cons?: string[];
-  reviews?: any[];
+  reviews?: ReviewItem[];
 }
 
 function buildHospitalComparisonData(slug: string, procSlug: string): HospitalComparisonData {
@@ -240,14 +240,22 @@ function buildHospitalComparisonData(slug: string, procSlug: string): HospitalCo
 
 function CompareContent() {
   const searchParams = useSearchParams();
-  const [selectedProc, setSelectedProc] = useState<string>("angioplasty");
-  const [hosp1Slug, setHosp1Slug] = useState<string>("pgimer-chandigarh");
-  const [hosp2Slug, setHosp2Slug] = useState<string>("max-super-speciality-hospital-mohali");
+  const ids = useMemo(() => searchParams.get("ids")?.split(",") || [], [searchParams]);
+  const procParam = searchParams.get("procedure") || searchParams.get("proc");
+  const budgetParam = searchParams.get("budget");
+
+  const [selectedProc, setSelectedProc] = useState<string>(() =>
+    procParam ? procParam.toLowerCase() : "angioplasty"
+  );
+  const [hosp1Slug, setHosp1Slug] = useState<string>(() => ids[0] || "pgimer-chandigarh");
+  const [hosp2Slug, setHosp2Slug] = useState<string>(() => ids[1] || "max-super-speciality-hospital-mohali");
   const [hospitalSearch, setHospitalSearch] = useState<string>("");
   const [hospitalsData, setHospitalsData] = useState<HospitalComparisonData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [payerMode, setPayerMode] = useState<"private" | "pmjay">("private");
-  const [targetBudget, setTargetBudget] = useState<number | null>(200000);
+  const [targetBudget, setTargetBudget] = useState<number | null>(() =>
+    budgetParam && !isNaN(Number(budgetParam)) ? Number(budgetParam) : 200000
+  );
 
   // Grouped hospitals list covering all 156 facilities
   const rawGrouped = useMemo(() => getGroupedHospitals(), []);
@@ -265,22 +273,6 @@ function CompareContent() {
       }))
       .filter((g) => g.hospitals.length > 0);
   }, [rawGrouped, hospitalSearch]);
-
-  // Read URL params
-  useEffect(() => {
-    const ids = searchParams.get("ids")?.split(",") || [];
-    const procParam = searchParams.get("procedure") || searchParams.get("proc");
-    const budgetParam = searchParams.get("budget");
-    if (procParam) setSelectedProc(procParam.toLowerCase());
-    if (budgetParam && !isNaN(Number(budgetParam))) setTargetBudget(Number(budgetParam));
-
-    if (ids.length >= 2) {
-      setHosp1Slug(ids[0]);
-      setHosp2Slug(ids[1]);
-    } else if (ids.length === 1) {
-      setHosp1Slug(ids[0]);
-    }
-  }, [searchParams]);
 
   // Fetch comparison from backend or dynamic fallback
   useEffect(() => {
@@ -304,7 +296,7 @@ function CompareContent() {
             }
           }
         }
-      } catch (e) {
+      } catch {
         // Fallback to dynamic rich dataset
       }
 
@@ -904,7 +896,7 @@ function CompareContent() {
                             <span>{h.reviews[0].created_at}</span>
                           </div>
                           <p className="italic text-slate-800 line-clamp-3">
-                            "{h.reviews[0].comment}"
+                            &ldquo;{h.reviews[0].comment}&rdquo;
                           </p>
                           <div className="mt-2 text-[11px] font-bold text-slate-600 flex items-center justify-between">
                             <span>— {h.reviews[0].author_name}</span>
