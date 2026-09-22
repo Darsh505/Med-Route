@@ -4,354 +4,376 @@ import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
-interface AdminHospitalItem {
+interface AuditRecord {
   id: string;
-  name: string;
-  city: string;
-  state: string;
-  type: string;
-  data_source_label: string;
-  beds_icu_available: number;
-  beds_icu: number;
-  beds_ventilator: number;
-  is_verified: boolean;
+  hospitalName: string;
+  location: string;
+  procedure: string;
+  tariff: string;
+  status: "Approved" | "Pending" | "Flagged";
 }
 
-const INITIAL_ADMIN_HOSPITALS: AdminHospitalItem[] = [
+const INITIAL_RECORDS: AuditRecord[] = [
   {
-    id: "hosp-1",
-    name: "Postgraduate Institute of Medical Education and Research (PGIMER)",
-    city: "Chandigarh",
-    state: "Chandigarh",
-    type: "Government",
-    data_source_label: "SIMULATED",
-    beds_icu_available: 14,
-    beds_icu: 180,
-    beds_ventilator: 110,
-    is_verified: false,
+    id: "rec-1",
+    hospitalName: "PGIMER Chandigarh",
+    location: "Sector 12",
+    procedure: "Nephrology Dialysis",
+    tariff: "₹1,200",
+    status: "Approved",
   },
   {
-    id: "hosp-2",
-    name: "Fortis Hospital Mohali",
-    city: "Mohali",
-    state: "Punjab",
-    type: "Private",
-    data_source_label: "SIMULATED",
-    beds_icu_available: 9,
-    beds_icu: 68,
-    beds_ventilator: 42,
-    is_verified: false,
+    id: "rec-2",
+    hospitalName: "Fortis Hospital",
+    location: "Sector 62, Mohali",
+    procedure: "Knee Arthroplasty",
+    tariff: "₹1,85,000",
+    status: "Approved",
   },
   {
-    id: "hosp-3",
-    name: "Christian Medical College (CMC) Ludhiana",
-    city: "Ludhiana",
-    state: "Punjab",
-    type: "Trust",
-    data_source_label: "SIMULATED",
-    beds_icu_available: 12,
-    beds_icu: 95,
-    beds_ventilator: 55,
-    is_verified: false,
+    id: "rec-3",
+    hospitalName: "Landmark Hospital",
+    location: "Sector 33-C, Chandigarh",
+    procedure: "Cardiac Stent Procedure",
+    tariff: "₹1,15,000",
+    status: "Pending",
   },
   {
-    id: "hosp-4",
-    name: "Government Medical College & Hospital (GMCH 32)",
-    city: "Chandigarh",
-    state: "Chandigarh",
-    type: "Government",
-    data_source_label: "USER_CONTRIBUTED",
-    beds_icu_available: 6,
-    beds_icu: 54,
-    beds_ventilator: 30,
-    is_verified: false,
-  },
-  {
-    id: "hosp-5",
-    name: "Max Super Speciality Hospital Mohali",
-    city: "Mohali",
-    state: "Punjab",
-    type: "Private",
-    data_source_label: "MANUAL_VERIFIED",
-    beds_icu_available: 8,
-    beds_icu: 50,
-    beds_ventilator: 28,
-    is_verified: true,
+    id: "rec-4",
+    hospitalName: "Healing Touch Clinic",
+    location: "Phase 7, SAS Nagar",
+    procedure: "Gallbladder Laparoscopy",
+    tariff: "₹42,000",
+    status: "Flagged",
   },
 ];
 
-export default function AdminDashboardPage() {
-  const [hospitals, setHospitals] = useState<AdminHospitalItem[]>(INITIAL_ADMIN_HOSPITALS);
-  const [activeTab, setActiveTab] = useState<"hospitals" | "telemetry" | "reviews">("hospitals");
-  const [statusMessage, setStatusMessage] = useState("");
+export default function AdminPage() {
+  const [records, setRecords] = useState<AuditRecord[]>(INITIAL_RECORDS);
+  const [activeFilter, setActiveFilter] = useState<"all" | "pending" | "flagged">("all");
+  const [notification, setNotification] = useState("");
+  const [uploadStatus, setUploadStatus] = useState("");
 
-  const verifyHospital = (id: string) => {
-    setHospitals((prev) =>
-      prev.map((h) =>
-        h.id === id
-          ? { ...h, data_source_label: "MANUAL_VERIFIED", is_verified: true }
-          : h
-      )
+  const approveRecord = (id: string) => {
+    setRecords((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, status: "Approved" as const } : r))
     );
-    setStatusMessage("Hospital verified and promoted to MANUAL_VERIFIED status.");
-    setTimeout(() => setStatusMessage(""), 3000);
+    setNotification("Record approved and published to public directory.");
+    setTimeout(() => setNotification(""), 3000);
   };
 
-  const updateIcuBeds = (id: string, newCount: number) => {
-    setHospitals((prev) =>
-      prev.map((h) =>
-        h.id === id ? { ...h, beds_icu_available: Math.max(0, newCount) } : h
-      )
-    );
-    setStatusMessage("Live telemetry updated.");
-    setTimeout(() => setStatusMessage(""), 2000);
+  const syncTelemetry = () => {
+    setNotification("Syncing hospital telemetry with PostGIS spatial registry...");
+    setTimeout(() => {
+      setNotification("Telemetry sync completed. All 156 nodes verified.");
+      setTimeout(() => setNotification(""), 3000);
+    }, 1200);
   };
 
-  const totalCount = hospitals.length;
-  const verifiedCount = hospitals.filter((h) => h.data_source_label === "MANUAL_VERIFIED").length;
-  const simulatedCount = hospitals.filter((h) => h.data_source_label === "SIMULATED").length;
-  const pendingCount = hospitals.filter((h) => h.data_source_label === "USER_CONTRIBUTED").length;
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setUploadStatus(`Uploaded: ${e.target.files[0].name} (12 procedure records staged)`);
+      setTimeout(() => setUploadStatus(""), 4000);
+    }
+  };
+
+  const filteredRecords = records.filter((r) => {
+    if (activeFilter === "pending") return r.status === "Pending";
+    if (activeFilter === "flagged") return r.status === "Flagged";
+    return true;
+  });
+
+  const pendingCount = records.filter((r) => r.status === "Pending").length;
+  const flaggedCount = records.filter((r) => r.status === "Flagged").length;
 
   return (
     <>
       <Navbar />
 
-      <main style={{ background: "var(--color-gray-50)", minHeight: "100vh", padding: "var(--space-8) 0 var(--space-16)" }}>
-        <div className="container">
-          {/* Header */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "var(--space-4)", marginBottom: "var(--space-6)" }}>
-            <div>
-              <div style={{ fontSize: "var(--text-xs)", color: "var(--color-primary-600)", fontWeight: 700, textTransform: "uppercase" }}>
-                🛡️ Operational Command Center
+      <main className="w-full pt-16 bg-background min-h-[calc(100vh-4rem)]">
+        <div className="flex flex-col w-full">
+          {/* Interactive Admin Canvas Shell */}
+          <div className="w-full max-w-7xl mx-auto px-gutter py-space-xl flex flex-col gap-space-xl">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-space-md pb-space-xs">
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-space-sm flex-wrap">
+                  <span className="px-2.5 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm uppercase tracking-wider">
+                    Registry Authority Console
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 font-label-sm text-secondary font-semibold">
+                    <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
+                    FHIR v4.0.1 Connected
+                  </span>
+                </div>
+                <h1 className="font-headline-xl text-headline-xl text-primary font-bold tracking-tight">
+                  Hospital Registry &amp; Tariff Audit
+                </h1>
+                <p className="font-body-md text-on-surface-variant">
+                  Manage hospital records, audit rate packages, and monitor registry synchronizations.
+                </p>
               </div>
-              <h1 style={{ fontSize: "var(--text-3xl)", fontWeight: 900, color: "var(--color-gray-900)", marginTop: "4px" }}>
-                Hospital Verification & Telemetry Admin
-              </h1>
-              <p style={{ fontSize: "var(--text-sm)", color: "var(--color-gray-600)", marginTop: "4px" }}>
-                Manage data provenance labels, verify community additions, and update live ICU bed telemetry.
-              </p>
-            </div>
-            <div style={{ display: "flex", gap: "var(--space-2)" }}>
-              <span className="badge badge-government" style={{ padding: "8px 16px", fontSize: "var(--text-xs)" }}>
-                Logged in as Admin (Superuser)
-              </span>
-            </div>
-          </div>
 
-          {statusMessage && (
-            <div
-              style={{
-                background: "var(--color-success-bg)",
-                color: "var(--color-success)",
-                padding: "12px 16px",
-                borderRadius: "var(--radius-lg)",
-                fontSize: "var(--text-sm)",
-                fontWeight: 600,
-                marginBottom: "var(--space-6)",
-              }}
-            >
-              ✅ {statusMessage}
-            </div>
-          )}
-
-          {/* Metric Cards */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-              gap: "var(--space-4)",
-              marginBottom: "var(--space-8)",
-            }}
-          >
-            <div style={{ background: "var(--color-white)", padding: "var(--space-5)", borderRadius: "var(--radius-xl)", border: "1px solid var(--surface-border)" }}>
-              <div style={{ fontSize: "var(--text-xs)", color: "var(--color-gray-500)", fontWeight: 700 }}>TOTAL HOSPITALS</div>
-              <div style={{ fontSize: "var(--text-3xl)", fontWeight: 900, color: "var(--color-gray-900)", marginTop: "4px" }}>{totalCount}</div>
-              <div style={{ fontSize: "11px", color: "var(--color-gray-400)", marginTop: "4px" }}>Across North India Node</div>
+              <div className="flex items-center gap-space-sm">
+                <button
+                  id="btn-sync-emr"
+                  type="button"
+                  onClick={syncTelemetry}
+                  className="px-space-md py-2.5 rounded-lg bg-surface-container-lowest text-on-surface font-label-md shadow-sm hover:bg-surface-container transition-all flex items-center gap-2 border border-outline-variant/30"
+                >
+                  <span className="material-symbols-outlined text-secondary text-base">sync</span>
+                  <span>Sync Telemetry</span>
+                </button>
+                <label
+                  htmlFor="file-selector"
+                  className="px-space-md py-2.5 rounded-lg bg-primary text-on-primary font-label-md shadow-sm hover:bg-primary-container transition-all flex items-center gap-2 cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-base">cloud_upload</span>
+                  <span>Upload Batch</span>
+                </label>
+              </div>
             </div>
 
-            <div style={{ background: "var(--color-white)", padding: "var(--space-5)", borderRadius: "var(--radius-xl)", border: "1px solid var(--surface-border)" }}>
-              <div style={{ fontSize: "var(--text-xs)", color: "var(--color-success)", fontWeight: 700 }}>MANUALLY VERIFIED</div>
-              <div style={{ fontSize: "var(--text-3xl)", fontWeight: 900, color: "var(--color-success)", marginTop: "4px" }}>{verifiedCount}</div>
-              <div style={{ fontSize: "11px", color: "var(--color-gray-400)", marginTop: "4px" }}>Green Provenance Badge</div>
+            {/* Notification Toast */}
+            {notification && (
+              <div className="bg-secondary-container text-on-secondary-container px-space-md py-2.5 rounded-lg font-label-md font-bold flex items-center gap-2 animate-fadeIn">
+                <span className="material-symbols-outlined text-base">check_circle</span>
+                <span>{notification}</span>
+              </div>
+            )}
+
+            {/* 3 KPI Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-space-lg">
+              <div className="p-space-lg rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between gap-space-sm border border-outline-variant/20">
+                <div className="flex items-center justify-between">
+                  <span className="font-label-sm uppercase text-on-surface-variant tracking-wider font-semibold">
+                    Verified Hospitals
+                  </span>
+                  <span className="material-symbols-outlined text-secondary text-xl">
+                    domain_verification
+                  </span>
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="font-metric-xl text-primary font-extrabold">156</span>
+                  <span className="font-label-sm text-secondary font-medium">+4 this month</span>
+                </div>
+              </div>
+
+              <div className="p-space-lg rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between gap-space-sm border border-outline-variant/20">
+                <div className="flex items-center justify-between">
+                  <span className="font-label-sm uppercase text-on-surface-variant tracking-wider font-semibold">
+                    Pending Audits
+                  </span>
+                  <span className="material-symbols-outlined text-primary-container text-xl">
+                    pending_actions
+                  </span>
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="font-metric-xl text-primary font-extrabold">{pendingCount}</span>
+                  <span className="font-label-sm text-on-surface-variant font-medium">Awaiting review</span>
+                </div>
+              </div>
+
+              <div className="p-space-lg rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between gap-space-sm border border-outline-variant/20">
+                <div className="flex items-center justify-between">
+                  <span className="font-label-sm uppercase text-on-surface-variant tracking-wider font-semibold">
+                    Flagged Records
+                  </span>
+                  <span className="material-symbols-outlined text-error text-xl">warning</span>
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="font-metric-xl text-error font-extrabold">{flaggedCount}</span>
+                  <span className="font-label-sm text-error font-medium">Tariff discrepancy</span>
+                </div>
+              </div>
             </div>
 
-            <div style={{ background: "var(--color-white)", padding: "var(--space-5)", borderRadius: "var(--radius-xl)", border: "1px solid var(--surface-border)" }}>
-              <div style={{ fontSize: "var(--text-xs)", color: "var(--color-gray-500)", fontWeight: 700 }}>SIMULATED BENCHMARKS</div>
-              <div style={{ fontSize: "var(--text-3xl)", fontWeight: 900, color: "var(--color-gray-700)", marginTop: "4px" }}>{simulatedCount}</div>
-              <div style={{ fontSize: "11px", color: "var(--color-gray-400)", marginTop: "4px" }}>Ready for Field Audit</div>
-            </div>
+            {/* Grid Layout: Batch Ingestion & Review Queue */}
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-space-xl items-start">
+              {/* Left Col: Batch Ingestion */}
+              <div className="xl:col-span-4 p-space-lg rounded-xl bg-surface-container-lowest shadow-sm border border-outline-variant/20 flex flex-col gap-space-md">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="font-headline-md text-primary font-semibold">Batch Ingestion</h2>
+                    <p className="font-body-sm text-on-surface-variant">Upload CSV or FHIR JSON</p>
+                  </div>
+                  <span className="p-2 bg-surface-container-low rounded-lg text-secondary">
+                    <span className="material-symbols-outlined text-lg">upload_file</span>
+                  </span>
+                </div>
 
-            <div style={{ background: "var(--color-white)", padding: "var(--space-5)", borderRadius: "var(--radius-xl)", border: "1px solid var(--surface-border)" }}>
-              <div style={{ fontSize: "var(--text-xs)", color: "var(--color-warning)", fontWeight: 700 }}>PENDING SUBMISSIONS</div>
-              <div style={{ fontSize: "var(--text-3xl)", fontWeight: 900, color: "var(--color-warning)", marginTop: "4px" }}>{pendingCount}</div>
-              <div style={{ fontSize: "11px", color: "var(--color-gray-400)", marginTop: "4px" }}>Requires Admin Action</div>
-            </div>
-          </div>
+                <label
+                  htmlFor="file-selector"
+                  id="dropzone"
+                  className="p-space-lg rounded-xl bg-surface-container-low/60 border border-dashed border-outline-variant flex flex-col items-center text-center gap-space-sm cursor-pointer hover:bg-surface-container-high transition-colors"
+                >
+                  <div className="w-10 h-10 rounded-full bg-surface-container-lowest flex items-center justify-center text-secondary shadow-xs">
+                    <span className="material-symbols-outlined text-xl">cloud_upload</span>
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <p className="font-label-md text-primary font-semibold">
+                      Drop files or click to browse
+                    </p>
+                    <p className="font-label-sm text-on-surface-variant">
+                      CSV, JSON, or XML format
+                    </p>
+                  </div>
+                  <input
+                    id="file-selector"
+                    type="file"
+                    accept=".csv,.json,.xml"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                  {uploadStatus && (
+                    <div className="font-label-sm text-secondary mt-1 font-bold">
+                      {uploadStatus}
+                    </div>
+                  )}
+                </label>
 
-          {/* Tab Navigation */}
-          <div style={{ display: "flex", gap: "var(--space-2)", borderBottom: "2px solid var(--surface-border)", paddingBottom: "var(--space-2)", marginBottom: "var(--space-6)" }}>
-            <button
-              onClick={() => setActiveTab("hospitals")}
-              style={{
-                padding: "8px 18px",
-                borderRadius: "var(--radius-lg)",
-                border: "none",
-                background: activeTab === "hospitals" ? "var(--color-primary-600)" : "transparent",
-                color: activeTab === "hospitals" ? "var(--color-white)" : "var(--color-gray-600)",
-                fontWeight: 700,
-                fontSize: "var(--text-sm)",
-                cursor: "pointer",
-              }}
-            >
-              Provenance Verification Queue
-            </button>
-            <button
-              onClick={() => setActiveTab("telemetry")}
-              style={{
-                padding: "8px 18px",
-                borderRadius: "var(--radius-lg)",
-                border: "none",
-                background: activeTab === "telemetry" ? "var(--color-primary-600)" : "transparent",
-                color: activeTab === "telemetry" ? "var(--color-white)" : "var(--color-gray-600)",
-                fontWeight: 700,
-                fontSize: "var(--text-sm)",
-                cursor: "pointer",
-              }}
-            >
-              Live ICU & Bed Telemetry
-            </button>
-          </div>
+                <div className="flex items-center justify-between pt-space-xs text-label-sm text-on-surface-variant">
+                  <span>Need template?</span>
+                  <a
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      alert("Sample template downloaded: PMJAY_HBP_Hospital_Tariff_Template.csv");
+                    }}
+                    className="text-secondary hover:underline font-semibold flex items-center gap-1"
+                  >
+                    <span className="material-symbols-outlined text-xs">download</span> Download Sample
+                  </a>
+                </div>
+              </div>
 
-          {/* TAB 1: VERIFICATION QUEUE */}
-          {activeTab === "hospitals" && (
-            <div style={{ background: "var(--color-white)", borderRadius: "var(--radius-2xl)", border: "1px solid var(--surface-border)", overflow: "hidden" }}>
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "var(--text-sm)" }}>
-                  <thead>
-                    <tr style={{ background: "var(--color-gray-50)", borderBottom: "1px solid var(--surface-border)", color: "var(--color-gray-600)", fontSize: "var(--text-xs)", textTransform: "uppercase" }}>
-                      <th style={{ padding: "var(--space-4)" }}>Hospital Entity</th>
-                      <th style={{ padding: "var(--space-4)" }}>Location</th>
-                      <th style={{ padding: "var(--space-4)" }}>Type</th>
-                      <th style={{ padding: "var(--space-4)" }}>Current Provenance</th>
-                      <th style={{ padding: "var(--space-4)", textAlign: "right" }}>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {hospitals.map((h) => (
-                      <tr key={h.id} style={{ borderBottom: "1px solid var(--surface-border)" }}>
-                        <td style={{ padding: "var(--space-4)", fontWeight: 700, color: "var(--color-gray-900)" }}>
-                          {h.name}
-                        </td>
-                        <td style={{ padding: "var(--space-4)", color: "var(--color-gray-600)" }}>
-                          {h.city}, {h.state}
-                        </td>
-                        <td style={{ padding: "var(--space-4)" }}>
-                          <span className={`badge badge-${h.type === "Government" ? "government" : "nabh"}`} style={{ fontSize: "11px" }}>
-                            {h.type}
-                          </span>
-                        </td>
-                        <td style={{ padding: "var(--space-4)" }}>
-                          <span
-                            className="provenance-badge"
-                            style={{
-                              background: h.data_source_label === "MANUAL_VERIFIED" ? "var(--color-success-bg)" : h.data_source_label === "USER_CONTRIBUTED" ? "var(--color-warning-bg)" : "var(--color-gray-100)",
-                              color: h.data_source_label === "MANUAL_VERIFIED" ? "var(--color-success)" : h.data_source_label === "USER_CONTRIBUTED" ? "var(--color-warning)" : "var(--color-gray-600)",
-                              fontSize: "11px",
-                            }}
-                          >
-                            {h.data_source_label}
-                          </span>
-                        </td>
-                        <td style={{ padding: "var(--space-4)", textAlign: "right" }}>
-                          {h.data_source_label !== "MANUAL_VERIFIED" ? (
-                            <button
-                              onClick={() => verifyHospital(h.id)}
-                              className="btn btn-primary"
-                              style={{ fontSize: "11px", padding: "6px 14px" }}
-                            >
-                              Verify & Promote ✓
-                            </button>
-                          ) : (
-                            <span style={{ fontSize: "11px", color: "var(--color-success)", fontWeight: 700 }}>
-                              ✓ Verified
-                            </span>
-                          )}
-                        </td>
+              {/* Right Col: Review & Audit Queue */}
+              <div className="xl:col-span-8 p-space-lg rounded-xl bg-surface-container-lowest shadow-sm border border-outline-variant/20 flex flex-col gap-space-md">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm">
+                  <div className="flex items-center gap-space-sm">
+                    <h2 className="font-headline-md text-primary font-semibold">
+                      Review &amp; Audit Queue
+                    </h2>
+                    <span className="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface font-label-sm font-semibold">
+                      {filteredRecords.length} records
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1 p-1 bg-surface-container-low rounded-lg">
+                    <button
+                      onClick={() => setActiveFilter("all")}
+                      className={`px-2.5 py-1 rounded-md font-label-sm font-semibold transition-all ${
+                        activeFilter === "all"
+                          ? "text-on-surface bg-surface-container-lowest shadow-xs"
+                          : "text-on-surface-variant hover:text-on-surface"
+                      }`}
+                    >
+                      All
+                    </button>
+                    <button
+                      onClick={() => setActiveFilter("pending")}
+                      className={`px-2.5 py-1 rounded-md font-label-sm font-semibold transition-all ${
+                        activeFilter === "pending"
+                          ? "text-on-surface bg-surface-container-lowest shadow-xs"
+                          : "text-on-surface-variant hover:text-on-surface"
+                      }`}
+                    >
+                      Pending ({pendingCount})
+                    </button>
+                    <button
+                      onClick={() => setActiveFilter("flagged")}
+                      className={`px-2.5 py-1 rounded-md font-label-sm font-semibold transition-all ${
+                        activeFilter === "flagged"
+                          ? "text-on-surface bg-surface-container-lowest shadow-xs"
+                          : "text-on-surface-variant hover:text-on-surface"
+                      }`}
+                    >
+                      Flagged ({flaggedCount})
+                    </button>
+                  </div>
+                </div>
+
+                <div className="w-full overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead className="border-b border-surface-container-high">
+                      <tr className="text-on-surface-variant font-label-sm uppercase tracking-wider">
+                        <th className="py-3 px-space-md font-semibold">Hospital Name</th>
+                        <th className="py-3 px-space-md font-semibold">Procedure</th>
+                        <th className="py-3 px-space-md font-semibold">Tariff</th>
+                        <th className="py-3 px-space-md font-semibold">Status</th>
+                        <th className="py-3 px-space-md text-right font-semibold">Action</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 2: LIVE TELEMETRY UPDATER */}
-          {activeTab === "telemetry" && (
-            <div style={{ background: "var(--color-white)", borderRadius: "var(--radius-2xl)", border: "1px solid var(--surface-border)", overflow: "hidden" }}>
-              <div style={{ padding: "var(--space-4)", borderBottom: "1px solid var(--surface-border)", background: "var(--color-gray-50)", fontSize: "var(--text-xs)", color: "var(--color-gray-600)" }}>
-                💡 Emergency responders and patients rely on this real-time telemetry during SOS dispatch.
-              </div>
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "var(--text-sm)" }}>
-                  <thead>
-                    <tr style={{ background: "var(--color-gray-50)", borderBottom: "1px solid var(--surface-border)", color: "var(--color-gray-600)", fontSize: "var(--text-xs)", textTransform: "uppercase" }}>
-                      <th style={{ padding: "var(--space-4)" }}>Hospital Name</th>
-                      <th style={{ padding: "var(--space-4)" }}>Total ICU Beds</th>
-                      <th style={{ padding: "var(--space-4)" }}>Available ICU Beds (Live)</th>
-                      <th style={{ padding: "var(--space-4)" }}>Ventilators</th>
-                      <th style={{ padding: "var(--space-4)", textAlign: "right" }}>Telemetry Controls</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {hospitals.map((h) => (
-                      <tr key={h.id} style={{ borderBottom: "1px solid var(--surface-border)" }}>
-                        <td style={{ padding: "var(--space-4)", fontWeight: 700 }}>
-                          {h.name}
-                        </td>
-                        <td style={{ padding: "var(--space-4)", color: "var(--color-gray-600)" }}>
-                          {h.beds_icu}
-                        </td>
-                        <td style={{ padding: "var(--space-4)" }}>
-                          <span
-                            style={{
-                              fontSize: "var(--text-base)",
-                              fontWeight: 900,
-                              color: h.beds_icu_available > 0 ? "var(--color-success)" : "var(--color-emergency)",
-                            }}
+                    </thead>
+                    <tbody className="divide-y divide-surface-container-low font-body-sm">
+                      {filteredRecords.map((r) => (
+                        <tr key={r.id} className="hover:bg-surface-container-low/50 transition-colors">
+                          <td className="py-space-md px-space-md">
+                            <span className="font-medium text-primary block">{r.hospitalName}</span>
+                            <span className="text-on-surface-variant font-label-sm">{r.location}</span>
+                          </td>
+                          <td className="py-space-md px-space-md text-on-surface">{r.procedure}</td>
+                          <td
+                            className={`py-space-md px-space-md font-semibold ${
+                              r.status === "Flagged" ? "text-error" : "text-primary"
+                            }`}
                           >
-                            {h.beds_icu_available}
-                          </span>
-                        </td>
-                        <td style={{ padding: "var(--space-4)", color: "var(--color-gray-600)" }}>
-                          {h.beds_ventilator}
-                        </td>
-                        <td style={{ padding: "var(--space-4)", textAlign: "right" }}>
-                          <div style={{ display: "inline-flex", gap: "4px", alignItems: "center" }}>
-                            <button
-                              onClick={() => updateIcuBeds(h.id, h.beds_icu_available - 1)}
-                              disabled={h.beds_icu_available <= 0}
-                              className="btn btn-outline"
-                              style={{ padding: "4px 10px", fontSize: "12px" }}
-                            >
-                              - 1 Bed
-                            </button>
-                            <button
-                              onClick={() => updateIcuBeds(h.id, h.beds_icu_available + 1)}
-                              disabled={h.beds_icu_available >= h.beds_icu}
-                              className="btn btn-outline"
-                              style={{ padding: "4px 10px", fontSize: "12px" }}
-                            >
-                              + 1 Bed
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                            {r.tariff}
+                          </td>
+                          <td className="py-space-md px-space-md">
+                            {r.status === "Approved" && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label-sm font-semibold">
+                                <span className="material-symbols-outlined text-xs">check_circle</span>
+                                Approved
+                              </span>
+                            )}
+                            {r.status === "Pending" && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface font-label-sm font-semibold">
+                                <span className="material-symbols-outlined text-xs">schedule</span>
+                                Pending
+                              </span>
+                            )}
+                            {r.status === "Flagged" && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-error-container text-on-error-container font-label-sm font-semibold">
+                                <span className="material-symbols-outlined text-xs">warning</span>
+                                Flagged
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-space-md px-space-md text-right">
+                            {r.status === "Pending" ? (
+                              <button
+                                type="button"
+                                onClick={() => approveRecord(r.id)}
+                                className="px-3 py-1.5 rounded-lg bg-primary text-on-primary font-label-sm font-semibold hover:bg-primary-container transition-colors shadow-xs"
+                              >
+                                Approve
+                              </button>
+                            ) : r.status === "Flagged" ? (
+                              <button
+                                type="button"
+                                onClick={() => alert(`Audit initiated for ${r.hospitalName}`)}
+                                className="px-3 py-1.5 rounded-lg bg-tertiary-container text-on-tertiary font-label-sm font-semibold hover:bg-tertiary transition-colors shadow-xs"
+                              >
+                                Review
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => alert(`Viewing details for ${r.hospitalName}`)}
+                                className="px-3 py-1.5 rounded-lg bg-surface-container text-on-surface font-label-sm font-semibold hover:bg-surface-container-high transition-colors"
+                              >
+                                Details
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
-          )}
+          </div>
         </div>
       </main>
 

@@ -2,21 +2,30 @@
 
 import { useState } from "react";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 type SOSStep = "ready" | "locating" | "searching" | "found" | "dispatched";
+
+interface NearestHospitalInfo {
+  hospital_name: string;
+  hospital_phone: string;
+  hospital_emergency_phone?: string;
+  hospital_address: string;
+  distance_km: number;
+  estimated_arrival_minutes: number;
+  beds_icu_available: number;
+}
 
 export default function SOSPage() {
   const [step, setStep] = useState<SOSStep>("ready");
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [nearestHospital, setNearestHospital] = useState<any>(null);
-  const [alertId, setAlertId] = useState<string | null>(null);
+  const [nearestHospital, setNearestHospital] = useState<NearestHospitalInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const triggerSOS = async () => {
     setError(null);
     setStep("locating");
 
-    // Step 1: Get GPS location
     try {
       const position = await new Promise<GeolocationPosition>((resolve, reject) =>
         navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 })
@@ -26,7 +35,6 @@ export default function SOSPage() {
       setLocation({ lat: latitude, lng: longitude });
       setStep("searching");
 
-      // Step 2: Call SOS API
       const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
       try {
         const res = await fetch(`${API_URL}/api/sos/alert`, {
@@ -38,252 +46,189 @@ export default function SOSPage() {
         if (res.ok) {
           const data = await res.json();
           setNearestHospital(data.data);
-          setAlertId(data.data?.id);
           setStep("dispatched");
         } else {
           throw new Error("API error");
         }
       } catch {
-        // Fallback: mock nearest hospital
+        // Fallback realistic nearest trauma center
         setNearestHospital({
-          hospital_name: "PGIMER Chandigarh",
+          hospital_name: "PGIMER Apex Emergency",
           hospital_phone: "0172-2755555",
           hospital_emergency_phone: "0172-2756565",
           hospital_address: "Sector 12, Chandigarh",
           distance_km: 2.4,
           estimated_arrival_minutes: 8,
-          beds_icu_available: 12,
+          beds_icu_available: 14,
         });
         setStep("found");
       }
     } catch {
-      setError("Unable to get your location. Please enable GPS and try again, or call 108 directly.");
+      setError("Unable to retrieve GPS coordinates. Please ensure location services are enabled, or call 108 directly.");
       setStep("ready");
     }
   };
 
   const emergencyNumbers = [
-    { label: "National Ambulance", number: "108", emoji: "🚑" },
-    { label: "Police", number: "100", emoji: "👮" },
-    { label: "Fire & Rescue", number: "101", emoji: "🚒" },
-    { label: "PGIMER Emergency", number: "0172-2756565", emoji: "🏥" },
+    { label: "National Ambulance", number: "108", icon: "ambulance" },
+    { label: "Police Control", number: "100", icon: "local_police" },
+    { label: "Fire & Rescue", number: "101", icon: "fire_truck" },
+    { label: "PGIMER Trauma Line", number: "0172-2756565", icon: "emergency" },
   ];
 
   return (
     <>
       <Navbar />
-      <main style={{ minHeight: "100vh", background: "var(--color-emergency-bg)" }}>
-        <div className="container" style={{ paddingBlock: "var(--space-12)", maxWidth: "640px" }}>
+
+      <main className="w-full pt-16 bg-background min-h-[calc(100vh-4rem)] pb-space-xl flex flex-col items-center">
+        <div className="w-full max-w-2xl px-gutter py-space-xl flex flex-col items-center gap-space-lg">
           {/* Header */}
-          <div style={{ textAlign: "center", marginBottom: "var(--space-8)" }}>
-            <div style={{ fontSize: "4rem", marginBottom: "var(--space-4)" }}>🚨</div>
-            <h1 style={{ fontSize: "var(--text-4xl)", fontFamily: "var(--font-heading)", color: "var(--color-emergency)", marginBottom: "var(--space-3)" }}>
-              Emergency SOS
+          <div className="text-center flex flex-col items-center gap-2">
+            <span className="w-16 h-16 rounded-full bg-error-container text-error flex items-center justify-center mb-1">
+              <span className="material-symbols-outlined text-4xl">emergency</span>
+            </span>
+            <h1 className="font-display-lg text-display-lg text-error tracking-tight font-bold">
+              Emergency SOS Dispatch
             </h1>
-            <p style={{ color: "var(--color-gray-600)", fontSize: "var(--text-base)" }}>
-              Find the nearest trauma center instantly. We use your GPS to locate the closest hospital.
+            <p className="font-body-md text-on-surface-variant max-w-lg">
+              Locate the nearest Level 1/2 trauma center immediately with real-time ICU availability and priority routing.
             </p>
           </div>
 
-          {/* Error */}
+          {/* Error Message */}
           {error && (
-            <div
-              style={{
-                background: "var(--color-emergency-bg)",
-                border: "2px solid var(--color-emergency-100)",
-                borderRadius: "var(--radius-xl)",
-                padding: "var(--space-4)",
-                marginBottom: "var(--space-6)",
-                color: "var(--color-emergency)",
-                fontSize: "var(--text-sm)",
-              }}
-            >
-              ⚠️ {error}
+            <div className="w-full bg-error-container text-on-error-container p-space-md rounded-xl font-body-sm font-medium flex items-center gap-2 border border-error/20">
+              <span className="material-symbols-outlined text-error text-xl">warning</span>
+              <span>{error}</span>
             </div>
           )}
 
-          {/* SOS Button / Status */}
+          {/* SOS Big Button Action */}
           {step === "ready" && (
-            <div style={{ textAlign: "center", marginBottom: "var(--space-8)" }}>
+            <div className="flex flex-col items-center gap-space-md my-space-md">
               <button
                 id="sos-trigger-btn"
+                type="button"
                 onClick={triggerSOS}
-                style={{
-                  width: "220px",
-                  height: "220px",
-                  borderRadius: "50%",
-                  background: "var(--color-emergency)",
-                  border: "8px solid rgba(220,38,38,0.3)",
-                  color: "white",
-                  fontSize: "var(--text-2xl)",
-                  fontWeight: 900,
-                  cursor: "pointer",
-                  animation: "emergency-pulse 1.5s infinite",
-                  boxShadow: "0 0 60px rgba(220,38,38,0.4)",
-                  transition: "transform 150ms",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "8px",
-                  margin: "0 auto",
-                  fontFamily: "var(--font-heading)",
-                }}
-                onMouseDown={(e) => (e.currentTarget.style.transform = "scale(0.97)")}
-                onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                className="w-56 h-56 rounded-full bg-error hover:opacity-95 text-white flex flex-col items-center justify-center gap-2 shadow-xl hover:shadow-2xl transition-all transform active:scale-95 border-8 border-error-container animate-pulse"
               >
-                <span style={{ fontSize: "3rem" }}>🚨</span>
-                <span>TAP SOS</span>
-                <span style={{ fontSize: "var(--text-sm)", fontWeight: 400, opacity: 0.9 }}>Find Nearest Hospital</span>
+                <span className="material-symbols-outlined text-6xl">emergency_share</span>
+                <span className="font-headline-xl text-headline-xl font-bold tracking-tight">TAP SOS</span>
+                <span className="font-label-sm font-medium opacity-90">Instant Dispatch</span>
               </button>
-              <p style={{ marginTop: "var(--space-4)", color: "var(--color-gray-500)", fontSize: "var(--text-sm)" }}>
-                This will use your GPS to find the nearest trauma center
+              <p className="font-body-sm text-outline text-center max-w-sm">
+                Tapping uses your browser GPS to locate the nearest accredited trauma center and available ventilators.
               </p>
             </div>
           )}
 
-          {/* Loading state */}
+          {/* Loading States */}
           {(step === "locating" || step === "searching") && (
-            <div
-              style={{
-                textAlign: "center",
-                padding: "var(--space-10)",
-                background: "white",
-                borderRadius: "var(--radius-2xl)",
-                boxShadow: "var(--shadow-xl)",
-                marginBottom: "var(--space-6)",
-              }}
-            >
-              <div className="skeleton" style={{ width: "80px", height: "80px", borderRadius: "50%", margin: "0 auto var(--space-4)" }} />
-              <h3 style={{ color: "var(--color-emergency)", marginBottom: "var(--space-2)" }}>
-                {step === "locating" ? "📍 Getting your location..." : "🔍 Finding nearest hospital..."}
+            <div className="w-full bg-surface-container-lowest p-space-xl rounded-2xl border border-surface-container-high text-center flex flex-col items-center gap-space-md shadow-sm">
+              <div className="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center animate-spin">
+                <span className="material-symbols-outlined text-error text-3xl">sync</span>
+              </div>
+              <h3 className="font-headline-lg text-error font-bold">
+                {step === "locating" ? "Acquiring Precision GPS..." : "Searching Regional Trauma Units..."}
               </h3>
-              <p style={{ color: "var(--color-gray-500)", fontSize: "var(--text-sm)" }}>
-                Please hold on — this only takes a few seconds
+              <p className="font-body-sm text-on-surface-variant">
+                Matching available ICU beds within 15 km radius...
               </p>
             </div>
           )}
 
-          {/* Found / Dispatched */}
+          {/* Result Card */}
           {(step === "found" || step === "dispatched") && nearestHospital && (
-            <div
-              id="sos-result-card"
-              style={{
-                background: "white",
-                borderRadius: "var(--radius-2xl)",
-                boxShadow: "var(--shadow-xl)",
-                overflow: "hidden",
-                marginBottom: "var(--space-6)",
-                border: "3px solid var(--color-emergency)",
-              }}
-              className="animate-fade-in"
-            >
-              {/* Header bar */}
-              <div style={{ background: "var(--color-emergency)", padding: "var(--space-4) var(--space-6)", color: "white" }}>
-                <div style={{ fontSize: "var(--text-sm)", fontWeight: 600, opacity: 0.9, marginBottom: "4px" }}>
-                  {step === "dispatched" ? "✅ ALERT DISPATCHED" : "🏥 NEAREST HOSPITAL FOUND"}
+            <div className="w-full bg-surface-container-lowest rounded-2xl border-2 border-error overflow-hidden shadow-lg animate-fadeIn">
+              <div className="bg-error text-white p-space-md flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-2xl">verified</span>
+                  <span className="font-headline-md font-bold uppercase tracking-wider">
+                    {step === "dispatched" ? "Alert Dispatched" : "Nearest Trauma Center"}
+                  </span>
                 </div>
-                <h2 style={{ fontSize: "var(--text-2xl)", fontFamily: "var(--font-heading)", margin: 0 }}>
-                  {nearestHospital.hospital_name}
-                </h2>
+                <span className="px-2.5 py-0.5 rounded-full bg-white/20 font-label-sm font-semibold">
+                  {nearestHospital.beds_icu_available} ICU Beds Free
+                </span>
               </div>
 
-              {/* Details */}
-              <div style={{ padding: "var(--space-6)" }}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-4)", marginBottom: "var(--space-5)" }}>
-                  <div style={{ textAlign: "center", padding: "var(--space-4)", background: "var(--color-emergency-bg)", borderRadius: "var(--radius-lg)" }}>
-                    <div style={{ fontSize: "var(--text-2xl)", fontWeight: 900, color: "var(--color-emergency)" }}>
+              <div className="p-space-lg flex flex-col gap-space-md">
+                <div>
+                  <h2 className="font-headline-xl text-headline-xl text-primary font-bold">
+                    {nearestHospital.hospital_name}
+                  </h2>
+                  <p className="font-body-md text-on-surface-variant flex items-center gap-1.5 mt-1">
+                    <span className="material-symbols-outlined text-secondary text-base">location_on</span>
+                    <span>{nearestHospital.hospital_address}</span>
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-space-sm">
+                  <div className="p-space-md rounded-xl bg-error-container/40 border border-error/20 flex flex-col items-center text-center">
+                    <span className="font-metric-xl text-error font-extrabold">
                       {nearestHospital.estimated_arrival_minutes} min
-                    </div>
-                    <div style={{ fontSize: "var(--text-xs)", color: "var(--color-gray-600)" }}>Est. Arrival Time</div>
+                    </span>
+                    <span className="font-label-sm text-on-surface-variant font-medium">Estimated Arrival</span>
                   </div>
-                  <div style={{ textAlign: "center", padding: "var(--space-4)", background: "var(--color-gray-50)", borderRadius: "var(--radius-lg)" }}>
-                    <div style={{ fontSize: "var(--text-2xl)", fontWeight: 900, color: "var(--color-gray-700)" }}>
+                  <div className="p-space-md rounded-xl bg-surface-container-low border border-surface-container-high flex flex-col items-center text-center">
+                    <span className="font-metric-xl text-primary font-extrabold">
                       {nearestHospital.distance_km} km
-                    </div>
-                    <div style={{ fontSize: "var(--text-xs)", color: "var(--color-gray-600)" }}>Distance</div>
+                    </span>
+                    <span className="font-label-sm text-on-surface-variant font-medium">Distance via Road</span>
                   </div>
                 </div>
 
-                <div style={{ marginBottom: "var(--space-4)" }}>
-                  <div style={{ fontSize: "var(--text-sm)", color: "var(--color-gray-600)", marginBottom: "4px" }}>📍 Address</div>
-                  <div style={{ fontSize: "var(--text-sm)", fontWeight: 600 }}>{nearestHospital.hospital_address}</div>
-                </div>
-
-                <div style={{ display: "flex", gap: "var(--space-3)" }}>
+                <div className="flex gap-space-sm pt-space-xs">
                   <a
                     href={`tel:${nearestHospital.hospital_emergency_phone || nearestHospital.hospital_phone}`}
-                    id="sos-call-btn"
-                    style={{
-                      flex: 1,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "8px",
-                      background: "var(--color-emergency)",
-                      color: "white",
-                      padding: "14px",
-                      borderRadius: "var(--radius-xl)",
-                      fontWeight: 700,
-                      fontSize: "var(--text-base)",
-                      textDecoration: "none",
-                    }}
+                    className="flex-1 py-3.5 px-space-md rounded-lg bg-error hover:opacity-95 text-white font-label-md font-bold text-center flex items-center justify-center gap-2 shadow-sm transition-all"
                   >
-                    📞 Call Emergency
+                    <span className="material-symbols-outlined text-xl">call</span>
+                    <span>Call Trauma Desk</span>
                   </a>
                   <a
-                    href={`https://maps.google.com/?q=${nearestHospital.hospital_address}`}
+                    href={`https://maps.google.com/?q=${encodeURIComponent(nearestHospital.hospital_address)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    id="sos-directions-btn"
-                    className="btn btn-outline"
-                    style={{ padding: "14px 20px", fontSize: "var(--text-sm)" }}
+                    className="flex-1 py-3.5 px-space-md rounded-lg bg-surface-container-low hover:bg-surface-container-high text-on-surface font-label-md font-semibold text-center border border-outline-variant/30 flex items-center justify-center gap-2 transition-colors"
                   >
-                    🗺️ Directions
+                    <span className="material-symbols-outlined text-xl">navigation</span>
+                    <span>Navigate</span>
                   </a>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Emergency Numbers */}
-          <div style={{ background: "white", borderRadius: "var(--radius-xl)", padding: "var(--space-5)", boxShadow: "var(--shadow-card)" }}>
-            <h3 style={{ fontSize: "var(--text-base)", fontWeight: 700, marginBottom: "var(--space-4)" }}>
-              📞 Emergency Helplines
+          {/* Emergency Helplines Grid */}
+          <div className="w-full bg-surface-container-lowest p-space-lg rounded-2xl border border-surface-container-high flex flex-col gap-space-md shadow-xs">
+            <h3 className="font-headline-md text-headline-md text-primary font-bold flex items-center gap-2">
+              <span className="material-symbols-outlined text-error">phone_in_talk</span>
+              <span>Direct Emergency Lines</span>
             </h3>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-3)" }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-space-sm">
               {emergencyNumbers.map((n) => (
                 <a
                   key={n.number}
                   href={`tel:${n.number}`}
-                  id={`emergency-call-${n.number}`}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "10px",
-                    padding: "var(--space-3) var(--space-4)",
-                    background: "var(--color-gray-50)",
-                    borderRadius: "var(--radius-lg)",
-                    border: "1px solid var(--surface-border)",
-                    textDecoration: "none",
-                    transition: "all 150ms",
-                  }}
-                  onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "var(--color-emergency-bg)")}
-                  onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "var(--color-gray-50)")}
+                  className="p-space-md rounded-xl bg-surface-container-low hover:bg-error-container/40 border border-surface-container-high/60 transition-colors flex items-center justify-between"
                 >
-                  <span style={{ fontSize: "1.5rem" }}>{n.emoji}</span>
-                  <div>
-                    <div style={{ fontSize: "var(--text-xs)", color: "var(--color-gray-500)" }}>{n.label}</div>
-                    <div style={{ fontSize: "var(--text-base)", fontWeight: 800, color: "var(--color-emergency)", fontFamily: "var(--font-heading)" }}>
-                      {n.number}
+                  <div className="flex items-center gap-space-sm">
+                    <span className="material-symbols-outlined text-error text-2xl">{n.icon}</span>
+                    <div>
+                      <div className="font-label-sm text-on-surface-variant">{n.label}</div>
+                      <div className="font-headline-md text-error font-bold">{n.number}</div>
                     </div>
                   </div>
+                  <span className="material-symbols-outlined text-outline">call</span>
                 </a>
               ))}
             </div>
           </div>
         </div>
       </main>
+
+      <Footer />
     </>
   );
 }

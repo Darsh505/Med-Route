@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
@@ -36,18 +37,24 @@ export default function LoginPage() {
       if (res.ok) {
         const data = await res.json();
         localStorage.setItem("medroute_token", data.access_token);
-        localStorage.setItem("medroute_user", JSON.stringify({ email, role: email.includes("admin") ? "admin" : "patient" }));
-        setSuccessMessage("Login successful! Redirecting...");
+        localStorage.setItem(
+          "medroute_user",
+          JSON.stringify({ email, role: email.includes("admin") ? "admin" : "patient" })
+        );
+        setSuccessMessage("Authentication successful. Redirecting to dashboard...");
         setTimeout(() => router.push("/"), 800);
       } else {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail?.message || "Invalid credentials");
+        throw new Error(err.detail?.message || "Invalid credentials provided");
       }
     } catch {
-      // Fallback demo simulation
+      // Demo session fallback
       if (password.length >= 6) {
         localStorage.setItem("medroute_token", "demo_jwt_token_" + Date.now());
-        localStorage.setItem("medroute_user", JSON.stringify({ email, role: email.includes("admin") ? "admin" : "patient" }));
+        localStorage.setItem(
+          "medroute_user",
+          JSON.stringify({ email, role: email.includes("admin") ? "admin" : "patient" })
+        );
         setSuccessMessage("Logged in via Demo Session. Redirecting...");
         setTimeout(() => router.push("/"), 800);
       } else {
@@ -72,79 +79,38 @@ export default function LoginPage() {
     <>
       <Navbar />
 
-      <main
-        style={{
-          minHeight: "calc(100vh - 140px)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "linear-gradient(135deg, var(--color-gray-50) 0%, var(--color-primary-50) 100%)",
-          padding: "var(--space-8) var(--space-4)",
-        }}
-      >
-        <div
-          style={{
-            background: "var(--color-white)",
-            borderRadius: "var(--radius-2xl)",
-            boxShadow: "var(--shadow-xl)",
-            border: "1px solid var(--surface-border)",
-            width: "100%",
-            maxWidth: "440px",
-            padding: "var(--space-8)",
-          }}
-        >
-          {/* Logo & Header */}
-          <div style={{ textAlign: "center", marginBottom: "var(--space-6)" }}>
-            <div
-              style={{
-                width: "48px",
-                height: "48px",
-                borderRadius: "var(--radius-xl)",
-                background: "linear-gradient(135deg, var(--color-primary-600), var(--color-accent-500))",
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "24px",
-                marginBottom: "var(--space-3)",
-              }}
-            >
-              🏥
+      <main className="w-full pt-16 bg-background min-h-[calc(100vh-4rem)] flex items-center justify-center py-space-xl px-gutter">
+        <div className="w-full max-w-md bg-surface-container-lowest rounded-2xl border border-surface-container-high/70 shadow-sm p-space-lg flex flex-col gap-space-md">
+          {/* Header */}
+          <div className="text-center flex flex-col items-center gap-1">
+            <div className="w-12 h-12 rounded-xl bg-primary text-on-primary flex items-center justify-center mb-1 shadow-xs">
+              <span className="material-symbols-outlined text-2xl">local_hospital</span>
             </div>
-            <h1 style={{ fontSize: "var(--text-2xl)", fontWeight: 900, color: "var(--color-gray-900)" }}>
-              Welcome to MedRoute
+            <h1 className="font-headline-xl text-headline-xl text-primary font-bold tracking-tight">
+              Sign In to MedRoute
             </h1>
-            <p style={{ fontSize: "var(--text-sm)", color: "var(--color-gray-500)", marginTop: "4px" }}>
-              Sign in to manage reviews, save comparisons, and access hospital admin tools.
+            <p className="font-body-sm text-on-surface-variant">
+              Access hospital comparisons, review submissions, and registry administration.
             </p>
           </div>
 
           {/* Quick Demo Fillers */}
-          <div
-            style={{
-              background: "var(--color-gray-50)",
-              border: "1px dashed var(--surface-border)",
-              borderRadius: "var(--radius-lg)",
-              padding: "var(--space-3)",
-              marginBottom: "var(--space-6)",
-            }}
-          >
-            <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--color-gray-500)", marginBottom: "6px" }}>
-              ⚡ 1-CLICK DEMO ACCOUNTS
-            </div>
-            <div style={{ display: "flex", gap: "var(--space-2)" }}>
+          <div className="bg-surface-container-low rounded-xl p-space-sm border border-surface-container-high/60 flex flex-col gap-1.5">
+            <span className="font-label-sm uppercase tracking-wider text-outline font-semibold">
+              ⚡ 1-Click Demo Accounts
+            </span>
+            <div className="flex gap-2">
               <button
                 type="button"
                 onClick={fillDemoAdmin}
-                className="btn btn-outline"
-                style={{ flex: 1, fontSize: "11px", padding: "6px" }}
+                className="flex-1 py-1.5 px-space-sm bg-surface-container-lowest hover:bg-surface-container-high rounded-md font-label-sm text-primary font-semibold border border-outline-variant/30 transition-colors"
               >
                 Fill Admin
               </button>
               <button
                 type="button"
                 onClick={fillDemoPatient}
-                className="btn btn-outline"
-                style={{ flex: 1, fontSize: "11px", padding: "6px" }}
+                className="flex-1 py-1.5 px-space-sm bg-surface-container-lowest hover:bg-surface-container-high rounded-md font-label-sm text-primary font-semibold border border-outline-variant/30 transition-colors"
               >
                 Fill Patient
               </button>
@@ -152,67 +118,39 @@ export default function LoginPage() {
           </div>
 
           {errorMessage && (
-            <div
-              style={{
-                background: "var(--color-emergency-bg)",
-                color: "var(--color-emergency)",
-                padding: "10px 14px",
-                borderRadius: "var(--radius-md)",
-                fontSize: "var(--text-xs)",
-                fontWeight: 600,
-                marginBottom: "var(--space-4)",
-              }}
-            >
-              ⚠️ {errorMessage}
+            <div className="bg-error-container text-on-error-container px-3.5 py-2.5 rounded-lg font-body-sm font-medium flex items-center gap-2 border border-error/20">
+              <span className="material-symbols-outlined text-error text-base">warning</span>
+              <span>{errorMessage}</span>
             </div>
           )}
 
           {successMessage && (
-            <div
-              style={{
-                background: "var(--color-success-bg)",
-                color: "var(--color-success)",
-                padding: "10px 14px",
-                borderRadius: "var(--radius-md)",
-                fontSize: "var(--text-xs)",
-                fontWeight: 600,
-                marginBottom: "var(--space-4)",
-              }}
-            >
-              ✅ {successMessage}
+            <div className="bg-secondary-container text-on-secondary-container px-3.5 py-2.5 rounded-lg font-body-sm font-semibold flex items-center gap-2">
+              <span className="material-symbols-outlined text-secondary text-base">check_circle</span>
+              <span>{successMessage}</span>
             </div>
           )}
 
-          <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
-            <div>
-              <label style={{ fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--color-gray-700)", display: "block", marginBottom: "6px" }}>
-                Email Address
-              </label>
+          <form onSubmit={handleLogin} className="flex flex-col gap-space-sm">
+            <div className="flex flex-col gap-1">
+              <label className="font-label-sm font-semibold text-on-surface">Email Address</label>
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@example.com"
-                style={{
-                  width: "100%",
-                  padding: "10px 14px",
-                  borderRadius: "var(--radius-lg)",
-                  border: "1px solid var(--surface-border)",
-                  fontSize: "var(--text-sm)",
-                }}
+                className="w-full bg-surface-container-low rounded-lg px-3.5 py-2.5 font-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:bg-surface-container-lowest border border-transparent focus:border-primary transition-all"
               />
             </div>
 
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
-                <label style={{ fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--color-gray-700)" }}>
-                  Password
-                </label>
+            <div className="flex flex-col gap-1">
+              <div className="flex justify-between items-center">
+                <label className="font-label-sm font-semibold text-on-surface">Password</label>
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  style={{ border: "none", background: "none", fontSize: "11px", color: "var(--color-primary-600)", cursor: "pointer" }}
+                  className="font-label-sm text-primary hover:underline"
                 >
                   {showPassword ? "Hide" : "Show"}
                 </button>
@@ -223,31 +161,31 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                style={{
-                  width: "100%",
-                  padding: "10px 14px",
-                  borderRadius: "var(--radius-lg)",
-                  border: "1px solid var(--surface-border)",
-                  fontSize: "var(--text-sm)",
-                }}
+                className="w-full bg-surface-container-low rounded-lg px-3.5 py-2.5 font-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:bg-surface-container-lowest border border-transparent focus:border-primary transition-all"
               />
             </div>
 
             <button
               type="submit"
               disabled={isLoading}
-              className="btn btn-primary"
-              style={{ width: "100%", padding: "12px", fontSize: "var(--text-sm)", fontWeight: 700, marginTop: "var(--space-2)" }}
+              className="mt-space-xs w-full py-3 px-space-md rounded-lg bg-primary hover:bg-primary-container text-on-primary font-label-md font-bold shadow-sm transition-all flex items-center justify-center gap-2"
             >
-              {isLoading ? "Signing in..." : "Sign In to MedRoute"}
+              {isLoading ? (
+                <>
+                  <span className="material-symbols-outlined text-base animate-spin">sync</span>
+                  <span>Signing in...</span>
+                </>
+              ) : (
+                <span>Sign In to MedRoute</span>
+              )}
             </button>
           </form>
 
-          <div style={{ textAlign: "center", marginTop: "var(--space-6)", fontSize: "var(--text-xs)", color: "var(--color-gray-500)" }}>
+          <div className="text-center font-body-sm text-on-surface-variant pt-2 border-t border-surface-container-high/50">
             Don&apos;t have an account?{" "}
-            <a href="/auth/register" style={{ color: "var(--color-primary-600)", fontWeight: 700, textDecoration: "none" }}>
+            <Link href="/auth/register" className="text-primary font-semibold hover:underline">
               Create Account
-            </a>
+            </Link>
           </div>
         </div>
       </main>

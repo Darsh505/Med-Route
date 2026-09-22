@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, use } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import HospitalMap from "@/components/HospitalMap";
@@ -86,7 +86,6 @@ interface HospitalData {
 export default function HospitalDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = use(params);
   const slug = resolvedParams.slug;
-  const router = useRouter();
 
   const [hospital, setHospital] = useState<HospitalData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -121,21 +120,21 @@ export default function HospitalDetailPage({ params }: { params: Promise<{ slug:
       if (res.ok) {
         const json = await res.json();
         const data = json.data;
-        // Transform backend response
         setHospital({
           ...data,
-          procedures: data.procedures?.map((p: any) => ({
-            name: p.procedure?.name || "Medical Procedure",
-            category: p.procedure?.category || "General",
-            cost_min: p.cost_min || 0,
-            cost_max: p.cost_max || 0,
-            cost_avg: p.cost_avg || 0,
-            pmjay_covered: p.pmjay_covered || false,
-            pmjay_package_rate: p.pmjay_package_rate,
-            success_rate: p.success_rate || 92,
-            wait_time_days: p.wait_time_days || 3,
-            volume_per_year: p.volume_per_year || 150,
-          })) || getMockProcedures(),
+          procedures:
+            data.procedures?.map((p: any) => ({
+              name: p.procedure?.name || "Medical Procedure",
+              category: p.procedure?.category || "General",
+              cost_min: p.cost_min || 0,
+              cost_max: p.cost_max || 0,
+              cost_avg: p.cost_avg || 0,
+              pmjay_covered: p.pmjay_covered || false,
+              pmjay_package_rate: p.pmjay_package_rate,
+              success_rate: p.success_rate || 92,
+              wait_time_days: p.wait_time_days || 3,
+              volume_per_year: p.volume_per_year || 150,
+            })) || getMockProcedures(),
           facilities: data.facilities || getMockFacilities(),
           departments: data.departments || getMockDepartments(),
           reviews: getMockReviews(),
@@ -155,15 +154,15 @@ export default function HospitalDetailPage({ params }: { params: Promise<{ slug:
     try {
       const saved = localStorage.getItem("medroute_compare_ids");
       let list: string[] = saved ? JSON.parse(saved) : [];
-      if (list.includes(hospital.id)) {
-        list = list.filter((id) => id !== hospital.id);
+      if (list.includes(hospital.id) || list.includes(hospital.slug)) {
+        list = list.filter((id) => id !== hospital.id && id !== hospital.slug);
         setIsInCompare(false);
       } else {
         if (list.length >= 4) {
           alert("You can compare up to 4 hospitals at a time.");
           return;
         }
-        list.push(hospital.id);
+        list.push(hospital.slug);
         setIsInCompare(true);
       }
       localStorage.setItem("medroute_compare_ids", JSON.stringify(list));
@@ -216,11 +215,11 @@ export default function HospitalDetailPage({ params }: { params: Promise<{ slug:
     return (
       <>
         <Navbar />
-        <div style={{ minHeight: "80vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "48px", animation: "pulse 1.5s infinite" }}>🏥</div>
-            <div style={{ marginTop: "var(--space-4)", color: "var(--color-gray-600)", fontWeight: 600 }}>
-              Loading hospital details...
+        <div className="min-h-[80vh] flex items-center justify-center bg-background">
+          <div className="text-center flex flex-col items-center gap-3">
+            <span className="material-symbols-outlined text-primary text-5xl animate-spin">sync</span>
+            <div className="font-body-md text-on-surface-variant font-medium">
+              Loading hospital telemetry and tariffs...
             </div>
           </div>
         </div>
@@ -233,15 +232,20 @@ export default function HospitalDetailPage({ params }: { params: Promise<{ slug:
     return (
       <>
         <Navbar />
-        <div style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ textAlign: "center", maxWidth: "480px", padding: "var(--space-6)" }}>
-            <h2 style={{ fontSize: "var(--text-2xl)", color: "var(--color-gray-900)" }}>Hospital Not Found</h2>
-            <p style={{ color: "var(--color-gray-600)", marginTop: "var(--space-2)" }}>
-              We could not find the hospital you requested. Please check the URL or search again.
+        <div className="min-h-[60vh] flex items-center justify-center bg-background px-gutter">
+          <div className="text-center max-w-md p-space-lg bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/30">
+            <span className="material-symbols-outlined text-error text-4xl mb-2">domain_disabled</span>
+            <h2 className="font-headline-lg text-headline-lg text-on-surface font-bold">Hospital Not Found</h2>
+            <p className="font-body-md text-on-surface-variant mt-2">
+              We could not find the facility you requested. Please verify the URL or return to search.
             </p>
-            <a href="/search" className="btn btn-primary" style={{ marginTop: "var(--space-4)", display: "inline-block" }}>
-              Back to Search
-            </a>
+            <Link
+              href="/search"
+              className="mt-space-md inline-flex items-center gap-2 px-space-md py-2.5 rounded-lg bg-primary text-on-primary font-label-md shadow-sm hover:bg-primary-container transition-all"
+            >
+              <span className="material-symbols-outlined text-base">search</span>
+              <span>Back to Directory</span>
+            </Link>
           </div>
         </div>
         <Footer />
@@ -249,11 +253,12 @@ export default function HospitalDetailPage({ params }: { params: Promise<{ slug:
     );
   }
 
-  // Filter procedures
   const filteredProcedures = hospital.procedures.filter((p) => {
-    const matchesSearch = p.name.toLowerCase().includes(procedureSearch.toLowerCase()) ||
-                          p.category.toLowerCase().includes(procedureSearch.toLowerCase());
-    const matchesCategory = selectedCategory === "all" || p.category.toLowerCase() === selectedCategory.toLowerCase();
+    const matchesSearch =
+      p.name.toLowerCase().includes(procedureSearch.toLowerCase()) ||
+      p.category.toLowerCase().includes(procedureSearch.toLowerCase());
+    const matchesCategory =
+      selectedCategory === "all" || p.category.toLowerCase() === selectedCategory.toLowerCase();
     return matchesSearch && matchesCategory;
   });
 
@@ -263,83 +268,111 @@ export default function HospitalDetailPage({ params }: { params: Promise<{ slug:
     <>
       <Navbar />
 
-      <main style={{ background: "var(--color-gray-50)", minHeight: "100vh", paddingBottom: "var(--space-16)" }}>
-        {/* Breadcrumbs */}
-        <div style={{ background: "var(--color-white)", borderBottom: "1px solid var(--surface-border)" }}>
-          <div className="container" style={{ padding: "var(--space-3) 0", display: "flex", gap: "var(--space-2)", fontSize: "var(--text-xs)", color: "var(--color-gray-500)" }}>
-            <a href="/" style={{ color: "var(--color-gray-500)", textDecoration: "none" }}>Home</a>
+      <main className="w-full pt-16 bg-background min-h-[calc(100vh-4rem)] pb-space-xl">
+        {/* Breadcrumb Navigation */}
+        <div className="w-full bg-surface-container-lowest border-b border-surface-container-high/60">
+          <div className="max-w-7xl mx-auto px-gutter py-2.5 flex items-center gap-2 font-label-sm text-label-sm text-on-surface-variant">
+            <Link href="/" className="hover:text-primary transition-colors">
+              Home
+            </Link>
             <span>/</span>
-            <a href="/search" style={{ color: "var(--color-gray-500)", textDecoration: "none" }}>Hospitals</a>
+            <Link href="/search" className="hover:text-primary transition-colors">
+              Hospitals
+            </Link>
             <span>/</span>
-            <span style={{ color: "var(--color-gray-900)", fontWeight: 600 }}>{hospital.name}</span>
+            <span className="text-on-surface font-semibold">{hospital.name}</span>
           </div>
         </div>
 
-        {/* Hospital Hero Header */}
-        <div style={{ background: "var(--color-white)", borderBottom: "1px solid var(--surface-border)", padding: "var(--space-8) 0" }}>
-          <div className="container">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "var(--space-6)", flexWrap: "wrap" }}>
-              <div style={{ flex: 1, minWidth: "300px" }}>
+        {/* Hospital Hero Section */}
+        <section className="w-full bg-surface-container-lowest border-b border-surface-container-high/60 py-space-xl px-gutter">
+          <div className="max-w-7xl mx-auto flex flex-col gap-space-lg">
+            <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-space-lg">
+              <div className="flex flex-col gap-space-xs max-w-3xl">
                 {/* Badges */}
-                <div style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap", marginBottom: "var(--space-3)" }}>
-                  <span className={`badge badge-${hospital.type === "government" ? "government" : "nabh"}`} style={{ textTransform: "capitalize" }}>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-full bg-surface-container-high text-primary font-label-sm uppercase tracking-wider font-semibold">
                     {hospital.type} Hospital
                   </span>
-                  {hospital.accreditation && <span className="badge badge-nabh">{hospital.accreditation} Certified</span>}
-                  {hospital.is_pmjay_empanelled && <span className="badge badge-pmjay">PMJAY Empanelled ✓</span>}
-                  {hospital.is_trauma_center && <span className="badge badge-emergency">🚨 {hospital.trauma_level || "Level 1"} Trauma Center</span>}
-                  <span className="provenance-badge provenance-simulated">
-                    {hospital.data_source_label === "SIMULATED" ? "⚪ Verified Benchmark Data" : "🟢 Government Verified"}
+                  {hospital.accreditation && (
+                    <span className="px-2.5 py-0.5 rounded-full bg-surface-container-high text-secondary font-label-sm font-semibold">
+                      {hospital.accreditation} Certified
+                    </span>
+                  )}
+                  {hospital.is_pmjay_empanelled && (
+                    <span className="px-2.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm font-semibold flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[14px]">check_circle</span>
+                      PMJAY Empanelled
+                    </span>
+                  )}
+                  {hospital.is_trauma_center && (
+                    <span className="px-2.5 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-sm font-semibold flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[14px]">emergency</span>
+                      {hospital.trauma_level || "Level 1"} Trauma Center
+                    </span>
+                  )}
+                  <span className="px-2.5 py-0.5 rounded-full bg-surface-container-low text-on-surface-variant font-label-sm">
+                    {hospital.data_source_label === "SIMULATED" ? "Verified Benchmark" : "MoHFW Verified"}
                   </span>
                 </div>
 
-                <h1 style={{ fontSize: "var(--text-3xl)", fontWeight: 800, color: "var(--color-gray-900)", marginBottom: "var(--space-2)" }}>
+                <h1 className="font-display-lg text-display-lg text-primary tracking-tight font-bold mt-1">
                   {hospital.name}
                 </h1>
 
-                <p style={{ fontSize: "var(--text-base)", color: "var(--color-gray-600)", display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
-                  📍 {hospital.address}, {hospital.city}, {hospital.state} — {hospital.pincode}
+                <p className="font-body-md text-body-md text-on-surface-variant flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-secondary text-base">location_on</span>
+                  <span>
+                    {hospital.address}, {hospital.city}, {hospital.state} — {hospital.pincode}
+                  </span>
                 </p>
 
-                {/* Rating line */}
-                <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", marginTop: "var(--space-4)" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "4px", background: "#FEF3C7", padding: "4px 12px", borderRadius: "20px" }}>
-                    <span style={{ color: "#F59E0B", fontSize: "var(--text-base)" }}>⭐</span>
-                    <span style={{ fontSize: "var(--text-base)", fontWeight: 800, color: "#92400E" }}>{hospital.overall_rating}</span>
-                    <span style={{ fontSize: "var(--text-xs)", color: "#B45309" }}>({hospital.total_reviews} reviews)</span>
+                {/* Rating & Availability */}
+                <div className="flex items-center gap-space-md pt-2 flex-wrap">
+                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-high">
+                    <span className="text-amber-500 font-bold">★</span>
+                    <span className="font-headline-md text-primary font-bold">{hospital.overall_rating}</span>
+                    <span className="font-label-sm text-on-surface-variant">({hospital.total_reviews} reviews)</span>
                   </div>
-                  <span style={{ color: "var(--color-gray-300)" }}>•</span>
-                  <span style={{ fontSize: "var(--text-sm)", color: "var(--color-success)", fontWeight: 600 }}>
-                    {hospital.is_emergency_24x7 ? "🟢 24x7 Emergency Active" : "🟡 Emergency Limited"}
-                  </span>
+                  <span className="text-outline-variant">•</span>
+                  <div className="flex items-center gap-1.5 font-label-sm text-secondary font-semibold">
+                    <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
+                    <span>{hospital.is_emergency_24x7 ? "24x7 Emergency Active" : "Emergency Limited"}</span>
+                  </div>
                 </div>
               </div>
 
-              {/* Actions Box */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)", width: "100%", maxWidth: "340px" }}>
+              {/* Action Buttons */}
+              <div className="flex flex-col gap-space-sm w-full lg:w-72 shrink-0">
                 {hospital.emergency_phone && (
                   <a
                     href={`tel:${hospital.emergency_phone}`}
-                    className="sos-btn"
-                    style={{ textAlign: "center", textDecoration: "none", fontSize: "var(--text-sm)", padding: "12px" }}
+                    className="w-full py-3 px-space-md rounded-lg bg-tertiary text-on-tertiary font-label-md font-bold text-center flex items-center justify-center gap-2 shadow-sm hover:opacity-95 transition-all"
                   >
-                    🚨 Emergency: {hospital.emergency_phone}
+                    <span className="material-symbols-outlined text-base">emergency</span>
+                    <span>Emergency: {hospital.emergency_phone}</span>
                   </a>
                 )}
-                <div style={{ display: "flex", gap: "var(--space-2)" }}>
+                <div className="flex gap-2">
                   <a
                     href={`tel:${hospital.phone}`}
-                    className="btn btn-outline"
-                    style={{ flex: 1, textAlign: "center", textDecoration: "none", fontSize: "var(--text-sm)" }}
+                    className="flex-1 py-2.5 px-space-sm rounded-lg bg-surface-container-low hover:bg-surface-container-high text-on-surface font-label-md font-medium text-center border border-outline-variant/30 flex items-center justify-center gap-1.5 transition-colors"
                   >
-                    📞 Call Line
+                    <span className="material-symbols-outlined text-base">call</span>
+                    <span>Call Line</span>
                   </a>
                   <button
                     onClick={toggleCompare}
-                    className={`btn ${isInCompare ? "btn-accent" : "btn-outline"}`}
-                    style={{ flex: 1, fontSize: "var(--text-sm)" }}
+                    className={`flex-1 py-2.5 px-space-sm rounded-lg font-label-md font-semibold text-center border transition-all flex items-center justify-center gap-1.5 ${
+                      isInCompare
+                        ? "bg-secondary-container text-on-secondary-container border-secondary"
+                        : "bg-surface-container-lowest text-primary border-outline-variant/40 hover:bg-surface-container-low"
+                    }`}
                   >
-                    {isInCompare ? "✓ Added to Compare" : "+ Compare"}
+                    <span className="material-symbols-outlined text-base">
+                      {isInCompare ? "check" : "compare_arrows"}
+                    </span>
+                    <span>{isInCompare ? "Added" : "Compare"}</span>
                   </button>
                 </div>
                 {hospital.website && (
@@ -347,62 +380,46 @@ export default function HospitalDetailPage({ params }: { params: Promise<{ slug:
                     href={hospital.website}
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{ fontSize: "var(--text-xs)", color: "var(--color-primary-600)", textAlign: "center", textDecoration: "none" }}
+                    className="font-label-sm text-primary hover:underline text-center flex items-center justify-center gap-1 mt-1"
                   >
-                    Official Portal ↗
+                    <span>Official Portal</span>
+                    <span className="material-symbols-outlined text-xs">open_in_new</span>
                   </a>
                 )}
               </div>
             </div>
 
-            {/* Telemetry Stat Cards */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
-                gap: "var(--space-3)",
-                marginTop: "var(--space-8)",
-              }}
-            >
-              <div style={{ background: "var(--color-gray-50)", padding: "var(--space-4)", borderRadius: "var(--radius-xl)", textAlign: "center", border: "1px solid var(--surface-border)" }}>
-                <div style={{ fontSize: "var(--text-2xl)", fontWeight: 900, color: "var(--color-success)" }}>
-                  {hospital.beds_icu_available}
-                </div>
-                <div style={{ fontSize: "var(--text-xs)", color: "var(--color-gray-500)", fontWeight: 600 }}>ICU Available</div>
+            {/* Telemetry Stat Cards Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-space-sm pt-space-md border-t border-surface-container-high/60">
+              <div className="p-space-md rounded-xl bg-surface-container-low border border-surface-container-high/50 flex flex-col items-center text-center">
+                <span className="font-metric-xl text-secondary font-extrabold">{hospital.beds_icu_available}</span>
+                <span className="font-label-sm text-on-surface-variant font-medium mt-1">ICU Available</span>
               </div>
-              <div style={{ background: "var(--color-gray-50)", padding: "var(--space-4)", borderRadius: "var(--radius-xl)", textAlign: "center", border: "1px solid var(--surface-border)" }}>
-                <div style={{ fontSize: "var(--text-2xl)", fontWeight: 800, color: "var(--color-gray-700)" }}>
-                  {hospital.beds_icu}
-                </div>
-                <div style={{ fontSize: "var(--text-xs)", color: "var(--color-gray-500)", fontWeight: 600 }}>Total ICU Beds</div>
+              <div className="p-space-md rounded-xl bg-surface-container-low border border-surface-container-high/50 flex flex-col items-center text-center">
+                <span className="font-metric-xl text-primary font-extrabold">{hospital.beds_icu}</span>
+                <span className="font-label-sm text-on-surface-variant font-medium mt-1">Total ICU Beds</span>
               </div>
-              <div style={{ background: "var(--color-gray-50)", padding: "var(--space-4)", borderRadius: "var(--radius-xl)", textAlign: "center", border: "1px solid var(--surface-border)" }}>
-                <div style={{ fontSize: "var(--text-2xl)", fontWeight: 800, color: "var(--color-gray-700)" }}>
-                  {hospital.beds_total}
-                </div>
-                <div style={{ fontSize: "var(--text-xs)", color: "var(--color-gray-500)", fontWeight: 600 }}>Total Capacity</div>
+              <div className="p-space-md rounded-xl bg-surface-container-low border border-surface-container-high/50 flex flex-col items-center text-center">
+                <span className="font-metric-xl text-primary font-extrabold">{hospital.beds_total}</span>
+                <span className="font-label-sm text-on-surface-variant font-medium mt-1">Total Capacity</span>
               </div>
-              <div style={{ background: "var(--color-gray-50)", padding: "var(--space-4)", borderRadius: "var(--radius-xl)", textAlign: "center", border: "1px solid var(--surface-border)" }}>
-                <div style={{ fontSize: "var(--text-2xl)", fontWeight: 800, color: "var(--color-gray-700)" }}>
-                  {hospital.beds_ventilator}
-                </div>
-                <div style={{ fontSize: "var(--text-xs)", color: "var(--color-gray-500)", fontWeight: 600 }}>Ventilators</div>
+              <div className="p-space-md rounded-xl bg-surface-container-low border border-surface-container-high/50 flex flex-col items-center text-center">
+                <span className="font-metric-xl text-primary font-extrabold">{hospital.beds_ventilator}</span>
+                <span className="font-label-sm text-on-surface-variant font-medium mt-1">Ventilators</span>
               </div>
-              <div style={{ background: "var(--color-gray-50)", padding: "var(--space-4)", borderRadius: "var(--radius-xl)", textAlign: "center", border: "1px solid var(--surface-border)" }}>
-                <div style={{ fontSize: "var(--text-2xl)", fontWeight: 800, color: "var(--color-gray-700)" }}>
-                  {hospital.beds_nicu}
-                </div>
-                <div style={{ fontSize: "var(--text-xs)", color: "var(--color-gray-500)", fontWeight: 600 }}>NICU Beds</div>
+              <div className="p-space-md rounded-xl bg-surface-container-low border border-surface-container-high/50 flex flex-col items-center text-center col-span-2 sm:col-span-1">
+                <span className="font-metric-xl text-primary font-extrabold">{hospital.beds_nicu}</span>
+                <span className="font-label-sm text-on-surface-variant font-medium mt-1">NICU Beds</span>
               </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Content Navigation Tabs */}
-        <div className="container" style={{ marginTop: "var(--space-6)" }}>
-          <div style={{ display: "flex", gap: "var(--space-2)", borderBottom: "2px solid var(--surface-border)", paddingBottom: "var(--space-2)", overflowX: "auto" }}>
+        {/* Tabbed Content Navigation */}
+        <div className="max-w-7xl mx-auto px-gutter mt-space-lg flex flex-col gap-space-lg">
+          <div className="flex gap-2 border-b border-surface-container-high pb-2 overflow-x-auto">
             {[
-              { id: "procedures", label: `Procedures & Pricing (${hospital.procedures.length})` },
+              { id: "procedures", label: `Procedures & Tariffs (${hospital.procedures.length})` },
               { id: "facilities", label: `Facilities & Tech (${hospital.facilities.length})` },
               { id: "departments", label: `Departments (${hospital.departments.length})` },
               { id: "reviews", label: `Patient Reviews (${hospital.reviews.length})` },
@@ -410,61 +427,42 @@ export default function HospitalDetailPage({ params }: { params: Promise<{ slug:
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                style={{
-                  padding: "var(--space-2) var(--space-4)",
-                  border: "none",
-                  background: activeTab === tab.id ? "var(--color-primary-600)" : "transparent",
-                  color: activeTab === tab.id ? "var(--color-white)" : "var(--color-gray-600)",
-                  borderRadius: "var(--radius-lg)",
-                  fontSize: "var(--text-sm)",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  transition: "all 150ms",
-                  whiteSpace: "nowrap",
-                }}
+                className={`px-space-md py-2 rounded-lg font-label-md font-semibold transition-all whitespace-nowrap ${
+                  activeTab === tab.id
+                    ? "bg-primary text-on-primary shadow-sm"
+                    : "bg-surface-container-low text-on-surface hover:bg-surface-container-high"
+                }`}
               >
                 {tab.label}
               </button>
             ))}
           </div>
 
-          {/* TAB 1: PROCEDURES & COSTS */}
+          {/* TAB 1: PROCEDURES */}
           {activeTab === "procedures" && (
-            <div style={{ marginTop: "var(--space-6)" }}>
-              {/* Filter Row */}
-              <div
-                style={{
-                  background: "var(--color-white)",
-                  padding: "var(--space-4)",
-                  borderRadius: "var(--radius-xl)",
-                  border: "1px solid var(--surface-border)",
-                  display: "flex",
-                  gap: "var(--space-4)",
-                  flexWrap: "wrap",
-                  alignItems: "center",
-                  marginBottom: "var(--space-4)",
-                }}
-              >
-                <div style={{ flex: 1, minWidth: "240px" }}>
+            <div className="flex flex-col gap-space-md">
+              {/* Search & Filter Bar */}
+              <div className="bg-surface-container-lowest p-space-md rounded-xl border border-surface-container-high/60 flex flex-col sm:flex-row gap-space-sm items-center justify-between shadow-xs">
+                <div className="relative w-full sm:w-96">
+                  <span className="material-symbols-outlined absolute left-3 top-2.5 text-outline text-base">
+                    search
+                  </span>
                   <input
                     type="text"
                     placeholder="Search procedure (e.g. Angioplasty, Knee Replacement)..."
                     value={procedureSearch}
                     onChange={(e) => setProcedureSearch(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "10px 14px",
-                      borderRadius: "var(--radius-lg)",
-                      border: "1px solid var(--surface-border)",
-                      fontSize: "var(--text-sm)",
-                    }}
+                    className="w-full bg-surface-container-low rounded-lg pl-9 pr-3 py-2 font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:bg-surface-container-lowest border border-transparent focus:border-primary"
                   />
                 </div>
-                <div style={{ display: "flex", gap: "var(--space-2)", overflowX: "auto" }}>
+                <div className="flex gap-1.5 overflow-x-auto w-full sm:w-auto">
                   <button
                     onClick={() => setSelectedCategory("all")}
-                    className={`btn ${selectedCategory === "all" ? "btn-primary" : "btn-outline"}`}
-                    style={{ fontSize: "var(--text-xs)", padding: "6px 14px" }}
+                    className={`px-3 py-1.5 rounded-md font-label-sm font-medium transition-colors ${
+                      selectedCategory === "all"
+                        ? "bg-primary text-on-primary"
+                        : "bg-surface-container-low text-on-surface hover:bg-surface-container-high"
+                    }`}
                   >
                     All Specialties
                   </button>
@@ -472,8 +470,11 @@ export default function HospitalDetailPage({ params }: { params: Promise<{ slug:
                     <button
                       key={c}
                       onClick={() => setSelectedCategory(c)}
-                      className={`btn ${selectedCategory === c ? "btn-primary" : "btn-outline"}`}
-                      style={{ fontSize: "var(--text-xs)", padding: "6px 14px", textTransform: "capitalize" }}
+                      className={`px-3 py-1.5 rounded-md font-label-sm font-medium capitalize transition-colors ${
+                        selectedCategory === c
+                          ? "bg-primary text-on-primary"
+                          : "bg-surface-container-low text-on-surface hover:bg-surface-container-high"
+                      }`}
                     >
                       {c}
                     </button>
@@ -482,60 +483,54 @@ export default function HospitalDetailPage({ params }: { params: Promise<{ slug:
               </div>
 
               {/* Procedures Table */}
-              <div style={{ background: "var(--color-white)", borderRadius: "var(--radius-xl)", border: "1px solid var(--surface-border)", overflow: "hidden" }}>
-                <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "var(--text-sm)" }}>
+              <div className="bg-surface-container-lowest rounded-xl border border-surface-container-high/60 overflow-hidden shadow-xs">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left font-body-md text-body-md border-collapse">
                     <thead>
-                      <tr style={{ background: "var(--color-gray-50)", borderBottom: "1px solid var(--surface-border)", color: "var(--color-gray-600)", fontSize: "var(--text-xs)", textTransform: "uppercase" }}>
-                        <th style={{ padding: "var(--space-4)" }}>Medical Procedure</th>
-                        <th style={{ padding: "var(--space-4)" }}>Category</th>
-                        <th style={{ padding: "var(--space-4)" }}>Estimated Cost</th>
-                        <th style={{ padding: "var(--space-4)" }}>PMJAY Coverage</th>
-                        <th style={{ padding: "var(--space-4)" }}>Success Rate</th>
-                        <th style={{ padding: "var(--space-4)" }}>Wait Time</th>
+                      <tr className="bg-surface-container-low border-b border-surface-container-high/60 font-label-sm uppercase tracking-wider text-on-surface-variant">
+                        <th className="py-3.5 px-space-md">Medical Procedure</th>
+                        <th className="py-3.5 px-space-md">Category</th>
+                        <th className="py-3.5 px-space-md">Tariff Estimate</th>
+                        <th className="py-3.5 px-space-md">PMJAY Cashless</th>
+                        <th className="py-3.5 px-space-md">Clinical Outcome</th>
+                        <th className="py-3.5 px-space-md">Wait Period</th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-surface-container-high/40">
                       {filteredProcedures.map((proc, idx) => (
-                        <tr
-                          key={idx}
-                          style={{
-                            borderBottom: "1px solid var(--surface-border)",
-                            transition: "background 150ms",
-                          }}
-                        >
-                          <td style={{ padding: "var(--space-4)", fontWeight: 700, color: "var(--color-gray-900)" }}>
+                        <tr key={idx} className="hover:bg-surface-container-low/50 transition-colors">
+                          <td className="py-4 px-space-md font-bold text-on-surface">
                             {proc.name}
                           </td>
-                          <td style={{ padding: "var(--space-4)" }}>
-                            <span className="badge" style={{ background: "var(--color-primary-50)", color: "var(--color-primary-700)" }}>
+                          <td className="py-4 px-space-md">
+                            <span className="px-2 py-0.5 rounded bg-surface-container-high text-primary font-label-sm font-medium">
                               {proc.category}
                             </span>
                           </td>
-                          <td style={{ padding: "var(--space-4)" }}>
-                            <div style={{ fontWeight: 800, color: "var(--color-gray-900)" }}>
+                          <td className="py-4 px-space-md">
+                            <div className="font-headline-md text-primary font-bold">
                               ₹{proc.cost_avg.toLocaleString("en-IN")}
                             </div>
-                            <div style={{ fontSize: "11px", color: "var(--color-gray-500)" }}>
-                              Range: ₹{proc.cost_min.toLocaleString("en-IN")} - ₹{proc.cost_max.toLocaleString("en-IN")}
+                            <div className="font-label-sm text-outline">
+                              ₹{proc.cost_min.toLocaleString("en-IN")} – ₹{proc.cost_max.toLocaleString("en-IN")}
                             </div>
                           </td>
-                          <td style={{ padding: "var(--space-4)" }}>
+                          <td className="py-4 px-space-md">
                             {proc.pmjay_covered ? (
-                              <span className="badge badge-pmjay">
-                                ₹{(proc.pmjay_package_rate || proc.cost_min).toLocaleString("en-IN")} Rate
+                              <span className="px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label-sm font-semibold">
+                                ₹{(proc.pmjay_package_rate || proc.cost_min).toLocaleString("en-IN")} Package
                               </span>
                             ) : (
-                              <span style={{ fontSize: "var(--text-xs)", color: "var(--color-gray-400)" }}>Not Covered</span>
+                              <span className="font-label-sm text-outline">Direct Pay</span>
                             )}
                           </td>
-                          <td style={{ padding: "var(--space-4)" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                              <span style={{ fontWeight: 700, color: "var(--color-success)" }}>{proc.success_rate}%</span>
-                              <span style={{ fontSize: "11px", color: "var(--color-gray-400)" }}>({proc.volume_per_year}/yr)</span>
+                          <td className="py-4 px-space-md">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-bold text-secondary">{proc.success_rate}%</span>
+                              <span className="font-label-sm text-outline">({proc.volume_per_year}/yr)</span>
                             </div>
                           </td>
-                          <td style={{ padding: "var(--space-4)", color: "var(--color-gray-600)" }}>
+                          <td className="py-4 px-space-md font-body-sm text-on-surface-variant">
                             ~{proc.wait_time_days} days
                           </td>
                         </tr>
@@ -549,46 +544,30 @@ export default function HospitalDetailPage({ params }: { params: Promise<{ slug:
 
           {/* TAB 2: FACILITIES */}
           {activeTab === "facilities" && (
-            <div
-              style={{
-                marginTop: "var(--space-6)",
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
-                gap: "var(--space-4)",
-              }}
-            >
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-space-sm">
               {hospital.facilities.map((fac, idx) => (
                 <div
                   key={idx}
-                  style={{
-                    background: "var(--color-white)",
-                    padding: "var(--space-5)",
-                    borderRadius: "var(--radius-xl)",
-                    border: "1px solid var(--surface-border)",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "var(--space-4)",
-                  }}
+                  className="bg-surface-container-lowest p-space-md rounded-xl border border-surface-container-high/60 flex items-center gap-space-md shadow-xs"
                 >
                   <div
-                    style={{
-                      width: "44px",
-                      height: "44px",
-                      borderRadius: "var(--radius-lg)",
-                      background: fac.is_available ? "var(--color-success-bg)" : "var(--color-gray-100)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: "20px",
-                    }}
+                    className={`w-11 h-11 rounded-lg flex items-center justify-center shrink-0 ${
+                      fac.is_available
+                        ? "bg-secondary-container text-on-secondary-container"
+                        : "bg-surface-container text-outline"
+                    }`}
                   >
-                    {fac.is_available ? "✅" : "❌"}
+                    <span className="material-symbols-outlined text-2xl">
+                      {fac.is_available ? "check_circle" : "cancel"}
+                    </span>
                   </div>
                   <div>
-                    <div style={{ fontWeight: 700, color: "var(--color-gray-900)" }}>{fac.name}</div>
-                    <div style={{ fontSize: "var(--text-xs)", color: "var(--color-gray-500)", marginTop: "2px" }}>
+                    <div className="font-headline-md text-headline-md text-on-surface font-bold">
+                      {fac.name}
+                    </div>
+                    <div className="font-label-sm text-on-surface-variant mt-0.5">
                       {fac.is_24x7 ? "24x7 Available" : "Operational Hours"}
-                      {fac.count ? ` • ${fac.count} Units` : ""}
+                      {fac.count ? ` • ${fac.count} Dedicated Units` : ""}
                     </div>
                   </div>
                 </div>
@@ -598,43 +577,33 @@ export default function HospitalDetailPage({ params }: { params: Promise<{ slug:
 
           {/* TAB 3: DEPARTMENTS */}
           {activeTab === "departments" && (
-            <div
-              style={{
-                marginTop: "var(--space-6)",
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-                gap: "var(--space-4)",
-              }}
-            >
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
               {hospital.departments.map((dept, idx) => (
                 <div
                   key={idx}
-                  style={{
-                    background: "var(--color-white)",
-                    padding: "var(--space-5)",
-                    borderRadius: "var(--radius-xl)",
-                    border: "1px solid var(--surface-border)",
-                  }}
+                  className="bg-surface-container-lowest p-space-lg rounded-xl border border-surface-container-high/60 flex flex-col gap-space-sm shadow-xs"
                 >
-                  <h3 style={{ fontSize: "var(--text-lg)", fontWeight: 800, color: "var(--color-gray-900)" }}>
-                    {dept.name}
-                  </h3>
-                  {dept.specialization && (
-                    <p style={{ fontSize: "var(--text-xs)", color: "var(--color-primary-600)", fontWeight: 600, marginTop: "2px" }}>
-                      {dept.specialization}
-                    </p>
-                  )}
-                  <div style={{ marginTop: "var(--space-4)", borderTop: "1px solid var(--surface-border)", paddingTop: "var(--space-3)" }}>
-                    <div style={{ fontSize: "var(--text-sm)", fontWeight: 700, color: "var(--color-gray-800)" }}>
+                  <div>
+                    <h3 className="font-headline-md text-headline-md text-primary font-bold">
+                      {dept.name}
+                    </h3>
+                    {dept.specialization && (
+                      <p className="font-label-sm text-secondary font-semibold mt-1">
+                        {dept.specialization}
+                      </p>
+                    )}
+                  </div>
+                  <div className="pt-space-sm border-t border-surface-container-high/60">
+                    <div className="font-body-md text-on-surface font-semibold">
                       Head: {dept.head_doctor || "Senior Specialist"}
                     </div>
                     {dept.head_doctor_qualification && (
-                      <div style={{ fontSize: "var(--text-xs)", color: "var(--color-gray-500)" }}>
+                      <div className="font-body-sm text-on-surface-variant">
                         {dept.head_doctor_qualification}
                       </div>
                     )}
                     {dept.doctor_count && (
-                      <div style={{ fontSize: "var(--text-xs)", color: "var(--color-gray-600)", marginTop: "4px" }}>
+                      <div className="font-label-sm text-outline mt-1">
                         Team of {dept.doctor_count} Consultant Specialists
                       </div>
                     )}
@@ -646,87 +615,68 @@ export default function HospitalDetailPage({ params }: { params: Promise<{ slug:
 
           {/* TAB 4: REVIEWS */}
           {activeTab === "reviews" && (
-            <div style={{ marginTop: "var(--space-6)" }}>
-              {/* Top review actions & rating stats */}
-              <div
-                style={{
-                  background: "var(--color-white)",
-                  padding: "var(--space-6)",
-                  borderRadius: "var(--radius-xl)",
-                  border: "1px solid var(--surface-border)",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  flexWrap: "wrap",
-                  gap: "var(--space-4)",
-                  marginBottom: "var(--space-6)",
-                }}
-              >
+            <div className="flex flex-col gap-space-md">
+              <div className="bg-surface-container-lowest p-space-lg rounded-xl border border-surface-container-high/60 flex flex-col sm:flex-row justify-between sm:items-center gap-space-md shadow-xs">
                 <div>
-                  <h3 style={{ fontSize: "var(--text-xl)", fontWeight: 800, color: "var(--color-gray-900)" }}>
-                    Patient Feedback & Cost Transparency
+                  <h3 className="font-headline-md text-headline-md text-primary font-bold">
+                    Patient Experiences &amp; Tariff Audit
                   </h3>
-                  <p style={{ fontSize: "var(--text-sm)", color: "var(--color-gray-500)", marginTop: "2px" }}>
-                    Verified patient experiences focusing on care quality and hidden fee transparency.
+                  <p className="font-body-sm text-on-surface-variant mt-1">
+                    Audited patient submissions with particular emphasis on hidden fees and billing accuracy.
                   </p>
                 </div>
                 <button
                   onClick={() => setShowReviewModal(true)}
-                  className="btn btn-primary"
-                  style={{ fontSize: "var(--text-sm)" }}
+                  className="px-space-md py-2.5 rounded-lg bg-primary text-on-primary font-label-md shadow-sm hover:bg-primary-container transition-all flex items-center gap-2 self-start sm:self-auto"
                 >
-                  ✍️ Write a Review
+                  <span className="material-symbols-outlined text-base">edit_note</span>
+                  <span>Write Review</span>
                 </button>
               </div>
 
-              {/* Reviews List */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
+              <div className="flex flex-col gap-space-sm">
                 {hospital.reviews.map((rev) => (
                   <div
                     key={rev.id}
-                    style={{
-                      background: "var(--color-white)",
-                      padding: "var(--space-5)",
-                      borderRadius: "var(--radius-xl)",
-                      border: "1px solid var(--surface-border)",
-                    }}
+                    className="bg-surface-container-lowest p-space-lg rounded-xl border border-surface-container-high/60 flex flex-col gap-space-sm shadow-xs"
                   >
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "var(--space-3)" }}>
+                    <div className="flex justify-between items-start">
                       <div>
-                        <div style={{ fontWeight: 800, fontSize: "var(--text-base)", color: "var(--color-gray-900)" }}>
+                        <div className="font-headline-md text-headline-md text-on-surface font-bold">
                           {rev.title}
                         </div>
-                        <div style={{ fontSize: "var(--text-xs)", color: "var(--color-gray-500)", marginTop: "2px" }}>
+                        <div className="font-label-sm text-on-surface-variant mt-0.5">
                           by {rev.author_name} • {rev.treatment_category} • {rev.created_at}
                         </div>
                       </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "4px", background: "#FEF3C7", padding: "3px 10px", borderRadius: "16px" }}>
-                        <span style={{ color: "#F59E0B" }}>⭐</span>
-                        <span style={{ fontSize: "var(--text-sm)", fontWeight: 800, color: "#92400E" }}>{rev.rating}</span>
+                      <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-high">
+                        <span className="text-amber-500 text-sm">★</span>
+                        <span className="font-headline-md text-primary font-bold">{rev.rating}</span>
                       </div>
                     </div>
 
-                    <p style={{ fontSize: "var(--text-sm)", color: "var(--color-gray-700)", lineHeight: 1.6, marginBottom: "var(--space-4)" }}>
+                    <p className="font-body-md text-on-surface-variant leading-relaxed">
                       {rev.content}
                     </p>
 
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--surface-border)", paddingTop: "var(--space-3)" }}>
-                      <div style={{ display: "flex", gap: "var(--space-4)", fontSize: "var(--text-xs)" }}>
-                        <span style={{ color: "var(--color-gray-600)" }}>
-                          💰 Pricing Transparency: <strong>{rev.cost_transparency_rating}/5</strong>
+                    <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 pt-space-xs border-t border-surface-container-high/60">
+                      <div className="flex items-center gap-space-md font-label-sm">
+                        <span className="text-on-surface-variant">
+                          Billing Transparency: <strong className="text-primary">{rev.cost_transparency_rating}/5</strong>
                         </span>
                         {rev.would_recommend && (
-                          <span style={{ color: "var(--color-success)", fontWeight: 600 }}>
-                            ✓ Recommends this hospital
+                          <span className="text-secondary font-semibold flex items-center gap-1">
+                            <span className="material-symbols-outlined text-sm">thumb_up</span>
+                            Recommends Care
                           </span>
                         )}
                       </div>
                       <button
-                        className="btn btn-outline"
-                        style={{ fontSize: "11px", padding: "4px 10px" }}
+                        className="font-label-sm text-outline hover:text-primary transition-colors flex items-center gap-1 self-start sm:self-auto"
                         onClick={() => rev.helpful_count++}
                       >
-                        👍 Helpful ({rev.helpful_count})
+                        <span className="material-symbols-outlined text-xs">recommend</span>
+                        <span>Helpful ({rev.helpful_count})</span>
                       </button>
                     </div>
                   </div>
@@ -735,10 +685,10 @@ export default function HospitalDetailPage({ params }: { params: Promise<{ slug:
             </div>
           )}
 
-          {/* Interactive Map & Location Section */}
-          <div style={{ marginTop: "var(--space-10)" }}>
-            <h2 style={{ fontSize: "var(--text-xl)", fontWeight: 800, color: "var(--color-gray-900)", marginBottom: "var(--space-4)" }}>
-              Location & Access
+          {/* Interactive Map & Access */}
+          <div className="flex flex-col gap-space-sm mt-space-md">
+            <h2 className="font-headline-md text-headline-md text-primary font-bold">
+              Location &amp; Spatial Telemetry
             </h2>
             <HospitalMap
               latitude={hospital.latitude}
@@ -751,161 +701,124 @@ export default function HospitalDetailPage({ params }: { params: Promise<{ slug:
 
         {/* WRITE REVIEW MODAL */}
         {showReviewModal && (
-          <div
-            style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: "rgba(15, 23, 42, 0.6)",
-              backdropFilter: "blur(4px)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              zIndex: "var(--z-modal)",
-              padding: "var(--space-4)",
-            }}
-          >
-            <div
-              style={{
-                background: "var(--color-white)",
-                borderRadius: "var(--radius-2xl)",
-                padding: "var(--space-6)",
-                width: "100%",
-                maxWidth: "540px",
-                boxShadow: "var(--shadow-xl)",
-              }}
-            >
+          <div className="fixed inset-0 bg-primary/40 backdrop-blur-xs flex items-center justify-center z-50 p-space-md">
+            <div className="bg-surface-container-lowest rounded-2xl p-space-lg w-full max-w-lg shadow-xl border border-surface-container-high">
               {reviewSubmitted ? (
-                <div style={{ textAlign: "center", padding: "var(--space-8) 0" }}>
-                  <div style={{ fontSize: "48px" }}>✅</div>
-                  <h3 style={{ fontSize: "var(--text-xl)", fontWeight: 800, color: "var(--color-gray-900)", marginTop: "var(--space-3)" }}>
-                    Review Submitted!
-                  </h3>
-                  <p style={{ color: "var(--color-gray-600)", marginTop: "var(--space-2)" }}>
-                    Thank you for contributing transparent hospital data to the community.
+                <div className="text-center py-space-lg flex flex-col items-center gap-2">
+                  <span className="material-symbols-outlined text-secondary text-5xl">verified</span>
+                  <h3 className="font-headline-lg text-primary font-bold">Review Submitted!</h3>
+                  <p className="font-body-sm text-on-surface-variant">
+                    Thank you for contributing transparent hospital data to the community registry.
                   </p>
                 </div>
               ) : (
-                <form onSubmit={handleReviewSubmit}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-4)" }}>
-                    <h3 style={{ fontSize: "var(--text-xl)", fontWeight: 800, color: "var(--color-gray-900)" }}>
+                <form onSubmit={handleReviewSubmit} className="flex flex-col gap-space-sm">
+                  <div className="flex justify-between items-center pb-2 border-b border-surface-container-high/60">
+                    <h3 className="font-headline-lg text-headline-lg text-primary font-bold">
                       Review {hospital.name}
                     </h3>
                     <button
                       type="button"
                       onClick={() => setShowReviewModal(false)}
-                      style={{ border: "none", background: "none", fontSize: "20px", cursor: "pointer", color: "var(--color-gray-400)" }}
+                      className="text-outline hover:text-on-surface material-symbols-outlined"
                     >
-                      ✕
+                      close
                     </button>
                   </div>
 
-                  <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
-                    <div>
-                      <label style={{ fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--color-gray-700)", display: "block", marginBottom: "4px" }}>
-                        Your Name
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={newReview.name}
-                        onChange={(e) => setNewReview({ ...newReview, name: e.target.value })}
-                        placeholder="e.g. Ramesh S."
-                        style={{ width: "100%", padding: "8px 12px", borderRadius: "var(--radius-lg)", border: "1px solid var(--surface-border)" }}
-                      />
-                    </div>
+                  <div className="flex flex-col gap-space-xs">
+                    <label className="font-label-sm font-semibold text-on-surface">Your Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={newReview.name}
+                      onChange={(e) => setNewReview({ ...newReview, name: e.target.value })}
+                      placeholder="e.g. Ramesh S."
+                      className="bg-surface-container-low rounded-lg px-3 py-2 font-body-sm text-on-surface focus:outline-none focus:border-primary border border-transparent"
+                    />
+                  </div>
 
-                    <div style={{ display: "flex", gap: "var(--space-4)" }}>
-                      <div style={{ flex: 1 }}>
-                        <label style={{ fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--color-gray-700)", display: "block", marginBottom: "4px" }}>
-                          Overall Rating (1-5)
-                        </label>
-                        <select
-                          value={newReview.rating}
-                          onChange={(e) => setNewReview({ ...newReview, rating: Number(e.target.value) })}
-                          style={{ width: "100%", padding: "8px 12px", borderRadius: "var(--radius-lg)", border: "1px solid var(--surface-border)" }}
-                        >
-                          <option value={5}>⭐⭐⭐⭐⭐ (5 - Excellent)</option>
-                          <option value={4}>⭐⭐⭐⭐ (4 - Very Good)</option>
-                          <option value={3}>⭐⭐⭐ (3 - Average)</option>
-                          <option value={2}>⭐⭐ (2 - Poor)</option>
-                          <option value={1}>⭐ (1 - Terrible)</option>
-                        </select>
-                      </div>
-
-                      <div style={{ flex: 1 }}>
-                        <label style={{ fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--color-gray-700)", display: "block", marginBottom: "4px" }}>
-                          Pricing Transparency
-                        </label>
-                        <select
-                          value={newReview.transparency}
-                          onChange={(e) => setNewReview({ ...newReview, transparency: Number(e.target.value) })}
-                          style={{ width: "100%", padding: "8px 12px", borderRadius: "var(--radius-lg)", border: "1px solid var(--surface-border)" }}
-                        >
-                          <option value={5}>5 - Fully Transparent</option>
-                          <option value={4}>4 - Mostly Clear</option>
-                          <option value={3}>3 - Minor Unexpected Costs</option>
-                          <option value={2}>2 - High Hidden Fees</option>
-                          <option value={1}>1 - Completely Opaque</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label style={{ fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--color-gray-700)", display: "block", marginBottom: "4px" }}>
-                        Treatment Received
-                      </label>
-                      <input
-                        type="text"
-                        value={newReview.treatment}
-                        onChange={(e) => setNewReview({ ...newReview, treatment: e.target.value })}
-                        placeholder="e.g. Angioplasty / Knee Surgery / Emergency"
-                        style={{ width: "100%", padding: "8px 12px", borderRadius: "var(--radius-lg)", border: "1px solid var(--surface-border)" }}
-                      />
-                    </div>
-
-                    <div>
-                      <label style={{ fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--color-gray-700)", display: "block", marginBottom: "4px" }}>
-                        Review Summary Title
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={newReview.title}
-                        onChange={(e) => setNewReview({ ...newReview, title: e.target.value })}
-                        placeholder="e.g. Excellent critical care with upfront package costs"
-                        style={{ width: "100%", padding: "8px 12px", borderRadius: "var(--radius-lg)", border: "1px solid var(--surface-border)" }}
-                      />
-                    </div>
-
-                    <div>
-                      <label style={{ fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--color-gray-700)", display: "block", marginBottom: "4px" }}>
-                        Detailed Feedback
-                      </label>
-                      <textarea
-                        required
-                        rows={4}
-                        value={newReview.content}
-                        onChange={(e) => setNewReview({ ...newReview, content: e.target.value })}
-                        placeholder="Explain doctor availability, billing clarity, wait times, nursing responsiveness..."
-                        style={{ width: "100%", padding: "8px 12px", borderRadius: "var(--radius-lg)", border: "1px solid var(--surface-border)", resize: "vertical" }}
-                      />
-                    </div>
-
-                    <div style={{ display: "flex", justifyContent: "flex-end", gap: "var(--space-2)", marginTop: "var(--space-2)" }}>
-                      <button
-                        type="button"
-                        onClick={() => setShowReviewModal(false)}
-                        className="btn btn-outline"
+                  <div className="grid grid-cols-2 gap-space-sm">
+                    <div className="flex flex-col gap-space-xs">
+                      <label className="font-label-sm font-semibold text-on-surface">Overall Rating</label>
+                      <select
+                        value={newReview.rating}
+                        onChange={(e) => setNewReview({ ...newReview, rating: Number(e.target.value) })}
+                        className="bg-surface-container-low rounded-lg px-3 py-2 font-body-sm text-on-surface focus:outline-none"
                       >
-                        Cancel
-                      </button>
-                      <button type="submit" className="btn btn-primary">
-                        Submit Review
-                      </button>
+                        <option value={5}>⭐⭐⭐⭐⭐ (5 - Excellent)</option>
+                        <option value={4}>⭐⭐⭐⭐ (4 - Very Good)</option>
+                        <option value={3}>⭐⭐⭐ (3 - Average)</option>
+                        <option value={2}>⭐⭐ (2 - Poor)</option>
+                        <option value={1}>⭐ (1 - Terrible)</option>
+                      </select>
                     </div>
+
+                    <div className="flex flex-col gap-space-xs">
+                      <label className="font-label-sm font-semibold text-on-surface">Billing Transparency</label>
+                      <select
+                        value={newReview.transparency}
+                        onChange={(e) => setNewReview({ ...newReview, transparency: Number(e.target.value) })}
+                        className="bg-surface-container-low rounded-lg px-3 py-2 font-body-sm text-on-surface focus:outline-none"
+                      >
+                        <option value={5}>5 - Fully Transparent</option>
+                        <option value={4}>4 - Mostly Clear</option>
+                        <option value={3}>3 - Minor Surprise Fees</option>
+                        <option value={2}>2 - High Hidden Fees</option>
+                        <option value={1}>1 - Completely Opaque</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-space-xs">
+                    <label className="font-label-sm font-semibold text-on-surface">Treatment Received</label>
+                    <input
+                      type="text"
+                      value={newReview.treatment}
+                      onChange={(e) => setNewReview({ ...newReview, treatment: e.target.value })}
+                      placeholder="e.g. Angioplasty / Knee Surgery / Emergency"
+                      className="bg-surface-container-low rounded-lg px-3 py-2 font-body-sm text-on-surface focus:outline-none border border-transparent"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-space-xs">
+                    <label className="font-label-sm font-semibold text-on-surface">Headline Summary</label>
+                    <input
+                      type="text"
+                      required
+                      value={newReview.title}
+                      onChange={(e) => setNewReview({ ...newReview, title: e.target.value })}
+                      placeholder="e.g. Transparent package rates with no surprises"
+                      className="bg-surface-container-low rounded-lg px-3 py-2 font-body-sm text-on-surface focus:outline-none border border-transparent"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-space-xs">
+                    <label className="font-label-sm font-semibold text-on-surface">Detailed Feedback</label>
+                    <textarea
+                      required
+                      rows={3}
+                      value={newReview.content}
+                      onChange={(e) => setNewReview({ ...newReview, content: e.target.value })}
+                      placeholder="Describe doctor availability, billing transparency, wait time..."
+                      className="bg-surface-container-low rounded-lg px-3 py-2 font-body-sm text-on-surface focus:outline-none border border-transparent resize-none"
+                    />
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowReviewModal(false)}
+                      className="px-space-md py-2 rounded-lg bg-surface-container-low text-on-surface font-label-md"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-space-md py-2 rounded-lg bg-primary text-on-primary font-label-md font-semibold"
+                    >
+                      Submit Review
+                    </button>
                   </div>
                 </form>
               )}
@@ -925,7 +838,6 @@ export default function HospitalDetailPage({ params }: { params: Promise<{ slug:
 function getMockHospital(slug: string): HospitalData {
   const isPgi = slug.includes("pgimer") || slug.includes("chandigarh");
   const isFortis = slug.includes("fortis");
-  const isCmc = slug.includes("cmc") || slug.includes("ludhiana");
 
   return {
     id: isPgi ? "hosp-pgi-001" : isFortis ? "hosp-fortis-002" : "hosp-cmc-003",
@@ -940,7 +852,7 @@ function getMockHospital(slug: string): HospitalData {
     city: isPgi ? "Chandigarh" : isFortis ? "Mohali" : "Ludhiana",
     state: isPgi ? "Chandigarh" : "Punjab",
     pincode: isPgi ? "160012" : isFortis ? "160062" : "141008",
-    latitude: isPgi ? 30.7634 : isFortis ? 30.7046 : 30.9010,
+    latitude: isPgi ? 30.7634 : isFortis ? 30.7046 : 30.901,
     longitude: isPgi ? 76.7766 : isFortis ? 76.7179 : 75.8573,
     phone: isPgi ? "0172-2755555" : isFortis ? "0172-4692222" : "0161-2115000",
     emergency_phone: isPgi ? "0172-2756565" : isFortis ? "0172-4692200" : "0161-2115111",
@@ -1058,10 +970,34 @@ function getMockFacilities(): FacilityItem[] {
 
 function getMockDepartments(): DepartmentItem[] {
   return [
-    { name: "Department of Cardiology", head_doctor: "Dr. Yash Paul Sharma", head_doctor_qualification: "MD, DM (Cardiology), FACC", doctor_count: 14, specialization: "Interventional Cardiology & Electrophysiology" },
-    { name: "Department of Orthopedics & Trauma", head_doctor: "Dr. M. S. Dhillon", head_doctor_qualification: "MS (Ortho), FRCS", doctor_count: 12, specialization: "Arthroplasty & Spine Surgery" },
-    { name: "Department of Nephrology", head_doctor: "Dr. K. L. Gupta", head_doctor_qualification: "MD, DM (Nephrology)", doctor_count: 8, specialization: "Kidney Transplant & Acute Renal Care" },
-    { name: "Advanced Eye Centre", head_doctor: "Dr. Jagat Ram", head_doctor_qualification: "MS, DNB, FAMS", doctor_count: 16, specialization: "Cornea, Vitreo-Retina & Cataract" },
+    {
+      name: "Department of Cardiology",
+      head_doctor: "Dr. Yash Paul Sharma",
+      head_doctor_qualification: "MD, DM (Cardiology), FACC",
+      doctor_count: 14,
+      specialization: "Interventional Cardiology & Electrophysiology",
+    },
+    {
+      name: "Department of Orthopedics & Trauma",
+      head_doctor: "Dr. M. S. Dhillon",
+      head_doctor_qualification: "MS (Ortho), FRCS",
+      doctor_count: 12,
+      specialization: "Arthroplasty & Spine Surgery",
+    },
+    {
+      name: "Department of Nephrology",
+      head_doctor: "Dr. K. L. Gupta",
+      head_doctor_qualification: "MD, DM (Nephrology)",
+      doctor_count: 8,
+      specialization: "Kidney Transplant & Acute Renal Care",
+    },
+    {
+      name: "Advanced Eye Centre",
+      head_doctor: "Dr. Jagat Ram",
+      head_doctor_qualification: "MS, DNB, FAMS",
+      doctor_count: 16,
+      specialization: "Cornea, Vitreo-Retina & Cataract",
+    },
   ];
 }
 
@@ -1074,7 +1010,8 @@ function getMockReviews(): ReviewItem[] {
       cost_transparency_rating: 5,
       treatment_category: "Cardiology",
       title: "Saved my father's life during cardiac arrest",
-      content: "Brought my father to emergency at 2 AM. The cardiac cath lab was primed immediately. Stent surgery was done under 45 minutes with full pricing explanation before the procedure. No hidden costs whatsoever.",
+      content:
+        "Brought my father to emergency at 2 AM. The cardiac cath lab was primed immediately. Stent surgery was done under 45 minutes with full pricing explanation before the procedure. No hidden costs whatsoever.",
       helpful_count: 28,
       created_at: "2 weeks ago",
       would_recommend: true,
@@ -1086,7 +1023,8 @@ function getMockReviews(): ReviewItem[] {
       cost_transparency_rating: 4,
       treatment_category: "Orthopedic",
       title: "Total knee replacement - transparent PMJAY handling",
-      content: "Underwent knee replacement surgery. The PMJAY desk verified my card within an hour. Hospital staff guided us smoothly through implant choices and postoperative physio.",
+      content:
+        "Underwent knee replacement surgery. The PMJAY desk verified my card within an hour. Hospital staff guided us smoothly through implant choices and postoperative physio.",
       helpful_count: 19,
       created_at: "1 month ago",
       would_recommend: true,
@@ -1098,7 +1036,8 @@ function getMockReviews(): ReviewItem[] {
       cost_transparency_rating: 4,
       treatment_category: "Renal",
       title: "Excellent doctors, long OPD registration queue",
-      content: "The nephrology consultants are world class. The only friction is morning OPD crowd, so book an online slot in advance if possible.",
+      content:
+        "The nephrology consultants are world class. The only friction is morning OPD crowd, so book an online slot in advance if possible.",
       helpful_count: 14,
       created_at: "2 months ago",
       would_recommend: true,
