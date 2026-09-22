@@ -269,6 +269,3 @@ To maintain clinical integrity and user trust, every healthcare record in Med Ro
 
 ---
 
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
