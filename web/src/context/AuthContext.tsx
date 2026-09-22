@@ -109,14 +109,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       let role = "patient";
-      let userData: MedRouteUser;
-
       if (res.ok) {
         const data = await res.json();
         role = data.user?.role || "patient";
       }
 
-      userData = {
+      const userData: MedRouteUser = {
         uid: firebaseUser.uid,
         email: firebaseUser.email || "",
         name: firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "User",
