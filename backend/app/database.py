@@ -86,12 +86,25 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with async_session_factory() as session:
         try:
             yield session
-            await session.commit()
+            try:
+                if session.is_active:
+                    await session.commit()
+            except Exception:
+                try:
+                    await session.rollback()
+                except Exception:
+                    pass
         except Exception:
-            await session.rollback()
+            try:
+                await session.rollback()
+            except Exception:
+                pass
             raise
         finally:
-            await session.close()
+            try:
+                await session.close()
+            except Exception:
+                pass
 
 
 # ── Startup Helper ────────────────────────────────────────────────

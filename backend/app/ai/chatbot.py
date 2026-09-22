@@ -56,7 +56,7 @@ REFERENCE_HOSPITALS = [
         "distance_km": 7.4,
         "overall_rating": 4.6,
         "beds_icu_available": 6,
-        "is_pmjay_empanelled": true_val := True,
+        "is_pmjay_empanelled": True,
         "phone": "0172-6652000",
         "emergency_phone": "0172-6652100",
         "cost_indicative": "₹1,42,000 Package",
@@ -234,9 +234,13 @@ class ClinicalChatbot:
 
         full_prompt = "\n".join(prompt_parts)
 
-        response = await self.gemini_model.generate_content_async(
-            full_prompt,
-            generation_config={"temperature": 0.2, "max_output_tokens": 1000},
+        import asyncio
+        response = await asyncio.wait_for(
+            self.gemini_model.generate_content_async(
+                full_prompt,
+                generation_config={"temperature": 0.2, "max_output_tokens": 1000},
+            ),
+            timeout=4.0,
         )
 
         raw = response.text.strip()

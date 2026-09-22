@@ -1797,9 +1797,15 @@ async def seed_hospitals():
     from app.models.user import User, UserRole
     from app.services.auth_service import hash_password
     from geoalchemy2.shape import from_shape
-    from shapely.geometry import Point
-    from python_slugify import slugify
-    from sqlalchemy import select
+    try:
+        from slugify import slugify
+    except ImportError:
+        try:
+            from python_slugify import slugify
+        except ImportError:
+            def slugify(text: str) -> str:
+                import re
+                return re.sub(r'[\W_]+', '-', text.lower()).strip('-')
 
     async with async_session_factory() as db:
         existing = (await db.execute(select(Hospital).limit(1))).scalar_one_or_none()

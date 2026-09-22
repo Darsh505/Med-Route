@@ -40,8 +40,11 @@ async def lifespan(app: FastAPI):
 
     # Create tables (in production, use Alembic instead)
     if settings.APP_ENV == "development":
-        await create_db_and_tables()
-        logger.info("✅ Database tables created/verified")
+        try:
+            await create_db_and_tables()
+            logger.info("✅ Database tables created/verified")
+        except Exception as e:
+            logger.warning("⚠️ Database offline or unreachable; continuing in resilient mode", error=str(e))
 
     # Seed database with simulated hospital data
     if settings.SEED_ON_STARTUP:
@@ -50,7 +53,7 @@ async def lifespan(app: FastAPI):
             await seed_hospitals()
             logger.info("✅ Hospital seed data loaded")
         except Exception as e:
-            logger.warning("Seed data failed (may already be seeded)", error=str(e))
+            logger.warning("Seed data failed (may already be seeded or DB offline)", error=str(e))
 
     logger.info("✅ Med Route API ready", version=settings.APP_VERSION)
 
@@ -58,8 +61,11 @@ async def lifespan(app: FastAPI):
 
     # ── SHUTDOWN ──────────────────────────────────────────────────
     logger.info("👋 Med Route API shutting down gracefully")
-    from app.database import engine
-    await engine.dispose()
+    try:
+        from app.database import engine
+        await engine.dispose()
+    except Exception as e:
+        logger.warning("Error disposing database engine on shutdown", error=str(e))
 
 
 # ── FastAPI Application ────────────────────────────────────────────

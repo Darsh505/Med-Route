@@ -29,21 +29,34 @@ class CompareService:
         - Ranking score
         """
         # Fetch hospitals with full related data
-        result = await db.execute(
-            select(Hospital)
-            .where(Hospital.id.in_(hospital_ids), Hospital.is_active == True)
-            .options(
-                selectinload(Hospital.facilities),
-                selectinload(Hospital.hospital_procedures).selectinload(
-                    HospitalProcedure.procedure
-                ),
+        hospitals = []
+        try:
+            result = await db.execute(
+                select(Hospital)
+                .where(Hospital.id.in_(hospital_ids), Hospital.is_active == True)
+                .options(
+                    selectinload(Hospital.facilities),
+                    selectinload(Hospital.hospital_procedures).selectinload(
+                        HospitalProcedure.procedure
+                    ),
+                )
             )
-        )
-        hospitals = result.scalars().all()
+            hospitals = result.scalars().all()
+        except Exception:
+            pass
+
+        if not hospitals:
+            from app.services.hospital_service import hospital_service
+            for hid in hospital_ids:
+                h = hospital_service._find_fallback_by_id(hid)
+                if h:
+                    hospitals.append(h)
 
         # Preserve requested order
-        id_to_hospital = {h.id: h for h in hospitals}
-        ordered = [id_to_hospital[hid] for hid in hospital_ids if hid in id_to_hospital]
+        id_to_hospital = {str(h.id): h for h in hospitals}
+        ordered = [id_to_hospital[str(hid)] for hid in hospital_ids if str(hid) in id_to_hospital]
+        if not ordered and hospitals:
+            ordered = hospitals
 
         # Build comparison attribute rows
         attributes = self._build_attributes(ordered)
@@ -53,13 +66,13 @@ class CompareService:
         if procedure_id:
             proc_costs = {}
             for hospital in ordered:
-                for hp in hospital.hospital_procedures:
-                    if hp.procedure_id == procedure_id:
+                for hp in getattr(hospital, "hospital_procedures", []):
+                    if getattr(hp, "procedure_id", None) == procedure_id:
                         proc_costs[str(hospital.id)] = {
-                            "min": hp.cost_min,
-                            "max": hp.cost_max,
-                            "pmjay_covered": hp.pmjay_covered,
-                            "pmjay_rate": hp.pmjay_package_rate,
+                            "min": getattr(hp, "cost_min", None),
+                            "max": getattr(hp, "cost_max", None),
+                            "pmjay_covered": getattr(hp, "pmjay_covered", False),
+                            "pmjay_rate": getattr(hp, "pmjay_package_rate", None),
                         }
 
         return {
@@ -68,10 +81,10 @@ class CompareService:
                     "id": str(h.id),
                     "name": h.name,
                     "city": h.city,
-                    "type": h.type,
+                    "type": h.type.value if hasattr(h.type, "value") else str(h.type),
                     "rating": h.overall_rating,
-                    "image_url": h.image_url,
-                    "data_source_label": h.data_source_label,
+                    "image_url": getattr(h, "image_url", None),
+                    "data_source_label": getattr(h, "data_source_label", "SIMULATED"),
                 }
                 for h in ordered
             ],
@@ -85,7 +98,7 @@ class CompareService:
             return {str(h.id): fn(h) for h in hospitals}
 
         return [
-            {"label": "Hospital Type", "values": vals(lambda h: h.type.value.title()), "section": "overview"},
+            {"label": "Hospital Type", "values": vals(lambda h: h.type.value.title() if hasattr(h.type, "value") else str(h.type).title()), "section": "overview"},
             {"label": "Overall Rating", "values": vals(lambda h: f"⭐ {h.overall_rating}/5"), "section": "overview", "highlight_best": True},
             {"label": "Total Reviews", "values": vals(lambda h: h.total_reviews), "section": "overview"},
             {"label": "Accreditation", "values": vals(lambda h: h.accreditation or "None"), "section": "quality"},

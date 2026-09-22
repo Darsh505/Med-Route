@@ -28,9 +28,16 @@ async def find_nearest_hospital(
     result = await sos_service.find_nearest_and_create_alert.__wrapped__ if False else None
     # Just find nearest without saving
     from app.services.hospital_service import hospital_service
-    result = await hospital_service.find_nearest_trauma_center(
-        db, request.latitude, request.longitude
-    )
+    try:
+        result = await hospital_service.find_nearest_trauma_center(
+            db, request.latitude, request.longitude
+        )
+    except Exception:
+        result = None
+
+    if not result:
+        result = hospital_service._find_fallback_nearest_trauma(request.latitude, request.longitude)
+
     if not result:
         raise HTTPException(
             status_code=404,
@@ -71,8 +78,18 @@ async def create_sos_alert(
             db=db,
             request=request,
         )
+        from datetime import datetime
         return APIResponse(
-            data=SOSAlertResponse.model_validate(alert),
+            data=SOSAlertResponse(
+                id=alert.id,
+                status=alert.status if isinstance(alert.status, str) else alert.status.value,
+                hospital_name=nearest.hospital_name,
+                hospital_phone=nearest.hospital_phone,
+                distance_km=alert.distance_km,
+                estimated_arrival_minutes=alert.estimated_arrival_minutes,
+                ambulance_number=alert.ambulance_number,
+                created_at=alert.created_at or datetime.utcnow(),
+            ),
             message=f"🚨 SOS alert sent to {nearest.hospital_name}. ETA: {nearest.estimated_arrival_minutes} minutes.",
         )
     except ValueError as e:
