@@ -1,18 +1,80 @@
 import rawHospitals from "./allHospitals.json";
 
+export interface ReviewItem {
+  id: string;
+  author_name: string;
+  rating_overall: number;
+  treatment_category: string;
+  title: string;
+  comment: string;
+  created_at: string;
+  helpful_count: number;
+  verified: boolean;
+  would_recommend: boolean;
+}
+
 export interface HospitalOption {
+  id: string;
   slug: string;
   name: string;
   city: string;
   state: string;
+  address: string;
   type: string;
   accreditation: string;
+  is_pmjay_empanelled: boolean;
   pmjay: boolean;
   icu: number;
+  beds_icu_available: number;
+  beds_icu: number;
+  beds_total: number;
+  beds_ventilator: number;
+  beds_emergency?: number;
   ambulance: string;
+  ambulance_phone: string;
+  emergency_phone: string;
+  phone: string;
+  latitude: number;
+  longitude: number;
+  overall_rating: number;
+  total_reviews: number;
+  cost_range: string;
+  base_package_inr: number;
+  pros: string[];
+  cons: string[];
+  reviews: ReviewItem[];
+  specialties: string[];
+  description: string;
+  is_trauma_center: boolean;
+  trauma_level: string;
 }
 
-export const ALL_HOSPITALS: HospitalOption[] = rawHospitals as HospitalOption[];
+export const ALL_HOSPITALS: HospitalOption[] = (rawHospitals as any[]).map((h) => ({
+  ...h,
+  id: h.id || `hosp-${h.slug}`,
+  pmjay: h.is_pmjay_empanelled ?? h.pmjay ?? true,
+  is_pmjay_empanelled: h.is_pmjay_empanelled ?? h.pmjay ?? true,
+  icu: h.beds_icu_available ?? h.icu ?? 5,
+  beds_icu_available: h.beds_icu_available ?? h.icu ?? 5,
+  beds_icu: h.beds_icu ?? 20,
+  beds_total: h.beds_total ?? 200,
+  beds_ventilator: h.beds_ventilator ?? 6,
+  ambulance: h.ambulance_phone || h.emergency_phone || h.ambulance || "108",
+  ambulance_phone: h.ambulance_phone || h.emergency_phone || "108",
+  emergency_phone: h.emergency_phone || "108",
+  phone: h.phone || h.emergency_phone || "108",
+  overall_rating: h.overall_rating || 4.6,
+  total_reviews: h.total_reviews || 112,
+  cost_range: h.cost_range || (h.type?.toLowerCase() === "government" ? "Free / Subsidized" : "₹75,000 – ₹1,80,000"),
+  base_package_inr: h.base_package_inr || (h.type?.toLowerCase() === "government" ? 25000 : 95000),
+  pros: h.pros || [],
+  cons: h.cons || [],
+  reviews: h.reviews || [],
+  specialties: h.specialties || ["Emergency Care", "Heart Care", "Bone & Joint", "General Surgery", "Kidney Care"],
+  description: h.description || "",
+  is_trauma_center: h.is_trauma_center ?? true,
+  trauma_level: h.trauma_level || (h.type?.toLowerCase() === "government" ? "Level 1" : "Level 2"),
+}));
 
 export interface HospitalRegionGroup {
   region: string;

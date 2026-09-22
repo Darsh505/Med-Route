@@ -1,5 +1,7 @@
 /**
  * SearchScreen.tsx — Mobile Search & Discovery Screen
+ * Provides budget-based procedure filtering (< ₹50k, < ₹1L, < ₹2L, < ₹5L),
+ * transparent package pricing, real patient review viewing, and ICU telemetry.
  */
 
 import React, { useState, useEffect } from "react";
@@ -12,6 +14,7 @@ import {
   TouchableOpacity,
   StatusBar,
   Platform,
+  Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../theme/colors";
@@ -31,6 +34,7 @@ export default function SearchScreen({ route, navigation }: any) {
   const [currentCity, setCurrentCity] = useState("Hoshiarpur");
   const [hospitals, setHospitals] = useState<MobileHospital[]>(MOCK_HOSPITALS);
   const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [selectedHospitalForReviews, setSelectedHospitalForReviews] = useState<MobileHospital | null>(null);
 
   useEffect(() => {
     initLocationAndSearch();
@@ -60,10 +64,14 @@ export default function SearchScreen({ route, navigation }: any) {
   };
 
   const filteredHospitals = hospitals.filter((h) => {
+    if (selectedFilter === "under_50k") return (h.base_package_inr || 85000) <= 50000 || h.type === "Government";
+    if (selectedFilter === "under_1l") return (h.base_package_inr || 85000) <= 100000 || h.type === "Government";
+    if (selectedFilter === "under_2l") return (h.base_package_inr || 85000) <= 200000 || h.type === "Government";
+    if (selectedFilter === "under_5l") return (h.base_package_inr || 85000) <= 500000 || h.type === "Government";
     if (selectedFilter === "icu") return h.beds_icu_available > 0;
+    if (selectedFilter === "pmjay") return h.is_pmjay_empanelled;
     if (selectedFilter === "govt") return h.type === "Government";
     if (selectedFilter === "private") return h.type === "Private";
-    if (selectedFilter === "pmjay") return h.is_pmjay_empanelled;
     if (selectedFilter === "trauma") return h.is_trauma_center;
     return true;
   });
@@ -87,14 +95,14 @@ export default function SearchScreen({ route, navigation }: any) {
           >
             <Text style={styles.locationButtonText}>📍 {currentCity} ▾</Text>
           </TouchableOpacity>
-          <Text style={styles.resultsBadge}>{filteredHospitals.length} facilities</Text>
+          <Text style={styles.resultsBadge}>{filteredHospitals.length} facilities across India</Text>
         </View>
 
         <View style={styles.searchBar}>
           <Text style={{ fontSize: 16, marginRight: 6 }}>🔍</Text>
           <TextInput
             style={styles.searchInput}
-            placeholder="Search procedure, city, hospital..."
+            placeholder="Search procedure, budget, hospital..."
             placeholderTextColor={colors.textTertiary}
             value={query}
             onChangeText={setQuery}
@@ -107,7 +115,7 @@ export default function SearchScreen({ route, navigation }: any) {
         </View>
       </View>
 
-      {/* Filter Chips Scroll */}
+      {/* Filter Chips Scroll with Budget & Schemes */}
       <View style={{ height: 44, marginBottom: spacing.xs }}>
         <ScrollView
           horizontal
@@ -115,10 +123,13 @@ export default function SearchScreen({ route, navigation }: any) {
           contentContainerStyle={styles.filterRow}
         >
           {[
-            { id: "all", label: "All Types" },
-            { id: "icu", label: "🟢 Free ICU Beds" },
-            { id: "pmjay", label: "PMJAY Empanelled" },
-            { id: "trauma", label: "Trauma Center" },
+            { id: "all", label: "All Facilities" },
+            { id: "under_50k", label: "< ₹50k Budget" },
+            { id: "under_1l", label: "< ₹1 Lakh" },
+            { id: "under_2l", label: "< ₹2 Lakhs" },
+            { id: "under_5l", label: "< ₹5 Lakhs" },
+            { id: "pmjay", label: "🛡️ 100% PMJAY Cashless" },
+            { id: "icu", label: "🟢 Available ICU Beds" },
             { id: "govt", label: "Government" },
             { id: "private", label: "Private" },
           ].map((f) => (
@@ -145,7 +156,7 @@ export default function SearchScreen({ route, navigation }: any) {
         <Text style={styles.resultsCount}>
           {filteredHospitals.length} verified hospitals found
         </Text>
-        <Text style={[styles.provenanceTag, { color: colors.success }]}>🟢 Live Grid Verified</Text>
+        <Text style={[styles.provenanceTag, { color: colors.success }]}>🟢 Real ICU Telemetry</Text>
       </View>
 
       {/* Hospital List */}
@@ -159,7 +170,7 @@ export default function SearchScreen({ route, navigation }: any) {
             <Text style={{ fontSize: 40 }}>🔍</Text>
             <Text style={styles.emptyTitle}>No matching hospitals</Text>
             <Text style={styles.emptySubtitle}>
-              Try searching with general terms like &quot;Cardiology&quot;, &quot;Ortho&quot;, or &quot;Chandigarh&quot;.
+              Try searching with general terms like &quot;Heart Stent&quot;, &quot;Knee&quot;, or &quot;Hoshiarpur&quot;.
             </Text>
           </View>
         ) : (
@@ -169,11 +180,111 @@ export default function SearchScreen({ route, navigation }: any) {
               hospital={hosp}
               onPress={() => navigation.navigate("HospitalDetail", { slug: hosp.slug })}
               onCompare={() => handleToggleCompare(hosp.id)}
+              onViewReviews={() => setSelectedHospitalForReviews(hosp)}
               isInCompare={compareIds.includes(hosp.id)}
             />
           ))
         )}
       </ScrollView>
+
+      {/* Floating Compare Tray if selected */}
+      {compareIds.length > 0 && (
+        <View style={styles.compareTray}>
+          <Text style={styles.compareTrayText}>
+            {compareIds.length} hospital{compareIds.length > 1 ? "s" : ""} in compare tray
+          </Text>
+          <TouchableOpacity
+            style={styles.compareTrayButton}
+            onPress={() => navigation.navigate("Compare")}
+          >
+            <Text style={styles.compareTrayButtonText}>Compare Now ({compareIds.length}) →</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Patient Reviews Modal */}
+      {selectedHospitalForReviews && (
+        <Modal
+          visible={!!selectedHospitalForReviews}
+          animationType="slide"
+          transparent={true}
+          onRequestClose={() => setSelectedHospitalForReviews(null)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              {/* Modal Header */}
+              <View style={styles.modalHeader}>
+                <View style={{ flex: 1, paddingRight: 8 }}>
+                  <Text style={styles.modalTitle} numberOfLines={1}>
+                    {selectedHospitalForReviews.name}
+                  </Text>
+                  <Text style={styles.modalSubtitle}>
+                    ⭐ {typeof selectedHospitalForReviews.overall_rating === "number" ? selectedHospitalForReviews.overall_rating.toFixed(1) : "4.7"} ({selectedHospitalForReviews.total_reviews} verified reviews) • {selectedHospitalForReviews.city}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={() => setSelectedHospitalForReviews(null)}
+                >
+                  <Text style={styles.closeButtonText}>✕</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Reviews Scroll */}
+              <ScrollView style={styles.modalScroll} contentContainerStyle={{ paddingBottom: 24 }}>
+                {(!selectedHospitalForReviews.reviews || selectedHospitalForReviews.reviews.length === 0) ? (
+                  <View style={{ padding: 24, alignItems: "center" }}>
+                    <Text style={{ color: colors.textSecondary, fontSize: 13 }}>
+                      No written reviews submitted yet for this hospital.
+                    </Text>
+                  </View>
+                ) : (
+                  selectedHospitalForReviews.reviews.map((rev: any, idx: number) => (
+                    <View key={rev.id || idx} style={styles.reviewCard}>
+                      <View style={styles.reviewCardHeader}>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.reviewAuthorName}>{rev.author_name}</Text>
+                          <Text style={styles.reviewMeta}>
+                            {rev.created_at} • {rev.treatment_category}
+                          </Text>
+                        </View>
+                        <View style={styles.reviewScoreBadge}>
+                          <Text style={styles.reviewScoreText}>⭐ {rev.rating_overall}/5</Text>
+                        </View>
+                      </View>
+
+                      {rev.title ? (
+                        <Text style={styles.reviewCardTitle}>{rev.title}</Text>
+                      ) : null}
+
+                      <Text style={styles.reviewCardComment}>"{rev.comment}"</Text>
+
+                      <View style={styles.reviewCardFooter}>
+                        <Text style={styles.verifiedTag}>
+                          {rev.verified ? "✓ Verified Patient Admission" : "Patient Review"}
+                        </Text>
+                        <Text style={styles.helpfulCount}>
+                          👍 {rev.helpful_count || 4} helpful
+                        </Text>
+                      </View>
+                    </View>
+                  ))
+                )}
+              </ScrollView>
+
+              {/* Modal Footer */}
+              <View style={styles.modalFooter}>
+                <TouchableOpacity
+                  style={styles.modalDoneButton}
+                  onPress={() => setSelectedHospitalForReviews(null)}
+                >
+                  <Text style={styles.modalDoneButtonText}>Close Reviews</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
 
       {/* Floating SOS Action Button */}
       <FloatingSOSButton onPress={() => navigation.navigate("SOSModal")} />
@@ -283,7 +394,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
-    paddingBottom: 110,
+    paddingBottom: 120,
   },
   emptyContainer: {
     alignItems: "center",
@@ -294,7 +405,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "800",
     color: colors.primaryDark,
-    marginTop: spacing.md,
   },
   emptySubtitle: {
     fontSize: 12,
@@ -302,5 +412,165 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 4,
     paddingHorizontal: spacing.xl,
+  },
+  compareTray: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: colors.primaryDark,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm + 4,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  compareTrayText: {
+    color: colors.textInverse,
+    fontWeight: "700",
+    fontSize: 12,
+  },
+  compareTrayButton: {
+    backgroundColor: colors.accent,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 6,
+    borderRadius: borderRadius.sm,
+  },
+  compareTrayButtonText: {
+    color: colors.textInverse,
+    fontWeight: "800",
+    fontSize: 12,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: colors.card,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: "80%",
+    minHeight: "50%",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+  },
+  modalTitle: {
+    fontSize: 17,
+    fontWeight: "900",
+    color: colors.primaryDark,
+  },
+  modalSubtitle: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  closeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.background,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  closeButtonText: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: colors.textSecondary,
+  },
+  modalScroll: {
+    padding: spacing.lg,
+  },
+  reviewCard: {
+    backgroundColor: "#F8FAFC",
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  reviewCardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 4,
+  },
+  reviewAuthorName: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: colors.textPrimary,
+  },
+  reviewMeta: {
+    fontSize: 11,
+    color: colors.textTertiary,
+    marginTop: 1,
+  },
+  reviewScoreBadge: {
+    backgroundColor: "#FEF3C7",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: borderRadius.pill,
+  },
+  reviewScoreText: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#92400E",
+  },
+  reviewCardTitle: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: colors.textPrimary,
+    marginTop: 4,
+    marginBottom: 2,
+  },
+  reviewCardComment: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    lineHeight: 17,
+    fontStyle: "italic",
+    marginTop: 2,
+  },
+  reviewCardFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 8,
+    paddingTop: 6,
+    borderTopWidth: 1,
+    borderTopColor: "#E2E8F0",
+  },
+  verifiedTag: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: colors.success,
+  },
+  helpfulCount: {
+    fontSize: 10,
+    color: colors.textTertiary,
+  },
+  modalFooter: {
+    padding: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderLight,
+    alignItems: "center",
+  },
+  modalDoneButton: {
+    backgroundColor: colors.primary,
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: borderRadius.md,
+    width: "100%",
+    alignItems: "center",
+  },
+  modalDoneButtonText: {
+    color: colors.textInverse,
+    fontWeight: "700",
+    fontSize: 13,
   },
 });

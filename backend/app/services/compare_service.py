@@ -23,8 +23,8 @@ STANDARD_PROCEDURES: Dict[str, Dict[str, Any]] = {
     "angioplasty": {
         "id": "proc-angioplasty",
         "slug": "angioplasty",
-        "name": "Coronary Angioplasty (PTCA with 1 DES Stent)",
-        "specialty": "Cardiology & Cath Lab",
+        "name": "Heart Stent / Angioplasty",
+        "specialty": "Heart Care",
         "pmjay_hbp_code": "MC004",
         "pmjay_package_rate": 65000,
         "private_tariff_min": 125000,
@@ -33,7 +33,7 @@ STANDARD_PROCEDURES: Dict[str, Dict[str, Any]] = {
         "govt_tariff_max": 45000,
         "implant_details": "1 US-FDA Approved Drug-Eluting Stent (DES) included",
         "icu_days": 2,
-        "pre_post_op": "Pre-op 2D-ECHO, Angiography + 5 days post-op antiplatelets",
+        "pre_post_op": "Pre-op ECG, 2D-ECHO, Angiography + 5 days post-op antiplatelets",
         "inclusions": [
             "1 US-FDA Approved Drug-Eluting Stent (DES)",
             "2 Days in Cardiac Care Unit (CCU) / ICU",
@@ -51,8 +51,8 @@ STANDARD_PROCEDURES: Dict[str, Dict[str, Any]] = {
     "knee-replacement": {
         "id": "proc-knee-replacement",
         "slug": "knee-replacement",
-        "name": "Total Knee Replacement (Unilateral TKR)",
-        "specialty": "Orthopedics & Joint Replacement",
+        "name": "Knee Replacement",
+        "specialty": "Bone & Joint",
         "pmjay_hbp_code": "OR002",
         "pmjay_package_rate": 80000,
         "private_tariff_min": 140000,
@@ -79,8 +79,8 @@ STANDARD_PROCEDURES: Dict[str, Dict[str, Any]] = {
     "cabg": {
         "id": "proc-cabg",
         "slug": "cabg",
-        "name": "Coronary Artery Bypass Graft (Open Heart CABG)",
-        "specialty": "Cardiothoracic & Vascular Surgery (CTVS)",
+        "name": "Heart Bypass Surgery (CABG)",
+        "specialty": "Heart Surgery",
         "pmjay_hbp_code": "MC001",
         "pmjay_package_rate": 130000,
         "private_tariff_min": 240000,
@@ -107,8 +107,8 @@ STANDARD_PROCEDURES: Dict[str, Dict[str, Any]] = {
     "c-section": {
         "id": "proc-c-section",
         "slug": "c-section",
-        "name": "Cesarean Section Delivery (C-Section LSCS)",
-        "specialty": "Obstetrics & Gynecology",
+        "name": "C-Section (Cesarean Delivery)",
+        "specialty": "Pregnancy & Maternity",
         "pmjay_hbp_code": "OG002",
         "pmjay_package_rate": 14000,
         "private_tariff_min": 45000,
@@ -134,8 +134,8 @@ STANDARD_PROCEDURES: Dict[str, Dict[str, Any]] = {
     "normal-delivery": {
         "id": "proc-normal-delivery",
         "slug": "normal-delivery",
-        "name": "Normal Vaginal Delivery",
-        "specialty": "Obstetrics & Gynecology",
+        "name": "Normal Delivery",
+        "specialty": "Pregnancy & Maternity",
         "pmjay_hbp_code": "OG001",
         "pmjay_package_rate": 9000,
         "private_tariff_min": 28000,
@@ -159,8 +159,8 @@ STANDARD_PROCEDURES: Dict[str, Dict[str, Any]] = {
     "dialysis": {
         "id": "proc-dialysis",
         "slug": "dialysis",
-        "name": "Hemodialysis (Single Session / Monthly Care)",
-        "specialty": "Nephrology & Renal Care",
+        "name": "Kidney Dialysis",
+        "specialty": "Kidney Care",
         "pmjay_hbp_code": "NP001",
         "pmjay_package_rate": 1800,
         "private_tariff_min": 2200,
@@ -186,8 +186,8 @@ STANDARD_PROCEDURES: Dict[str, Dict[str, Any]] = {
     "cholecystectomy": {
         "id": "proc-cholecystectomy",
         "slug": "cholecystectomy",
-        "name": "Laparoscopic Cholecystectomy (Gallbladder Removal)",
-        "specialty": "General & Minimal Access Surgery",
+        "name": "Gallbladder Stone Removal",
+        "specialty": "General Surgery",
         "pmjay_hbp_code": "GS003",
         "pmjay_package_rate": 22000,
         "private_tariff_min": 55000,
@@ -213,8 +213,8 @@ STANDARD_PROCEDURES: Dict[str, Dict[str, Any]] = {
     "cataract": {
         "id": "proc-cataract",
         "slug": "cataract",
-        "name": "Cataract Surgery with Foldable IOL (Phaco)",
-        "specialty": "Ophthalmology",
+        "name": "Cataract Eye Surgery",
+        "specialty": "Eye Care",
         "pmjay_hbp_code": "OP001",
         "pmjay_package_rate": 8500,
         "private_tariff_min": 22000,
@@ -239,8 +239,8 @@ STANDARD_PROCEDURES: Dict[str, Dict[str, Any]] = {
     "hip-replacement": {
         "id": "proc-hip-replacement",
         "slug": "hip-replacement",
-        "name": "Total Hip Replacement (THR)",
-        "specialty": "Orthopedics & Joint Replacement",
+        "name": "Hip Replacement",
+        "specialty": "Bone & Joint",
         "pmjay_hbp_code": "OR005",
         "pmjay_package_rate": 90000,
         "private_tariff_min": 165000,
@@ -266,8 +266,8 @@ STANDARD_PROCEDURES: Dict[str, Dict[str, Any]] = {
     "kidney-transplant": {
         "id": "proc-kidney-transplant",
         "slug": "kidney-transplant",
-        "name": "Renal / Kidney Transplant Package",
-        "specialty": "Nephrology & Urology (Transplant Unit)",
+        "name": "Kidney Transplant",
+        "specialty": "Kidney Care",
         "pmjay_hbp_code": "SU001",
         "pmjay_package_rate": 250000,
         "private_tariff_min": 550000,
@@ -293,8 +293,8 @@ STANDARD_PROCEDURES: Dict[str, Dict[str, Any]] = {
     "valve-replacement": {
         "id": "proc-valve-replacement",
         "slug": "valve-replacement",
-        "name": "Open Heart Single Valve Replacement (MVR/AVR)",
-        "specialty": "Cardiothoracic & Vascular Surgery (CTVS)",
+        "name": "Heart Valve Replacement",
+        "specialty": "Heart Surgery",
         "pmjay_hbp_code": "MC002",
         "pmjay_package_rate": 150000,
         "private_tariff_min": 280000,
@@ -320,8 +320,8 @@ STANDARD_PROCEDURES: Dict[str, Dict[str, Any]] = {
     "spine-surgery": {
         "id": "proc-spine-surgery",
         "slug": "spine-surgery",
-        "name": "Lumbar Spine Decompression & Fusion (TLIF/PLIF)",
-        "specialty": "Neurosurgery & Spine Care",
+        "name": "Spine Surgery (Back / Disc)",
+        "specialty": "Spine & Brain",
         "pmjay_hbp_code": "NE003",
         "pmjay_package_rate": 75000,
         "private_tariff_min": 165000,
@@ -347,8 +347,8 @@ STANDARD_PROCEDURES: Dict[str, Dict[str, Any]] = {
     "hernia-repair": {
         "id": "proc-hernia-repair",
         "slug": "hernia-repair",
-        "name": "Laparoscopic Inguinal Hernia Repair (TEP/TAPP)",
-        "specialty": "General & Minimal Access Surgery",
+        "name": "Hernia Surgery",
+        "specialty": "General Surgery",
         "pmjay_hbp_code": "GS001",
         "pmjay_package_rate": 25000,
         "private_tariff_min": 55000,
@@ -373,8 +373,8 @@ STANDARD_PROCEDURES: Dict[str, Dict[str, Any]] = {
     "chemotherapy": {
         "id": "proc-chemotherapy",
         "slug": "chemotherapy",
-        "name": "Medical Oncology Chemotherapy Cycle (Daycare)",
-        "specialty": "Medical Oncology & Cancer Care",
+        "name": "Chemotherapy (Cancer Care)",
+        "specialty": "Cancer Care",
         "pmjay_hbp_code": "MO001",
         "pmjay_package_rate": 18000,
         "private_tariff_min": 35000,
@@ -414,8 +414,8 @@ class CompareService:
             for p in STANDARD_PROCEDURES.values()
         ]
 
-    async def compare(self, db, hospital_ids: list, procedure_id: Optional[str] = None) -> dict:
-        """Compare hospitals side-by-side with procedure-specific clinical & financial depth."""
+    async def compare(self, db, hospital_ids: list, procedure_id: Optional[str] = None, user_budget: Optional[int] = None) -> dict:
+        """Compare hospitals side-by-side with procedure-specific clinical & financial depth and budget matching."""
         hospitals = []
 
         for hid in hospital_ids:
@@ -431,7 +431,6 @@ class CompareService:
         proc_key = (procedure_id or "angioplasty").lower().strip()
         matched_proc = STANDARD_PROCEDURES.get(proc_key)
         if not matched_proc:
-            # Try fuzzy match by name or specialty
             for k, v in STANDARD_PROCEDURES.items():
                 if k in proc_key or proc_key in v["name"].lower() or proc_key in v["specialty"].lower():
                     matched_proc = v
@@ -445,27 +444,36 @@ class CompareService:
             is_govt = sh["type"].lower() in ["government", "trust", "semi-government"]
             is_pmjay = sh["is_pmjay_empanelled"]
 
+            # Compute realistic out-of-pocket private vs subsidized costs
             if is_govt:
-                if is_pmjay:
-                    sh["procedure_tariff_display"] = "100% Free (PMJAY Cashless)"
-                    sh["out_of_pocket_estimate"] = "₹0 Out-of-Pocket"
-                else:
-                    avg_govt = (matched_proc["govt_tariff_min"] + matched_proc["govt_tariff_max"]) // 2
-                    sh["procedure_tariff_display"] = f"₹{avg_govt:,} (Subsidized Rate)"
-                    sh["out_of_pocket_estimate"] = f"₹{avg_govt:,} (Nominal Consumables)"
+                avg_cost = (matched_proc["govt_tariff_min"] + matched_proc["govt_tariff_max"]) // 2
+                sh["estimated_out_of_pocket_inr"] = avg_cost
+                sh["procedure_tariff_display"] = f"₹{avg_cost:,} (Subsidized)" if not is_pmjay else "100% Free (PMJAY Cashless)"
+                sh["out_of_pocket_estimate"] = f"₹{avg_cost:,} (Consumables)" if not is_pmjay else "₹0 (PMJAY Cashless)"
+                sh["private_cash_tariff"] = f"₹{avg_cost:,}"
             else:
-                avg_pvt = (matched_proc["private_tariff_min"] + matched_proc["private_tariff_max"]) // 2
-                sh["procedure_tariff_display"] = f"₹{avg_pvt:,} (All-Inclusive Package)"
-                if is_pmjay:
-                    sh["out_of_pocket_estimate"] = f"₹0 with PMJAY / ₹{avg_pvt:,} Private"
-                else:
-                    sh["out_of_pocket_estimate"] = f"₹{avg_pvt:,} (TPA / Insurance Copay)"
+                avg_cost = (matched_proc["private_tariff_min"] + matched_proc["private_tariff_max"]) // 2
+                sh["estimated_out_of_pocket_inr"] = avg_cost
+                sh["procedure_tariff_display"] = f"₹{avg_cost:,} (Private Package)"
+                sh["out_of_pocket_estimate"] = f"₹{avg_cost:,} (Private / TPA)" if not is_pmjay else f"₹0 with PMJAY (or ₹{avg_cost:,} Private)"
+                sh["private_cash_tariff"] = f"₹{avg_cost:,}"
 
-            sh["pmjay_tariff_display"] = f"₹{matched_proc['pmjay_package_rate']:,} Cashless ({matched_proc['pmjay_hbp_code']})" if is_pmjay else "Non-Empanelled"
+            sh["pmjay_tariff_display"] = f"₹{matched_proc['pmjay_package_rate']:,} Cashless ({matched_proc['pmjay_hbp_code']})" if is_pmjay else "Not Empanelled"
             sh["implant_included"] = matched_proc["implant_details"]
             sh["icu_days_included"] = f"{matched_proc['icu_days']} Days Included" if matched_proc['icu_days'] > 0 else "Ward Stay (ICU on actuals)"
             sh["pre_post_op_included"] = matched_proc["pre_post_op"]
             sh["exclusions"] = matched_proc["exclusions"]
+
+            # Budget evaluation
+            if user_budget is not None and user_budget > 0:
+                sh["is_within_budget"] = avg_cost <= user_budget
+                sh["budget_difference"] = user_budget - avg_cost
+                sh["budget_status_label"] = f"Within Budget (Saved ₹{user_budget - avg_cost:,})" if avg_cost <= user_budget else f"Exceeds Budget by ₹{avg_cost - user_budget:,}"
+            else:
+                sh["is_within_budget"] = True
+                sh["budget_difference"] = 0
+                sh["budget_status_label"] = "Standard Tariff"
+
             serialized_hospitals.append(sh)
 
         return {
@@ -537,6 +545,9 @@ class CompareService:
                 "ambulance_phone": h.get("ambulance_phone") or h.get("emergency_phone") or "108",
                 "pros": h.get("pros", []),
                 "cons": h.get("cons", []),
+                "reviews": h.get("reviews", []),
+                "cost_range": h.get("cost_range", ""),
+                "base_package_inr": h.get("base_package_inr", 0),
                 "ranking_score": h.get("ranking_score", 85),
                 "specialties": h.get("specialties", []),
             }
@@ -564,6 +575,9 @@ class CompareService:
             "ambulance_phone": getattr(h, "ambulance_phone", None) or h.emergency_phone or "108",
             "pros": getattr(h, "pros", []),
             "cons": getattr(h, "cons", []),
+            "reviews": getattr(h, "reviews", []),
+            "cost_range": getattr(h, "cost_range", ""),
+            "base_package_inr": getattr(h, "base_package_inr", 0),
             "ranking_score": h.ranking_score or 85,
         }
 
