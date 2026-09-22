@@ -237,12 +237,6 @@ Every hospital record includes a `data_source_label`:
 
 ---
 
-## 📄 License
-
-MIT License — see [LICENSE](LICENSE) file for details.
-
----
-
 ## 🙏 Acknowledgements
 
 - **PMJAY** — Pradhan Mantri Jan Arogya Yojana health benefit package data structure
