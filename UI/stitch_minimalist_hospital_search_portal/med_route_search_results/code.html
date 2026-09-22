@@ -1,0 +1,460 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"><meta content="mobile_tab" name="shell-type"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "background": "#f7f9fb", "on-surface-variant": "#47464a", "on-primary-fixed-variant": "#474649", "on-secondary-fixed": "#1a1b22", "on-primary-fixed": "#1c1b1d", "primary": "#000000", "on-error-container": "#93000a", "primary-fixed-dim": "#c8c6c8", "surface-container-highest": "#e0e3e5", "outline-variant": "#c8c5ca", "inverse-surface": "#2d3133", "secondary-fixed": "#e3e1ec", "tertiary-fixed": "#dbe1ff", "surface-bright": "#f7f9fb", "surface-container-high": "#e6e8ea", "on-surface": "#191c1e", "on-secondary-fixed-variant": "#46464e", "surface-container": "#eceef0", "surface-variant": "#e0e3e5", "on-primary-container": "#858386", "tertiary-container": "#00174b", "inverse-on-surface": "#eff1f3", "secondary": "#5d5e66", "surface-container-low": "#f2f4f6", "on-secondary-container": "#63646c", "primary-container": "#1c1b1d", "tertiary": "#000000", "surface-container-lowest": "#ffffff", "secondary-container": "#e3e1ec", "error": "#ba1a1a", "on-tertiary-container": "#497cff", "on-tertiary": "#ffffff", "on-error": "#ffffff", "surface-tint": "#5f5e60", "on-tertiary-fixed-variant": "#003ea8", "on-primary": "#ffffff", "on-secondary": "#ffffff", "inverse-primary": "#c8c6c8", "surface": "#f7f9fb", "tertiary-fixed-dim": "#b4c5ff", "error-container": "#ffdad6", "primary-fixed": "#e5e1e4", "outline": "#78767b", "surface-dim": "#d8dadc", "on-tertiary-fixed": "#00174b", "secondary-fixed-dim": "#c6c5cf", "on-background": "#191c1e" }, borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }, spacing: { "margin": "1rem", "space-xl": "1.5rem", "space-xs": "0.25rem", "space-sm": "0.5rem", "gutter": "1rem", "space-md": "0.75rem", "space-lg": "1rem" }, fontFamily: { "headline-md": ["Inter"], "label-md": ["Inter"], "body-sm": ["Inter"], "body-md": ["Inter"], "label-sm": ["Inter"], "body-lg": ["Inter"], "display-lg": ["Inter"], "headline-lg": ["Inter"], "headline-sm": ["Inter"] }, fontSize: { "headline-md": ["20px", { "lineHeight": "26px", "letterSpacing": "-0.015em", "fontWeight": "600" }], "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "600" }], "body-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0em", "fontWeight": "400" }], "body-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" }], "label-sm": ["10px", { "lineHeight": "12px", "letterSpacing": "0.06em", "fontWeight": "600" }], "body-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "400" }], "display-lg": ["32px", { "lineHeight": "38px", "letterSpacing": "-0.03em", "fontWeight": "600" }], "headline-lg": ["24px", { "lineHeight": "30px", "letterSpacing": "-0.02em", "fontWeight": "600" }], "headline-sm": ["18px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "500" }] } } } }</script><style>@layer base{html,body{width:100vw;margin:0;padding:0;background-color:#f7f9fb;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style></head><body class="bg-surface font-body-md text-on-surface flex flex-col min-h-screen"><header class="fixed top-0 inset-x-0 z-50 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] pt-safe"><div class="h-16 px-gutter flex items-center justify-between"><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">alt_route</span></div><div class="flex flex-col"><div class="flex items-center gap-space-xs"><span class="font-headline-sm text-headline-sm text-primary tracking-tight">Med Route</span><span class="font-label-sm text-label-sm text-on-surface-variant font-medium">/</span><span class="font-label-md text-label-md text-on-surface font-semibold">Search</span></div><div class="flex items-center gap-0.5 text-on-surface-variant"><span class="material-symbols-outlined text-[12px]">location_on</span><span class="font-label-sm text-label-sm tracking-wide uppercase">Chandigarh</span></div></div></div><div class="flex items-center gap-space-xs"><button aria-label="Notifications" class="w-11 h-11 flex items-center justify-center text-on-surface hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">notifications</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center ml-space-xs"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex flex-col relative w-full pt-16 pb-24 bg-surface flex-grow"><div class="flex flex-col w-full px-gutter space-y-space-md">
+<!-- 1. Search Bar & Query Parser Section -->
+<section class="flex flex-col space-y-space-sm pt-space-xs">
+<!-- Search Input Form Container -->
+<div class="relative flex items-center w-full bg-surface-container-lowest rounded-xl shadow-sm">
+<div class="absolute left-3 flex items-center pointer-events-none text-primary">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+</div>
+<input aria-label="Search medical care" class="w-full h-11 pl-10 pr-9 bg-transparent font-body-md text-body-md text-on-surface placeholder:text-outline focus:outline-none" id="search-input" type="text" value="kidney treatment near Chandigarh under 2 lakhs">
+<button aria-label="Clear query" class="absolute right-2.5 w-7 h-7 flex items-center justify-center rounded-full text-on-surface-variant hover:text-primary transition-colors" id="clear-search-btn">
+<span class="material-symbols-outlined text-[16px]">close</span>
+</button>
+</div>
+<!-- AI Parsed Entity Chips (Horizontally Scrollable) -->
+<div class="flex items-center gap-space-xs overflow-x-auto no-scrollbar py-0.5">
+<!-- Chip 1: Clinical Procedure -->
+<div class="flex items-center gap-1 bg-surface-container-lowest px-2 py-1 rounded-full text-on-surface shadow-xs shrink-0">
+<span class="material-symbols-outlined text-[14px] text-primary">clinical_notes</span>
+<span class="font-label-sm text-label-sm font-medium">Kidney Treatment</span>
+<button aria-label="Remove filter" class="w-3.5 h-3.5 flex items-center justify-center text-outline hover:text-primary ml-0.5">
+<span class="material-symbols-outlined text-[12px]">close</span>
+</button>
+</div>
+<!-- Chip 2: Location -->
+<div class="flex items-center gap-1 bg-surface-container-lowest px-2 py-1 rounded-full text-on-surface shadow-xs shrink-0">
+<span class="material-symbols-outlined text-[14px] text-primary">near_me</span>
+<span class="font-label-sm text-label-sm font-medium">Chandigarh</span>
+<button aria-label="Remove filter" class="w-3.5 h-3.5 flex items-center justify-center text-outline hover:text-primary ml-0.5">
+<span class="material-symbols-outlined text-[12px]">close</span>
+</button>
+</div>
+<!-- Chip 3: Budget Ceiling -->
+<div class="flex items-center gap-1 bg-surface-container-lowest px-2 py-1 rounded-full text-on-surface shadow-xs shrink-0">
+<span class="material-symbols-outlined text-[14px] text-primary">payments</span>
+<span class="font-label-sm text-label-sm font-medium">Under ₹2,00,000</span>
+<button aria-label="Remove filter" class="w-3.5 h-3.5 flex items-center justify-center text-outline hover:text-primary ml-0.5">
+<span class="material-symbols-outlined text-[12px]">close</span>
+</button>
+</div>
+<!-- Chip 4: Geographic Radius -->
+<div class="flex items-center gap-1 bg-surface-container-lowest px-2 py-1 rounded-full text-on-surface shadow-xs shrink-0">
+<span class="material-symbols-outlined text-[14px] text-primary">radar</span>
+<span class="font-label-sm text-label-sm font-medium">50km radius</span>
+<button aria-label="Remove filter" class="w-3.5 h-3.5 flex items-center justify-center text-outline hover:text-primary ml-0.5">
+<span class="material-symbols-outlined text-[12px]">close</span>
+</button>
+</div>
+</div>
+<!-- AI Route Analysis Sub-banner -->
+<div class="flex items-center gap-1.5 px-space-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px] text-primary">hub</span>
+<span class="font-label-sm text-label-sm">Routing synthesized via multi-parameter clinical graph</span>
+</div>
+</section>
+<!-- 2. Mobile Filter & Sorting Controls -->
+<section class="flex flex-col space-y-space-xs">
+<div class="flex items-center justify-between gap-space-xs">
+<!-- Active Filters Drawer Trigger -->
+<button class="flex items-center gap-1.5 h-8 px-2.5 bg-primary text-on-primary rounded-lg shadow-sm" id="toggle-filter-panel">
+<span class="material-symbols-outlined text-[14px]">tune</span>
+<span class="font-label-sm text-label-sm font-semibold">Filters</span>
+<span class="flex items-center justify-center w-4 h-4 rounded-full bg-surface-container-lowest text-primary font-label-sm text-[9px] font-bold ml-0.5">4</span>
+</button>
+<!-- Quick Sorting Dropdown Selector -->
+<div class="relative">
+<button class="flex items-center gap-1 h-8 px-2.5 bg-surface-container-lowest text-on-surface rounded-lg shadow-xs hover:bg-surface-container-low transition-colors" id="sort-trigger">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-normal">Sort:</span>
+<span class="font-label-sm text-label-sm font-semibold">Relevance</span>
+<span class="material-symbols-outlined text-[14px] ml-0.5">expand_more</span>
+</button>
+</div>
+<!-- Map vs List Segmented Switch -->
+<div class="flex items-center p-0.5 bg-surface-container rounded-lg">
+<button aria-label="List View" class="flex items-center justify-center w-7 h-7 bg-surface-container-lowest text-primary rounded shadow-xs" title="List View">
+<span class="material-symbols-outlined text-[16px]">format_list_bulleted</span>
+</button>
+<button aria-label="Map View" class="flex items-center justify-center w-7 h-7 text-on-surface-variant hover:text-primary transition-colors" title="Map View">
+<span class="material-symbols-outlined text-[16px]">map</span>
+</button>
+</div>
+</div>
+<!-- Collapsible Active Filter Drawer -->
+<div class="flex flex-col bg-surface-container-lowest rounded-xl p-space-md space-y-space-md shadow-sm transition-all duration-200" id="filter-panel">
+<!-- Distance Slider & Indicator -->
+<div class="flex flex-col space-y-1.5">
+<div class="flex justify-between items-center text-on-surface">
+<span class="font-label-sm text-label-sm font-semibold uppercase tracking-wider text-on-surface-variant">Transport Isochrone</span>
+<span class="font-label-sm text-label-sm font-bold text-primary">5 - 50 km <span class="font-normal text-on-surface-variant">/ 200km</span></span>
+</div>
+<div class="w-full bg-surface-container-high h-1 rounded-full relative">
+<div class="absolute left-0 top-0 bottom-0 bg-primary rounded-full" style="width: 25%;"></div>
+<div class="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-primary rounded-full shadow" style="left: 25%;"></div>
+</div>
+</div>
+<!-- Budget Range Metric -->
+<div class="flex justify-between items-center">
+<span class="font-label-sm text-label-sm font-semibold uppercase tracking-wider text-on-surface-variant">Proc Cost Window</span>
+<span class="font-label-sm text-label-sm bg-surface-container-low px-2 py-0.5 rounded text-on-surface font-semibold">₹10k — ₹2,00,000</span>
+</div>
+<!-- Entity Ownership Classification -->
+<div class="flex flex-col space-y-1">
+<span class="font-label-sm text-label-sm font-semibold uppercase tracking-wider text-on-surface-variant">Care Facility Type</span>
+<div class="flex flex-wrap gap-1.5">
+<button class="h-6 px-2 rounded-full text-on-surface-variant bg-surface-container-low font-label-sm text-label-sm">All</button>
+<button class="h-6 px-2 rounded-full text-on-primary bg-primary font-label-sm text-label-sm font-medium flex items-center gap-1">
+<span>Private</span>
+<span class="material-symbols-outlined text-[12px]">check</span>
+</button>
+<button class="h-6 px-2 rounded-full text-on-surface-variant bg-surface-container-low font-label-sm text-label-sm">Government</button>
+<button class="h-6 px-2 rounded-full text-on-surface-variant bg-surface-container-low font-label-sm text-label-sm">Trust / NGO</button>
+</div>
+</div>
+<!-- Clinical Accreditations Filters -->
+<div class="flex flex-col space-y-1">
+<span class="font-label-sm text-label-sm font-semibold uppercase tracking-wider text-on-surface-variant">Accreditations &amp; Subsidies</span>
+<div class="flex flex-wrap gap-1.5">
+<button class="h-6 px-2 rounded-full text-on-primary bg-primary font-label-sm text-label-sm font-medium flex items-center gap-1">
+<span>NABH</span>
+<span class="material-symbols-outlined text-[12px]">check</span>
+</button>
+<button class="h-6 px-2 rounded-full text-on-surface-variant bg-surface-container-low font-label-sm text-label-sm">NABL</button>
+<button class="h-6 px-2 rounded-full text-on-primary bg-primary font-label-sm text-label-sm font-medium flex items-center gap-1">
+<span>PMJAY Empanelled</span>
+<span class="material-symbols-outlined text-[12px]">check</span>
+</button>
+</div>
+</div>
+<!-- Reset Action Footer -->
+<div class="flex justify-end pt-1">
+<button class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary underline font-medium">Reset All Filters</button>
+</div>
+</div>
+</section>
+<!-- 3. Results Header -->
+<section class="flex items-center justify-between pt-space-xs">
+<div class="flex items-center gap-2">
+<span class="font-headline-sm text-headline-sm text-primary tracking-tight">23 Care Facilities</span>
+<div class="flex items-center gap-1 bg-surface-container-highest px-1.5 py-0.5 rounded-full">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+<span class="font-label-sm text-[9px] uppercase tracking-wider text-on-surface-variant font-bold">LIVE TELEMETRY</span>
+</div>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Index v4.19</span>
+</section>
+<!-- 4. Hospital Result Cards Feed -->
+<section class="flex flex-col space-y-space-md">
+<!-- Card 1: Max Super Speciality Hospital -->
+<article class="flex flex-col bg-surface-container-lowest rounded-xl p-space-md shadow-sm space-y-space-md">
+<!-- Title & Badges -->
+<div class="flex items-start justify-between gap-2">
+<div class="flex flex-col space-y-0.5 min-w-0">
+<div class="flex items-center gap-1">
+<h2 class="font-headline-sm text-headline-sm text-primary truncate">Max Super Speciality Hospital</h2>
+<span class="material-symbols-outlined text-[16px] text-primary" style="font-variation-settings: 'FILL' 1;" title="Verified Provider">verified</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Mohali Sector 56A</span>
+</div>
+<span class="font-label-sm text-label-sm bg-surface-container text-on-surface px-2 py-0.5 rounded uppercase font-semibold tracking-wider shrink-0">Private</span>
+</div>
+<!-- Telemetry Meta Bar -->
+<div class="flex items-center gap-3 py-1 px-2.5 bg-surface-container-low rounded-lg text-on-surface">
+<div class="flex items-center gap-1 font-label-md text-label-md">
+<span class="material-symbols-outlined text-[14px] text-primary" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-bold">4.8</span>
+<span class="text-on-surface-variant font-normal">(1,420)</span>
+</div>
+<span class="text-outline-variant font-light">•</span>
+<div class="flex items-center gap-1 font-label-md text-label-md">
+<span class="material-symbols-outlined text-[14px] text-on-surface-variant">navigation</span>
+<span>12.3 km transit</span>
+</div>
+</div>
+<!-- Matching Procedure & Estimated Cost Bracket -->
+<div class="flex flex-col space-y-0.5 bg-surface-container-low p-2 rounded-lg">
+<span class="font-label-sm text-label-sm font-semibold uppercase text-on-surface-variant tracking-wider">Indexed Procedure Matrix</span>
+<div class="flex justify-between items-baseline gap-2">
+<span class="font-body-md text-body-md font-semibold text-primary">Dialysis &amp; Nephrology Care</span>
+<span class="font-label-md text-label-md font-bold text-primary">₹18,000 – ₹1,45,000</span>
+</div>
+</div>
+<!-- Accreditations Row -->
+<div class="flex flex-wrap items-center gap-1.5">
+<span class="font-label-sm text-label-sm bg-surface-container-high text-on-surface px-2 py-0.5 rounded font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">verified_user</span> NABH Accredited
+        </span>
+<span class="font-label-sm text-label-sm bg-surface-container-high text-on-surface px-2 py-0.5 rounded font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">shield</span> PMJAY Empanelled
+        </span>
+</div>
+<!-- Algorithmic Match Score Telemetry Breakdown -->
+<div class="flex flex-col space-y-1.5 bg-surface-container p-2.5 rounded-lg">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-primary">grain</span>
+<span class="font-label-md text-label-md font-bold text-primary">Match Score 94%</span>
+</div>
+<span class="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wider font-semibold">Priority Alignment</span>
+</div>
+<!-- Segmented Diagnostic Progress Bar -->
+<div class="grid grid-cols-4 gap-1 h-1.5 w-full">
+<div class="bg-primary rounded-xs h-full" title="Distance: 85%"></div>
+<div class="bg-primary rounded-xs h-full" title="Cost: 92%"></div>
+<div class="bg-primary rounded-xs h-full" title="Rating: 96%"></div>
+<div class="bg-primary rounded-xs h-full" title="Accreditation: 100%"></div>
+</div>
+<div class="flex justify-between text-on-surface-variant font-label-sm text-[10px] pt-0.5">
+<span>Dist 85%</span>
+<span>Cost 92%</span>
+<span>Score 96%</span>
+<span>Accred 100%</span>
+</div>
+</div>
+<!-- Action Panel & Provenance -->
+<div class="flex flex-col space-y-2 pt-1">
+<div class="flex items-center justify-between gap-3">
+<label class="flex items-center gap-2 cursor-pointer select-none">
+<input class="w-4 h-4 accent-primary rounded cursor-pointer" type="checkbox">
+<span class="font-label-sm text-label-sm text-on-surface font-medium">Add to Compare</span>
+</label>
+<button class="h-9 px-4 bg-primary text-on-primary rounded-lg font-label-md text-label-md font-semibold tracking-wide hover:bg-neutral-800 transition-colors shadow-sm">
+            View Details
+          </button>
+</div>
+<div class="flex items-center gap-1 text-on-surface-variant pt-1">
+<span class="material-symbols-outlined text-[12px]">info</span>
+<span class="font-label-sm text-[10px] uppercase tracking-wider font-medium">[SIMULATED DATA] Real-time hospital route telemetry snapshot</span>
+</div>
+</div>
+</article>
+<!-- Card 2: PGIMER, Chandigarh -->
+<article class="flex flex-col bg-surface-container-lowest rounded-xl p-space-md shadow-sm space-y-space-md">
+<!-- Title & Badges -->
+<div class="flex items-start justify-between gap-2">
+<div class="flex flex-col space-y-0.5 min-w-0">
+<div class="flex items-center gap-1">
+<h2 class="font-headline-sm text-headline-sm text-primary truncate">PGIMER</h2>
+<span class="material-symbols-outlined text-[16px] text-primary" style="font-variation-settings: 'FILL' 1;" title="Verified Provider">verified</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Sector 12, Chandigarh</span>
+</div>
+<span class="font-label-sm text-label-sm bg-surface-container text-on-surface px-2 py-0.5 rounded uppercase font-semibold tracking-wider shrink-0">Government</span>
+</div>
+<!-- Telemetry Meta Bar -->
+<div class="flex items-center gap-3 py-1 px-2.5 bg-surface-container-low rounded-lg text-on-surface">
+<div class="flex items-center gap-1 font-label-md text-label-md">
+<span class="material-symbols-outlined text-[14px] text-primary" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-bold">4.7</span>
+<span class="text-on-surface-variant font-normal">(3,890)</span>
+</div>
+<span class="text-outline-variant font-light">•</span>
+<div class="flex items-center gap-1 font-label-md text-label-md">
+<span class="material-symbols-outlined text-[14px] text-on-surface-variant">navigation</span>
+<span>6.5 km transit</span>
+</div>
+</div>
+<!-- Matching Procedure & Estimated Cost Bracket -->
+<div class="flex flex-col space-y-0.5 bg-surface-container-low p-2 rounded-lg">
+<span class="font-label-sm text-label-sm font-semibold uppercase text-on-surface-variant tracking-wider">Indexed Procedure Matrix</span>
+<div class="flex justify-between items-baseline gap-2">
+<span class="font-body-md text-body-md font-semibold text-primary truncate">Nephrology &amp; Renal Transplant</span>
+<span class="font-label-md text-label-md font-bold text-primary shrink-0">₹8,000 – ₹85,000</span>
+</div>
+</div>
+<!-- Accreditations Row -->
+<div class="flex flex-wrap items-center gap-1.5">
+<span class="font-label-sm text-label-sm bg-surface-container-high text-on-surface px-2 py-0.5 rounded font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">science</span> NABL Certified
+        </span>
+<span class="font-label-sm text-label-sm bg-surface-container-high text-on-surface px-2 py-0.5 rounded font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">shield</span> PMJAY Empanelled
+        </span>
+</div>
+<!-- Algorithmic Match Score Telemetry Breakdown -->
+<div class="flex flex-col space-y-1.5 bg-surface-container p-2.5 rounded-lg">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-primary">grain</span>
+<span class="font-label-md text-label-md font-bold text-primary">Match Score 91%</span>
+</div>
+<span class="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wider font-semibold">Priority Alignment</span>
+</div>
+<!-- Segmented Diagnostic Progress Bar -->
+<div class="grid grid-cols-4 gap-1 h-1.5 w-full">
+<div class="bg-primary rounded-xs h-full" title="Distance: 98%"></div>
+<div class="bg-primary rounded-xs h-full" title="Cost: 95%"></div>
+<div class="bg-primary rounded-xs h-full" title="Rating: 94%"></div>
+<div class="bg-primary rounded-xs h-full" title="Accreditation: 100%"></div>
+</div>
+<div class="flex justify-between text-on-surface-variant font-label-sm text-[10px] pt-0.5">
+<span>Dist 98%</span>
+<span>Cost 95%</span>
+<span>Score 94%</span>
+<span>Accred 100%</span>
+</div>
+</div>
+<!-- Action Panel & Provenance -->
+<div class="flex flex-col space-y-2 pt-1">
+<div class="flex items-center justify-between gap-3">
+<label class="flex items-center gap-2 cursor-pointer select-none">
+<input class="w-4 h-4 accent-primary rounded cursor-pointer" type="checkbox">
+<span class="font-label-sm text-label-sm text-on-surface font-medium">Add to Compare</span>
+</label>
+<button class="h-9 px-4 bg-primary text-on-primary rounded-lg font-label-md text-label-md font-semibold tracking-wide hover:bg-neutral-800 transition-colors shadow-sm">
+            View Details
+          </button>
+</div>
+<div class="flex items-center gap-1 text-on-surface-variant pt-1">
+<span class="material-symbols-outlined text-[12px]">info</span>
+<span class="font-label-sm text-[10px] uppercase tracking-wider font-medium">[SIMULATED DATA] Verified against Ministry registry</span>
+</div>
+</div>
+</article>
+<!-- Card 3: Fortis Hospital, Mohali -->
+<article class="flex flex-col bg-surface-container-lowest rounded-xl p-space-md shadow-sm space-y-space-md">
+<!-- Title & Badges -->
+<div class="flex items-start justify-between gap-2">
+<div class="flex flex-col space-y-0.5 min-w-0">
+<div class="flex items-center gap-1">
+<h2 class="font-headline-sm text-headline-sm text-primary truncate">Fortis Hospital</h2>
+<span class="material-symbols-outlined text-[16px] text-primary" style="font-variation-settings: 'FILL' 1;" title="Verified Provider">verified</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Sector 62, Phase VIII, Mohali</span>
+</div>
+<span class="font-label-sm text-label-sm bg-surface-container text-on-surface px-2 py-0.5 rounded uppercase font-semibold tracking-wider shrink-0">Private</span>
+</div>
+<!-- Telemetry Meta Bar -->
+<div class="flex items-center gap-3 py-1 px-2.5 bg-surface-container-low rounded-lg text-on-surface">
+<div class="flex items-center gap-1 font-label-md text-label-md">
+<span class="material-symbols-outlined text-[14px] text-primary" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-bold">4.5</span>
+<span class="text-on-surface-variant font-normal">(980)</span>
+</div>
+<span class="text-outline-variant font-light">•</span>
+<div class="flex items-center gap-1 font-label-md text-label-md">
+<span class="material-symbols-outlined text-[14px] text-on-surface-variant">navigation</span>
+<span>14.1 km transit</span>
+</div>
+</div>
+<!-- Matching Procedure & Estimated Cost Bracket -->
+<div class="flex flex-col space-y-0.5 bg-surface-container-low p-2 rounded-lg">
+<span class="font-label-sm text-label-sm font-semibold uppercase text-on-surface-variant tracking-wider">Indexed Procedure Matrix</span>
+<div class="flex justify-between items-baseline gap-2">
+<span class="font-body-md text-body-md font-semibold text-primary truncate">Kidney Stone &amp; Hemodialysis</span>
+<span class="font-label-md text-label-md font-bold text-primary shrink-0">₹22,000 – ₹1,80,000</span>
+</div>
+</div>
+<!-- Accreditations Row -->
+<div class="flex flex-wrap items-center gap-1.5">
+<span class="font-label-sm text-label-sm bg-surface-container-high text-on-surface px-2 py-0.5 rounded font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">verified_user</span> NABH
+        </span>
+<span class="font-label-sm text-label-sm bg-surface-container-high text-on-surface px-2 py-0.5 rounded font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">shield</span> PMJAY
+        </span>
+</div>
+<!-- Algorithmic Match Score Telemetry Breakdown -->
+<div class="flex flex-col space-y-1.5 bg-surface-container p-2.5 rounded-lg">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-primary">grain</span>
+<span class="font-label-md text-label-md font-bold text-primary">Match Score 87%</span>
+</div>
+<span class="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wider font-semibold">Priority Alignment</span>
+</div>
+<!-- Segmented Diagnostic Progress Bar -->
+<div class="grid grid-cols-4 gap-1 h-1.5 w-full">
+<div class="bg-primary rounded-xs h-full" title="Distance: 80%"></div>
+<div class="bg-primary rounded-xs h-full" title="Cost: 78%"></div>
+<div class="bg-primary rounded-xs h-full" title="Rating: 90%"></div>
+<div class="bg-primary rounded-xs h-full" title="Accreditation: 100%"></div>
+</div>
+<div class="flex justify-between text-on-surface-variant font-label-sm text-[10px] pt-0.5">
+<span>Dist 80%</span>
+<span>Cost 78%</span>
+<span>Score 90%</span>
+<span>Accred 100%</span>
+</div>
+</div>
+<!-- Action Panel & Provenance -->
+<div class="flex flex-col space-y-2 pt-1">
+<div class="flex items-center justify-between gap-3">
+<label class="flex items-center gap-2 cursor-pointer select-none">
+<input class="w-4 h-4 accent-primary rounded cursor-pointer" type="checkbox">
+<span class="font-label-sm text-label-sm text-on-surface font-medium">Add to Compare</span>
+</label>
+<button class="h-9 px-4 bg-primary text-on-primary rounded-lg font-label-md text-label-md font-semibold tracking-wide hover:bg-neutral-800 transition-colors shadow-sm">
+            View Details
+          </button>
+</div>
+<div class="flex items-center gap-1 text-on-surface-variant pt-1">
+<span class="material-symbols-outlined text-[12px]">info</span>
+<span class="font-label-sm text-[10px] uppercase tracking-wider font-medium">[SIMULATED DATA] Dynamic routing estimate updated 4m ago</span>
+</div>
+</div>
+</article>
+</section>
+<!-- 5. Pagination Container -->
+<section class="flex flex-col items-center pt-space-xs pb-space-lg">
+<button class="w-full h-11 bg-surface-container-lowest text-primary rounded-xl font-label-md text-label-md font-semibold flex items-center justify-center gap-2 shadow-xs hover:bg-surface-container-low transition-colors" id="load-more-btn">
+<span class="material-symbols-outlined text-[18px]">add_circle_outline</span>
+<span>Load More Hospitals (20 remaining)</span>
+</button>
+</section>
+</div>
+<script>
+  (function initHospitalSearch() {
+    // Clear Search Input Handler
+    const clearBtn = document.getElementById('clear-search-btn');
+    const searchInput = document.getElementById('search-input');
+    if (clearBtn && searchInput) {
+      clearBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        searchInput.focus();
+      });
+    }
+
+    // Toggle Filter Drawer Panel
+    const toggleFilterBtn = document.getElementById('toggle-filter-panel');
+    const filterPanel = document.getElementById('filter-panel');
+    if (toggleFilterBtn && filterPanel) {
+      toggleFilterBtn.addEventListener('click', () => {
+        if (filterPanel.classList.contains('hidden')) {
+          filterPanel.classList.remove('hidden');
+        } else {
+          filterPanel.classList.add('hidden');
+        }
+      });
+    }
+
+    // Interactive Filter Tag dismissals
+    document.querySelectorAll('.overflow-x-auto button').forEach((btn) => {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const chip = this.closest('div');
+        if (chip) {
+          chip.style.opacity = '0';
+          chip.style.transform = 'scale(0.9)';
+          chip.style.transition = 'all 0.15s ease-out';
+          setTimeout(() => chip.remove(), 150);
+        }
+      });
+    });
+
+    // Micro feedback for Comparison selection
+    document.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
+      checkbox.addEventListener('change', function() {
+        const card = this.closest('article');
+        if (card) {
+          if (this.checked) {
+            card.classList.add('ring-offset-2', 'ring-1', 'ring-primary');
+          } else {
+            card.classList.remove('ring-offset-2', 'ring-1', 'ring-primary');
+          }
+        }
+      });
+    });
+  })();
+</script></main><nav class="fixed bottom-0 inset-x-0 z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-1px_8px_rgba(0,0,0,0.04)]" data-active-classes="text-primary font-semibold"><div class="flex justify-around items-center h-16 px-gutter"><a aria-current="page" class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 transition-colors text-primary font-semibold" data-path="search" href="#"><span class="material-symbols-outlined text-[22px]">search</span><span class="font-label-sm text-label-sm">Search</span></a><a class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 text-on-surface-variant transition-colors" data-path="compare" href="#"><span class="material-symbols-outlined text-[22px]">compare_arrows</span><span class="font-label-sm text-label-sm">Compare</span></a><a class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 text-on-surface-variant transition-colors" data-path="saved" href="#"><span class="material-symbols-outlined text-[22px]">bookmark</span><span class="font-label-sm text-label-sm">Saved</span></a><a class="flex flex-col items-center justify-center gap-0.5 w-14 h-12 text-on-surface-variant transition-colors" data-path="profile" href="#"><span class="material-symbols-outlined text-[22px]">person</span><span class="font-label-sm text-label-sm">Profile</span></a></div></nav></body></html>

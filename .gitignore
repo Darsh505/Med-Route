@@ -1,0 +1,136 @@
+# ──────────────────────────────────────────────
+# .gitignore — Med Route Monorepo
+# ──────────────────────────────────────────────
+
+# ── Environment & Secrets ─────────────────────
+.env
+.env.local
+.env.production
+.env.staging
+*.env
+
+# ── Python / Backend ──────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+*.manifest
+*.spec
+pip-log.txt
+pip-delete-this-directory.txt
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+cython_debug/
+
+# ── Alembic ───────────────────────────────────
+# Keep migrations but ignore compiled files
+backend/alembic/__pycache__/
+
+# ── Node.js / Web Frontend ────────────────────
+node_modules/
+.npm
+.eslintcache
+.stylelintcache
+
+# Next.js
+web/.next/
+web/out/
+web/.vercel
+web/next-env.d.ts
+
+# Build outputs
+web/dist/
+web/build/
+
+# ── React Native / Mobile ─────────────────────
+mobile/node_modules/
+mobile/.expo/
+mobile/dist/
+mobile/web-build/
+mobile/.expo-shared/
+mobile/android/
+mobile/ios/
+*.apk
+*.aab
+*.ipa
+
+# Expo
+.expo/
+.expo-shared/
+
+# ── Docker ────────────────────────────────────
+# Keep docker-compose.yml but ignore generated files
+.docker/
+
+# ── IDEs & Editors ────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ── Logs ──────────────────────────────────────
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── OS Generated ──────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ── Testing ───────────────────────────────────
+.pytest_cache/
+htmlcov/
+.coverage
+
+# ── Uploads (local dev only) ──────────────────
+backend/uploads/

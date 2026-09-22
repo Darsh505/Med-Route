@@ -1,0 +1,443 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport">
+<title>MedRoute Search Results</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary-dark": "#0d131f",
+            "accent-blue": "#1a73e8",
+            "accent-green": "#00875a",
+            "light-bg": "#f9fafb"
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    body {
+      -webkit-tap-highlight-color: transparent;
+      background-color: #ffffff;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .pb-safe {
+      padding-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
+    }
+    .pt-safe {
+      padding-top: max(env(safe-area-inset-top, 0px), 12px);
+    }
+  </style>
+</head>
+<body class="bg-white text-slate-900 min-h-screen flex flex-col antialiased selection:bg-blue-100">
+<!-- Top App Bar / Header matching Discover screen -->
+<header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-100 px-4 pt-safe pb-2">
+<div class="h-14 flex items-center justify-between">
+<!-- Menu Button -->
+<button aria-label="Menu" class="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-800 hover:bg-slate-50 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[20px]">menu</span>
+</button>
+<!-- App Logo & Title -->
+<div class="flex items-center gap-2.5">
+<div class="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shadow-xs">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">add_location</span>
+</div>
+<div class="flex flex-col">
+<span class="font-extrabold text-[17px] leading-tight text-slate-900 tracking-tight">MedRoute</span>
+<span class="text-[11px] font-medium text-slate-500 leading-none">Hospital Discovery</span>
+</div>
+</div>
+<!-- Right Action Icons (Emergency siren & Profile avatar) -->
+<div class="flex items-center gap-2">
+<button aria-label="Emergency Siren" class="w-10 h-10 rounded-full bg-red-50 text-red-500 border border-red-100 flex items-center justify-center hover:bg-red-100 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[20px]">emergency</span>
+</button>
+<button aria-label="User Profile" class="w-10 h-10 rounded-full border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-700 hover:bg-slate-100 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[20px]">person</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Content Container -->
+<main class="flex-1 w-full max-w-md mx-auto px-4 pt-3.5 pb-28 flex flex-col space-y-4">
+<!-- Search Input Bar with Clear, Mic & Search Button -->
+<div class="relative flex items-center w-full bg-white rounded-2xl border border-slate-200 shadow-xs px-3.5 h-13 hover:border-slate-300 transition-colors">
+<span class="material-symbols-outlined text-slate-400 text-[20px] shrink-0 mr-2.5">search</span>
+<input class="w-full text-[13.5px] text-slate-900 bg-transparent placeholder-slate-400 focus:outline-none font-medium truncate" id="search-input" type="text" value="kidney treatment near Chandigarh under 2 lakhs">
+<button aria-label="Clear search" class="p-1 text-slate-400 hover:text-slate-700 transition-colors shrink-0" id="clear-search-btn">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+<button aria-label="Voice search" class="p-1 text-slate-400 hover:text-slate-700 transition-colors shrink-0">
+<span class="material-symbols-outlined text-[20px]">mic</span>
+</button>
+<button aria-label="Execute search" class="w-9 h-9 rounded-full bg-[#0d131f] text-white flex items-center justify-center shrink-0 ml-1 shadow-sm active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[19px]">arrow_forward</span>
+</button>
+</div>
+<!-- Query Entity Chips (Horizontally Scrollable) -->
+<div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+<!-- Chip 1: Kidney Care (soft blue chip) -->
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50/80 border border-blue-200/90 rounded-full text-blue-900 text-[12px] font-medium shrink-0 hover:bg-blue-100 transition-colors">
+<span class="material-symbols-outlined text-[15px] text-blue-600">nephrology</span>
+<span>Kidney Care</span>
+<span class="material-symbols-outlined text-[13px] text-blue-400 ml-0.5">close</span>
+</button>
+<!-- Chip 2: Location (soft green/mint chip) -->
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50/80 border border-emerald-200/90 rounded-full text-emerald-900 text-[12px] font-medium shrink-0 hover:bg-emerald-100 transition-colors">
+<span class="material-symbols-outlined text-[14px] text-emerald-600">navigation</span>
+<span>Chandigarh (≤15 km)</span>
+<span class="material-symbols-outlined text-[13px] text-emerald-500 ml-0.5">close</span>
+</button>
+<!-- Chip 3: Budget Ceiling (soft amber chip) -->
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50/90 border border-amber-200/90 rounded-full text-amber-900 text-[12px] font-medium shrink-0 hover:bg-amber-100 transition-colors">
+<span class="material-symbols-outlined text-[14px] text-amber-600">payments</span>
+<span>&lt; ₹2 Lakhs</span>
+<span class="material-symbols-outlined text-[13px] text-amber-500 ml-0.5">close</span>
+</button>
+<!-- Chip 4: Live Beds (emerald green pill) -->
+<div class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-full text-emerald-700 text-[12px] font-semibold shrink-0">
+<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+<span>Live Beds</span>
+</div>
+</div>
+<!-- Filter & Summary Bar -->
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-2">
+<span class="text-[16px] font-bold text-slate-900 tracking-tight">23 Hospitals Found</span>
+<div class="flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200/70 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+<span>Live Telemetry</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<!-- Filters Pill -->
+<button class="flex items-center gap-1 px-2.5 py-1 rounded-full border border-slate-200 bg-white text-slate-800 text-[12px] font-bold hover:bg-slate-50 shadow-xs" id="toggle-filter-panel">
+<span class="material-symbols-outlined text-[15px]">tune</span>
+<span>Filters</span>
+<span class="w-4 h-4 rounded-full bg-[#0d131f] text-white text-[10px] flex items-center justify-center font-bold">4</span>
+</button>
+<!-- Sort Selector -->
+<button class="flex items-center gap-1 px-2.5 py-1 rounded-full border border-slate-200 bg-white text-slate-700 text-[12px] font-semibold hover:bg-slate-50 shadow-xs">
+<span>Best Match</span>
+<span class="material-symbols-outlined text-[14px] text-slate-500">expand_more</span>
+</button>
+</div>
+</div>
+<!-- Collapsible Filter Tray (Drawer) -->
+<div class="hidden flex-col bg-slate-50 border border-slate-200 rounded-2xl p-3.5 space-y-3 shadow-xs" id="filter-panel">
+<div class="flex justify-between items-center text-slate-900">
+<span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Max Distance Isochrone</span>
+<span class="text-[12px] font-bold text-slate-900">≤ 15 km <span class="font-normal text-slate-400">/ 50km</span></span>
+</div>
+<div class="w-full bg-slate-200 h-1.5 rounded-full relative">
+<div class="absolute left-0 top-0 bottom-0 bg-[#0d131f] rounded-full" style="width: 30%;"></div>
+<div class="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-[#0d131f] rounded-full shadow" style="left: 30%;"></div>
+</div>
+<div class="flex justify-between items-center text-[12px] pt-1">
+<span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Facility Type</span>
+<div class="flex gap-1.5">
+<span class="px-2 py-0.5 rounded-full bg-[#0d131f] text-white text-[11px] font-medium">All</span>
+<span class="px-2 py-0.5 rounded-full bg-white border border-slate-200 text-slate-700 text-[11px]">Private</span>
+<span class="px-2 py-0.5 rounded-full bg-white border border-slate-200 text-slate-700 text-[11px]">Govt</span>
+</div>
+</div>
+</div>
+<!-- Hospital Cards List -->
+<div class="space-y-4 pt-1">
+<!-- Hospital Card 1: PGIMER Advanced Medical Institute -->
+<article class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:border-slate-300 transition-colors">
+<!-- Photo Container with Badges -->
+<div class="relative w-full h-44 bg-slate-200 overflow-hidden">
+<img alt="PGIMER Medical Institute Building" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB5AW_f4udxC7pjEYSNbnmZ7091C9yh-xrwo-L9AzzuD5SGY3uXIMTXciYx3vUSzIl8ZYd3E3x-6XyJj5DMxSkFFXxaAm7g8azdu13Z3DKUmRRqxtxBA0MG67Gk7RKKbucKDTFRWerE8SQIGQs-MTIUueCXEDunpSQjGR0h3H5jcAGu9IQwxGeBNJfwW_Z8tK6n4V4YMuzFMRflxghvuPvcRrkvHGeWhAsq1xnYTjYxnPzHEB5fu8VD">
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/25 pointer-events-none"></div>
+<!-- Top Left Distance Badge -->
+<div class="absolute top-2.5 left-2.5 bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-full text-[11px] font-semibold text-slate-900 flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[13px] text-slate-700">near_me</span>
+<span>3.8 km • Sector 12</span>
+</div>
+<!-- Top Right Accreditation Badge -->
+<div class="absolute top-2.5 right-2.5 bg-[#00875a] text-white px-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[13px]">verified</span>
+<span>NABH &amp; JCI</span>
+</div>
+<!-- Bottom Left Telemetry Pill -->
+<div class="absolute bottom-2.5 left-2.5 bg-black/75 backdrop-blur-md px-2.5 py-1 rounded-full text-[11px] font-semibold text-white flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+<span>14 ICU Beds Available</span>
+</div>
+<!-- Bottom Right Match Pill -->
+<div class="absolute bottom-2.5 right-2.5 bg-blue-600/90 backdrop-blur-md text-white px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">auto_awesome</span>
+<span>94% Match</span>
+</div>
+</div>
+<!-- Body Details -->
+<div class="p-3.5 space-y-3">
+<div>
+<h3 class="text-[16px] font-bold text-slate-900 leading-snug">PGIMER Advanced Medical Institute</h3>
+<div class="flex items-center gap-1.5 text-[12px] text-slate-500 pt-0.5 font-medium">
+<span class="text-amber-500 font-bold flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
+4.8
+</span>
+<span>•</span>
+<span>2,410 reviews</span>
+<span>•</span>
+<span class="text-emerald-700 font-semibold">Cashless 24/7</span>
+</div>
+</div>
+<!-- Package Estimates Box -->
+<div class="bg-slate-50 border border-slate-100 rounded-xl p-3">
+<div class="text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-1.5">PACKAGE ESTIMATES</div>
+<div class="grid grid-cols-2 gap-3">
+<div>
+<div class="text-[11px] text-slate-500 font-medium">Dialysis Session</div>
+<div class="text-[14px] font-extrabold text-slate-900">₹1,200 <span class="text-[11px] font-normal text-slate-400">- 2.5k</span></div>
+</div>
+<div>
+<div class="text-[11px] text-slate-500 font-medium">Kidney Transplant</div>
+<div class="text-[14px] font-extrabold text-slate-900">₹1.4 - ₹1.85 L</div>
+</div>
+</div>
+</div>
+<!-- Card Actions Row -->
+<div class="flex items-center justify-between pt-0.5">
+<label class="flex items-center gap-2 cursor-pointer select-none">
+<input checked="" class="w-4 h-4 rounded text-blue-600 focus:ring-0 accent-blue-600 cursor-pointer" type="checkbox">
+<span class="text-[13px] font-semibold text-slate-800">Compare</span>
+</label>
+<div class="flex items-center gap-2">
+<button aria-label="Route direction" class="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-50 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[18px]">explore</span>
+</button>
+<button class="h-9 px-4 rounded-xl bg-[#0d131f] text-white text-[13px] font-bold tracking-tight hover:bg-slate-800 active:scale-95 transition-all shadow-xs">
+View Hospital
+</button>
+</div>
+</div>
+</div>
+</article>
+<!-- Hospital Card 2: Max Super Speciality Hospital -->
+<article class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:border-slate-300 transition-colors">
+<!-- Photo Container with Badges -->
+<div class="relative w-full h-44 bg-slate-900 overflow-hidden">
+<img alt="Max Super Speciality Hospital Building" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD5_RaEdXVIkfzHfuYRD8jmEP3Lr1rO7SH24hg716ilZe2K1xhg9qQB_4ovUqd354nWVdk6U0tRVJk79ym1oBwhTGIPmY_wHgxI6ZhHOmW8WPtBZuBjknEMfhzgm_bL5q1Mms8apBDuVbQwoMGAVLweK_n-8WV4bfljAJ-Jlaloas17tJHmC3zNbbj8LKbjRnqeWgIXwdwfYhJjhlhpVLv9K0mLetsQQaB8zutiWYus0RBkmmBCbR9o">
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/25 pointer-events-none"></div>
+<!-- Top Left Distance Badge -->
+<div class="absolute top-2.5 left-2.5 bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-full text-[11px] font-semibold text-slate-900 flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[13px] text-slate-700">near_me</span>
+<span>6.1 km • Phase 6</span>
+</div>
+<!-- Top Right Accreditation Badge -->
+<div class="absolute top-2.5 right-2.5 bg-[#00875a] text-white px-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[13px]">verified</span>
+<span>NABH Accredited</span>
+</div>
+<!-- Bottom Left Telemetry Pill -->
+<div class="absolute bottom-2.5 left-2.5 bg-black/75 backdrop-blur-md px-2.5 py-1 rounded-full text-[11px] font-semibold text-white flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+<span>9 ICU Beds Available</span>
+</div>
+<!-- Bottom Right Match Pill -->
+<div class="absolute bottom-2.5 right-2.5 bg-blue-600/90 backdrop-blur-md text-white px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">auto_awesome</span>
+<span>91% Match</span>
+</div>
+</div>
+<!-- Body Details -->
+<div class="p-3.5 space-y-3">
+<div>
+<h3 class="text-[16px] font-bold text-slate-900 leading-snug">Max Super Speciality Hospital</h3>
+<div class="flex items-center gap-1.5 text-[12px] text-slate-500 pt-0.5 font-medium">
+<span class="text-amber-500 font-bold flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
+4.6
+</span>
+<span>•</span>
+<span>1,520 reviews</span>
+<span>•</span>
+<span class="text-slate-600 font-medium">Care Health TPA</span>
+</div>
+</div>
+<!-- Package Estimates Box -->
+<div class="bg-slate-50 border border-slate-100 rounded-xl p-3">
+<div class="text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-1.5">PACKAGE ESTIMATES</div>
+<div class="grid grid-cols-2 gap-3">
+<div>
+<div class="text-[11px] text-slate-500 font-medium">Hemodialysis (ICU)</div>
+<div class="text-[14px] font-extrabold text-slate-900">₹2,800 <span class="text-[11px] font-normal text-slate-400">- 4.5k</span></div>
+</div>
+<div>
+<div class="text-[11px] text-slate-500 font-medium">Renal Angioplasty</div>
+<div class="text-[14px] font-extrabold text-slate-900">₹1.65 - ₹2.1 L</div>
+</div>
+</div>
+</div>
+<!-- Card Actions Row -->
+<div class="flex items-center justify-between pt-0.5">
+<label class="flex items-center gap-2 cursor-pointer select-none">
+<input class="w-4 h-4 rounded text-blue-600 focus:ring-0 accent-blue-600 cursor-pointer" type="checkbox">
+<span class="text-[13px] font-semibold text-slate-800">Compare</span>
+</label>
+<div class="flex items-center gap-2">
+<button aria-label="Route direction" class="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-50 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[18px]">explore</span>
+</button>
+<button class="h-9 px-4 rounded-xl bg-[#0d131f] text-white text-[13px] font-bold tracking-tight hover:bg-slate-800 active:scale-95 transition-all shadow-xs">
+View Hospital
+</button>
+</div>
+</div>
+</div>
+</article>
+<!-- Hospital Card 3: Fortis Super Speciality Hospital -->
+<article class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:border-slate-300 transition-colors">
+<!-- Photo Container with Badges -->
+<div class="relative w-full h-44 bg-slate-900 overflow-hidden">
+<img alt="Fortis Super Speciality Hospital Night Exterior" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_tUc5xQzofdK9vRU-kdI9xd7SHtBAKQhxIJBa6ZOmSKaGOlc6pwA4cOUzdhwn3rAP4QOKZKChSPaXwryBu9TZfoXOhVXX6c0ge9lL7Rp_j7dQCpOJC-GB-Gjk3saxGyEnV_ECx0KB6BH93NeWLidox1m_Ycqnrfcp0LgOKh4302mJmuiREFJWldRVxklhyY02tsxUuKUq717ZjjWTEts599xEAdK036YawI93UBUhmg0PUWOp4oy0">
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/25 pointer-events-none"></div>
+<!-- Top Left Distance Badge -->
+<div class="absolute top-2.5 left-2.5 bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-full text-[11px] font-semibold text-slate-900 flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[13px] text-slate-700">near_me</span>
+<span>5.4 km • Mohali</span>
+</div>
+<!-- Top Right Accreditation Badge -->
+<div class="absolute top-2.5 right-2.5 bg-[#00875a] text-white px-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[13px]">verified</span>
+<span>NABH Accredited</span>
+</div>
+<!-- Bottom Left Telemetry Pill -->
+<div class="absolute bottom-2.5 left-2.5 bg-black/75 backdrop-blur-md px-2.5 py-1 rounded-full text-[11px] font-semibold text-white flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+<span>6 ICU Beds Available</span>
+</div>
+<!-- Bottom Right Match Pill -->
+<div class="absolute bottom-2.5 right-2.5 bg-blue-600/90 backdrop-blur-md text-white px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">auto_awesome</span>
+<span>88% Match</span>
+</div>
+</div>
+<!-- Body Details -->
+<div class="p-3.5 space-y-3">
+<div>
+<h3 class="text-[16px] font-bold text-slate-900 leading-snug">Fortis Super Speciality Hospital</h3>
+<div class="flex items-center gap-1.5 text-[12px] text-slate-500 pt-0.5 font-medium">
+<span class="text-amber-500 font-bold flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
+4.7
+</span>
+<span>•</span>
+<span>1,890 reviews</span>
+<span>•</span>
+<span class="text-slate-600 font-medium">TPA Cashless</span>
+</div>
+</div>
+<!-- Package Estimates Box -->
+<div class="bg-slate-50 border border-slate-100 rounded-xl p-3">
+<div class="text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-1.5">PACKAGE ESTIMATES</div>
+<div class="grid grid-cols-2 gap-3">
+<div>
+<div class="text-[11px] text-slate-500 font-medium">Dialysis</div>
+<div class="text-[14px] font-extrabold text-slate-900">₹2,400 <span class="text-[11px] font-normal text-slate-400">- 4.2k</span></div>
+</div>
+<div>
+<div class="text-[11px] text-slate-500 font-medium">Lap. Nephrectomy</div>
+<div class="text-[14px] font-extrabold text-slate-900">₹1.5 - ₹1.95 L</div>
+</div>
+</div>
+</div>
+<!-- Card Actions Row -->
+<div class="flex items-center justify-between pt-0.5">
+<label class="flex items-center gap-2 cursor-pointer select-none">
+<input class="w-4 h-4 rounded text-blue-600 focus:ring-0 accent-blue-600 cursor-pointer" type="checkbox">
+<span class="text-[13px] font-semibold text-slate-800">Compare</span>
+</label>
+<div class="flex items-center gap-2">
+<button aria-label="Route direction" class="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-50 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[18px]">explore</span>
+</button>
+<button class="h-9 px-4 rounded-xl bg-[#0d131f] text-white text-[13px] font-bold tracking-tight hover:bg-slate-800 active:scale-95 transition-all shadow-xs">
+View Hospital
+</button>
+</div>
+</div>
+</div>
+</article>
+</div>
+<!-- Load More Hospitals Button -->
+<div class="pt-2 pb-2">
+<button class="w-full h-11 bg-white border border-slate-200 text-slate-800 rounded-2xl text-[13px] font-bold flex items-center justify-center gap-2 shadow-xs hover:bg-slate-50 transition-colors">
+<span class="material-symbols-outlined text-[18px] text-slate-500">add_circle_outline</span>
+<span>Load More Hospitals (20 remaining)</span>
+</button>
+</div>
+</main>
+<!-- Floating Emergency SOS Triage Button -->
+<div class="fixed bottom-20 right-4 z-40">
+<button class="flex items-center gap-1.5 bg-[#e11d48] text-white font-bold text-[13px] py-2.5 px-4 rounded-full shadow-lg shadow-rose-500/30 hover:bg-rose-700 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">emergency</span>
+<span>SOS Triage</span>
+</button>
+</div>
+<!-- Bottom Navigation Bar matching Discover styling, Search active -->
+<nav class="fixed bottom-0 inset-x-0 z-50 bg-white/95 backdrop-blur-xl border-t border-slate-200/80 pb-safe">
+<div class="max-w-md mx-auto flex items-center justify-around h-15 px-2">
+<!-- Discover -->
+<a class="flex flex-col items-center justify-center gap-0.5 w-16 text-slate-400 hover:text-slate-800 transition-colors font-medium" href="#">
+<span class="material-symbols-outlined text-[24px]">add_box</span>
+<span class="text-[10px] tracking-tight">Discover</span>
+</a>
+<!-- Search (ACTIVE) -->
+<a class="flex flex-col items-center justify-center gap-0.5 w-16 text-blue-600 font-bold" href="#">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">search</span>
+<span class="text-[10px] tracking-tight">Search</span>
+</a>
+<!-- Compare -->
+<a class="flex flex-col items-center justify-center gap-0.5 w-16 text-slate-400 hover:text-slate-800 transition-colors font-medium" href="#">
+<span class="material-symbols-outlined text-[24px]">compare_arrows</span>
+<span class="text-[10px] tracking-tight">Compare</span>
+</a>
+<!-- Account -->
+<a class="flex flex-col items-center justify-center gap-0.5 w-16 text-slate-400 hover:text-slate-800 transition-colors font-medium" href="#">
+<span class="material-symbols-outlined text-[24px]">person</span>
+<span class="text-[10px] tracking-tight">Account</span>
+</a>
+</div>
+</nav>
+<script>
+  (function initSearchInteractions() {
+    const clearBtn = document.getElementById('clear-search-btn');
+    const searchInput = document.getElementById('search-input');
+    if (clearBtn && searchInput) {
+      clearBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        searchInput.focus();
+      });
+    }
+
+    const toggleFilterBtn = document.getElementById('toggle-filter-panel');
+    const filterPanel = document.getElementById('filter-panel');
+    if (toggleFilterBtn && filterPanel) {
+      toggleFilterBtn.addEventListener('click', () => {
+        filterPanel.classList.toggle('hidden');
+        filterPanel.classList.toggle('flex');
+      });
+    }
+  })();
+</script>
+</body></html>
