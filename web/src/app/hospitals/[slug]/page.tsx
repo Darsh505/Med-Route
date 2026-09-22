@@ -695,6 +695,9 @@ export default function HospitalDetailPage({ params }: { params: Promise<{ slug:
               longitude={hospital.longitude}
               hospitalName={hospital.name}
               address={`${hospital.address}, ${hospital.city}, ${hospital.state}`}
+              phone={hospital.phone}
+              bedsIcuAvailable={hospital.beds_icu_available}
+              isPmjay={hospital.is_pmjay_empanelled}
             />
           </div>
         </div>

@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import SearchMap from "@/components/SearchMap";
 
 interface HospitalItem {
   id: string;
@@ -14,6 +15,8 @@ interface HospitalItem {
   city: string;
   state: string;
   address: string;
+  latitude: number;
+  longitude: number;
   distance_km?: number;
   overall_rating: number;
   total_reviews: number;
@@ -34,6 +37,8 @@ interface HospitalItem {
 export const BENCHMARK_HOSPITALS: HospitalItem[] = [
   {
     id: "hosp-1",
+    latitude: 30.765,
+    longitude: 76.781,
     name: "PGIMER Chandigarh",
     slug: "pgimer-chandigarh",
     type: "Government",
@@ -58,6 +63,8 @@ export const BENCHMARK_HOSPITALS: HospitalItem[] = [
   },
   {
     id: "hosp-2",
+    latitude: 30.724,
+    longitude: 76.713,
     name: "Max Super Speciality Hospital",
     slug: "max-super-speciality-mohali",
     type: "Private",
@@ -82,6 +89,8 @@ export const BENCHMARK_HOSPITALS: HospitalItem[] = [
   },
   {
     id: "hosp-3",
+    latitude: 30.697,
+    longitude: 76.728,
     name: "Fortis Hospital Mohali",
     slug: "fortis-hospital-mohali",
     type: "Private",
@@ -106,6 +115,8 @@ export const BENCHMARK_HOSPITALS: HospitalItem[] = [
   },
   {
     id: "hosp-4",
+    latitude: 30.7128,
+    longitude: 76.788,
     name: "GMCH Sector 32 Chandigarh",
     slug: "gmch-32-chandigarh",
     type: "Government",
@@ -130,6 +141,8 @@ export const BENCHMARK_HOSPITALS: HospitalItem[] = [
   },
   {
     id: "hosp-5",
+    latitude: 30.709,
+    longitude: 76.702,
     name: "Ivy Hospital Mohali",
     slug: "ivy-hospital-mohali",
     type: "Private",
@@ -154,6 +167,8 @@ export const BENCHMARK_HOSPITALS: HospitalItem[] = [
   },
   {
     id: "hosp-6",
+    latitude: 30.686,
+    longitude: 76.852,
     name: "Alchemist Hospital Panchkula",
     slug: "alchemist-hospital-panchkula",
     type: "Private",
@@ -178,6 +193,8 @@ export const BENCHMARK_HOSPITALS: HospitalItem[] = [
   },
   {
     id: "hosp-7",
+    latitude: 30.681,
+    longitude: 76.712,
     name: "Sohana Multi Speciality Hospital",
     slug: "sohana-hospital-mohali",
     type: "Trust",
@@ -202,6 +219,8 @@ export const BENCHMARK_HOSPITALS: HospitalItem[] = [
   },
   {
     id: "hosp-8",
+    latitude: 30.692,
+    longitude: 76.856,
     name: "Paras Health Panchkula",
     slug: "paras-health-panchkula",
     type: "Private",
@@ -226,6 +245,8 @@ export const BENCHMARK_HOSPITALS: HospitalItem[] = [
   },
   {
     id: "hosp-9",
+    latitude: 30.912,
+    longitude: 75.861,
     name: "CMC Ludhiana",
     slug: "christian-medical-college-ludhiana",
     type: "Trust",
@@ -250,6 +271,8 @@ export const BENCHMARK_HOSPITALS: HospitalItem[] = [
   },
   {
     id: "hosp-10",
+    latitude: 30.908,
+    longitude: 75.834,
     name: "DMCH Ludhiana",
     slug: "dayanand-medical-college-ludhiana",
     type: "Trust",
@@ -274,6 +297,8 @@ export const BENCHMARK_HOSPITALS: HospitalItem[] = [
   },
   {
     id: "hosp-11",
+    latitude: 30.871,
+    longitude: 75.819,
     name: "SPS Apollo Hospital Ludhiana",
     slug: "sps-apollo-hospital-ludhiana",
     type: "Private",
@@ -298,6 +323,8 @@ export const BENCHMARK_HOSPITALS: HospitalItem[] = [
   },
   {
     id: "hosp-12",
+    latitude: 30.378,
+    longitude: 76.776,
     name: "Civil Hospital Ambala City",
     slug: "civil-hospital-ambala-city",
     type: "Government",
@@ -322,6 +349,8 @@ export const BENCHMARK_HOSPITALS: HospitalItem[] = [
   },
   {
     id: "hosp-13",
+    latitude: 31.634,
+    longitude: 74.8723,
     name: "GMC Amritsar",
     slug: "government-medical-college-amritsar",
     type: "Government",
@@ -346,6 +375,8 @@ export const BENCHMARK_HOSPITALS: HospitalItem[] = [
   },
   {
     id: "hosp-14",
+    latitude: 31.648,
+    longitude: 74.889,
     name: "Fortis Escorts Hospital Amritsar",
     slug: "fortis-escorts-hospital-amritsar",
     type: "Private",
@@ -370,6 +401,8 @@ export const BENCHMARK_HOSPITALS: HospitalItem[] = [
   },
   {
     id: "hosp-15",
+    latitude: 31.326,
+    longitude: 75.5762,
     name: "Manipal Hospital Jalandhar",
     slug: "manipal-hospital-jalandhar",
     type: "Private",
@@ -394,6 +427,8 @@ export const BENCHMARK_HOSPITALS: HospitalItem[] = [
   },
   {
     id: "hosp-16",
+    latitude: 30.211,
+    longitude: 74.9455,
     name: "AIIMS Bathinda",
     slug: "aiims-bathinda",
     type: "Government",
@@ -418,6 +453,8 @@ export const BENCHMARK_HOSPITALS: HospitalItem[] = [
   },
   {
     id: "hosp-17",
+    latitude: 28.4395,
+    longitude: 77.0428,
     name: "Medanta The Medicity Gurugram",
     slug: "medanta-the-medicity-gurugram",
     type: "Private",
@@ -442,6 +479,8 @@ export const BENCHMARK_HOSPITALS: HospitalItem[] = [
   },
   {
     id: "hosp-18",
+    latitude: 28.5672,
+    longitude: 77.21,
     name: "AIIMS New Delhi",
     slug: "aiims-new-delhi",
     type: "Government",
@@ -466,6 +505,8 @@ export const BENCHMARK_HOSPITALS: HospitalItem[] = [
   },
   {
     id: "hosp-19",
+    latitude: 28.6389,
+    longitude: 77.1897,
     name: "Sir Ganga Ram Hospital Delhi",
     slug: "sir-ganga-ram-hospital-delhi",
     type: "Trust",
@@ -490,6 +531,8 @@ export const BENCHMARK_HOSPITALS: HospitalItem[] = [
   },
   {
     id: "hosp-20",
+    latitude: 28.5606,
+    longitude: 77.2764,
     name: "Fortis Escorts Heart Institute Delhi",
     slug: "fortis-escorts-heart-delhi",
     type: "Private",
@@ -530,6 +573,12 @@ function SearchContent() {
   const [hospitals, setHospitals] = useState<HospitalItem[]>(BENCHMARK_HOSPITALS);
   const [compareIds, setCompareIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [viewMode, setViewMode] = useState<"split" | "list" | "map">("split");
+  const [selectedHospitalId, setSelectedHospitalId] = useState<string | null>(null);
+  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>({
+    lat: 30.7333,
+    lng: 76.7794,
+  });
 
   useEffect(() => {
     try {
@@ -618,6 +667,8 @@ function SearchContent() {
           setHospitals(
             json.data.map((h: any) => ({
               ...h,
+              latitude: h.latitude || 30.7333,
+              longitude: h.longitude || 76.7794,
               cost_range: h.cost_indicative || "₹15,000 – ₹1,20,000",
               pmjay_label: h.is_pmjay_empanelled ? "PMJAY Cashless" : "Standard",
               description:
@@ -808,98 +859,326 @@ function SearchContent() {
               </div>
             </section>
 
-            {/* Hospital Results List */}
+            {/* Hospital Results & Tactical Geospatial Section */}
             <section className="flex flex-col gap-space-md">
-              <div className="flex items-center justify-between">
-                <span className="font-body-sm text-body-sm text-on-surface-variant">
-                  Showing {hospitals.length} matching accredited hospitals
-                </span>
-                <span className="font-body-sm text-body-sm text-secondary font-medium">
-                  Live ICU Telemetry Connected
-                </span>
+              {/* Header & View Switcher Bar */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-surface-container-lowest p-space-md rounded-xl border border-surface-container-high/40 shadow-xs">
+                <div>
+                  <span className="font-body-sm text-body-sm text-on-surface font-semibold">
+                    Showing {hospitals.length} accredited hospitals
+                  </span>
+                  <span className="hidden sm:inline text-outline-variant mx-2">·</span>
+                  <span className="font-body-sm text-body-sm text-secondary font-medium">
+                    Live ICU Telemetry Connected
+                  </span>
+                </div>
+
+                {/* View Mode Switcher (List | Split | Map) */}
+                <div className="flex items-center bg-surface-container-low p-1 rounded-xl border border-surface-container-high/60 self-stretch sm:self-auto justify-center">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("split")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-label-sm text-xs font-semibold transition-all cursor-pointer ${
+                      viewMode === "split"
+                        ? "bg-surface-container-lowest text-primary shadow-xs"
+                        : "text-on-surface-variant hover:text-on-surface"
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-[17px]">vertical_split</span>
+                    <span>Split View</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("map")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-label-sm text-xs font-semibold transition-all cursor-pointer ${
+                      viewMode === "map"
+                        ? "bg-surface-container-lowest text-primary shadow-xs"
+                        : "text-on-surface-variant hover:text-on-surface"
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-[17px]">map</span>
+                    <span>Live Map</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("list")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-label-sm text-xs font-semibold transition-all cursor-pointer ${
+                      viewMode === "list"
+                        ? "bg-surface-container-lowest text-primary shadow-xs"
+                        : "text-on-surface-variant hover:text-on-surface"
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-[17px]">view_list</span>
+                    <span>List Only</span>
+                  </button>
+                </div>
               </div>
 
-              <div className="flex flex-col gap-space-md">
-                {hospitals.map((hosp) => {
-                  const isCompared = compareIds.includes(hosp.slug) || compareIds.includes(hosp.id);
-                  return (
-                    <article
-                      key={hosp.id}
-                      className="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm hover:shadow-md transition-shadow flex flex-col md:flex-row items-start md:items-center justify-between gap-space-lg border border-surface-container-high/30"
-                    >
-                      {/* Left Block */}
-                      <div className="flex flex-col gap-1 max-w-sm">
-                        <div className="flex items-center gap-2">
-                          <Link
-                            href={`/hospitals/${hosp.slug}`}
-                            className="font-headline-md text-headline-md text-on-surface font-bold hover:text-primary transition-colors"
-                          >
-                            {hosp.name}
-                          </Link>
-                          {hosp.accreditation && (
-                            <span className="font-label-sm text-label-sm bg-surface-container-high text-secondary px-2 py-0.5 rounded font-medium">
-                              {hosp.accreditation}
-                            </span>
-                          )}
-                        </div>
-                        <p className="font-body-sm text-body-sm text-on-surface-variant">
-                          {hosp.address}
-                        </p>
-                        <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
-                          {hosp.description}
-                        </p>
-                      </div>
+              {/* VIEW MODE: MAP ONLY */}
+              {viewMode === "map" && (
+                <div className="relative w-full h-[640px] rounded-2xl overflow-hidden shadow-sm border border-surface-container-high">
+                  <SearchMap
+                    hospitals={hospitals}
+                    selectedHospitalId={selectedHospitalId}
+                    onSelectHospital={(id) => setSelectedHospitalId(id)}
+                    userCoords={userCoords}
+                    onLocateMe={(coords) => setUserCoords(coords)}
+                  />
 
-                      {/* Middle Block: Cost */}
-                      <div className="flex flex-row md:flex-col items-baseline md:items-start gap-space-xs">
-                        <span className="font-label-sm text-label-sm text-on-surface-variant">
-                          Verified Tariff
-                        </span>
-                        <div className="flex items-baseline gap-1.5">
-                          <span className="font-headline-lg text-headline-lg text-primary font-bold">
-                            {hosp.cost_range}
-                          </span>
-                          <span className="font-label-sm text-label-sm text-secondary font-semibold">
-                            {hosp.pmjay_label}
-                          </span>
-                        </div>
-                      </div>
+                  {/* Floating Active Hospital Drawer in Map Mode */}
+                  {selectedHospitalId && (
+                    <div className="absolute bottom-14 left-4 right-4 sm:left-auto sm:right-4 sm:w-96 z-[1000] bg-surface-container-lowest/95 backdrop-blur-md p-space-md rounded-2xl shadow-xl border border-surface-container-high animate-slideUp">
+                      {(() => {
+                        const target = hospitals.find(
+                          (h) => h.id === selectedHospitalId || h.slug === selectedHospitalId
+                        );
+                        if (!target) return null;
+                        const isCompared = compareIds.includes(target.slug) || compareIds.includes(target.id);
+                        return (
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-start justify-between gap-2">
+                              <div>
+                                <h3 className="font-headline-sm text-primary font-bold text-sm">
+                                  {target.name}
+                                </h3>
+                                <p className="font-body-xs text-on-surface-variant text-xs">
+                                  {target.address}
+                                </p>
+                              </div>
+                              <button
+                                onClick={() => setSelectedHospitalId(null)}
+                                className="text-outline hover:text-on-surface text-lg cursor-pointer"
+                              >
+                                &times;
+                              </button>
+                            </div>
 
-                      {/* ICU Status Block */}
-                      <div className="flex flex-row md:flex-col items-baseline md:items-start gap-space-xs">
-                        <span className="font-label-sm text-label-sm text-on-surface-variant">
-                          Live ICU Status
-                        </span>
-                        <span className="font-body-md text-body-md text-on-surface font-semibold flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
-                          {hosp.beds_icu_available} Beds Free ({hosp.beds_icu} Total)
-                        </span>
-                      </div>
+                            <div className="flex items-center gap-2 flex-wrap text-xs">
+                              <span className="px-2 py-0.5 rounded-full bg-secondary-container/60 text-secondary font-bold">
+                                {target.beds_icu_available} ICU Free
+                              </span>
+                              {target.is_pmjay_empanelled && (
+                                <span className="px-2 py-0.5 rounded-full bg-surface-container text-primary font-semibold">
+                                  PMJAY Cashless
+                                </span>
+                              )}
+                              <span className="text-on-surface-variant font-medium">
+                                {target.cost_range}
+                              </span>
+                            </div>
 
-                      {/* Actions */}
-                      <div className="flex items-center gap-space-sm w-full md:w-auto pt-space-xs md:pt-0">
-                        <button
-                          type="button"
-                          onClick={() => toggleCompare(hosp.slug)}
-                          className={`flex-1 md:flex-none px-space-md py-space-xs rounded-lg font-label-md text-label-md transition-colors text-center border ${
-                            isCompared
-                              ? "bg-secondary-container text-on-secondary-container border-secondary font-semibold"
-                              : "bg-surface-container-low hover:bg-surface-container-high text-on-surface border-transparent"
+                            <div className="flex gap-2 pt-1">
+                              <button
+                                onClick={() => toggleCompare(target.slug)}
+                                className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold text-center border transition-all ${
+                                  isCompared
+                                    ? "bg-secondary-container text-on-secondary-container border-secondary"
+                                    : "bg-surface-container-low text-on-surface border-transparent hover:bg-surface-container-high"
+                                }`}
+                              >
+                                {isCompared ? "✓ Added" : "Compare"}
+                              </button>
+                              <Link
+                                href={`/hospitals/${target.slug}`}
+                                className="flex-1 py-1.5 px-3 bg-primary hover:bg-primary/90 text-white rounded-lg text-xs font-semibold text-center shadow-xs"
+                              >
+                                View Details
+                              </Link>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* VIEW MODE: SPLIT VIEW (List + Sticky Map) */}
+              {viewMode === "split" && (
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-md items-start">
+                  {/* Left Column: Hospital Cards */}
+                  <div className="lg:col-span-7 flex flex-col gap-space-md order-2 lg:order-1">
+                    {hospitals.map((hosp) => {
+                      const isCompared = compareIds.includes(hosp.slug) || compareIds.includes(hosp.id);
+                      const isSelected = selectedHospitalId === hosp.id || selectedHospitalId === hosp.slug;
+                      return (
+                        <article
+                          id={`card-${hosp.id}`}
+                          key={hosp.id}
+                          onMouseEnter={() => setSelectedHospitalId(hosp.id)}
+                          className={`bg-surface-container-lowest rounded-xl p-space-md lg:p-space-lg shadow-xs hover:shadow-md transition-all flex flex-col gap-space-md border cursor-pointer ${
+                            isSelected
+                              ? "border-secondary ring-2 ring-secondary/20 bg-surface-container-low/30"
+                              : "border-surface-container-high/30"
                           }`}
                         >
-                          {isCompared ? "✓ Added" : "Compare"}
-                        </button>
-                        <Link
-                          href={`/hospitals/${hosp.slug}`}
-                          className="flex-1 md:flex-none px-space-md py-space-xs bg-primary hover:bg-primary-container text-on-primary rounded-lg font-label-md text-label-md transition-colors text-center shadow-sm"
-                        >
-                          View Facility
-                        </Link>
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <Link
+                                href={`/hospitals/${hosp.slug}`}
+                                className="font-headline-md text-headline-md text-on-surface font-bold hover:text-primary transition-colors"
+                              >
+                                {hosp.name}
+                              </Link>
+                              {hosp.accreditation && (
+                                <span className="font-label-sm text-label-sm bg-surface-container-high text-secondary px-2 py-0.5 rounded font-medium">
+                                  {hosp.accreditation}
+                                </span>
+                              )}
+                              {isSelected && (
+                                <span className="font-label-xs text-xs bg-secondary-container text-secondary font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                                  Focused on Map
+                                </span>
+                              )}
+                            </div>
+                            <span className="font-label-sm text-secondary font-semibold text-xs bg-secondary-container/40 px-2 py-0.5 rounded-full">
+                              {hosp.beds_icu_available} ICU Beds Free
+                            </span>
+                          </div>
+
+                          <p className="font-body-sm text-body-sm text-on-surface-variant">
+                            {hosp.address}
+                          </p>
+
+                          <div className="flex flex-wrap items-center justify-between gap-space-sm pt-space-xs border-t border-surface-container-high/20">
+                            <div>
+                              <span className="font-label-xs text-xs text-on-surface-variant block">
+                                Indicative Tariff
+                              </span>
+                              <span className="font-headline-sm text-primary font-bold text-sm">
+                                {hosp.cost_range}
+                              </span>
+                              <span className="text-secondary font-semibold text-xs ml-1.5">
+                                {hosp.pmjay_label}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleCompare(hosp.slug);
+                                }}
+                                className={`px-3 py-1.5 rounded-lg font-label-sm text-xs transition-colors border ${
+                                  isCompared
+                                    ? "bg-secondary-container text-on-secondary-container border-secondary font-semibold"
+                                    : "bg-surface-container-low hover:bg-surface-container-high text-on-surface border-transparent"
+                                }`}
+                              >
+                                {isCompared ? "✓ Added" : "Compare"}
+                              </button>
+                              <Link
+                                href={`/hospitals/${hosp.slug}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="px-3.5 py-1.5 bg-primary hover:bg-primary-container text-on-primary rounded-lg font-label-sm text-xs font-semibold transition-colors shadow-xs"
+                              >
+                                Details ↗
+                              </Link>
+                            </div>
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+
+                  {/* Right Column: Sticky Real Interactive Leaflet Map */}
+                  <div className="lg:col-span-5 sticky top-24 h-[560px] lg:h-[calc(100vh-7.5rem)] rounded-2xl overflow-hidden shadow-xs border border-surface-container-high order-1 lg:order-2">
+                    <SearchMap
+                      hospitals={hospitals}
+                      selectedHospitalId={selectedHospitalId}
+                      onSelectHospital={(id) => {
+                        setSelectedHospitalId(id);
+                        document.getElementById(`card-${id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+                      }}
+                      userCoords={userCoords}
+                      onLocateMe={(coords) => setUserCoords(coords)}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* VIEW MODE: LIST ONLY */}
+              {viewMode === "list" && (
+                <div className="flex flex-col gap-space-md">
+                  {hospitals.map((hosp) => {
+                    const isCompared = compareIds.includes(hosp.slug) || compareIds.includes(hosp.id);
+                    return (
+                      <article
+                        key={hosp.id}
+                        className="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm hover:shadow-md transition-shadow flex flex-col md:flex-row items-start md:items-center justify-between gap-space-lg border border-surface-container-high/30"
+                      >
+                        <div className="flex flex-col gap-1 max-w-sm">
+                          <div className="flex items-center gap-2">
+                            <Link
+                              href={`/hospitals/${hosp.slug}`}
+                              className="font-headline-md text-headline-md text-on-surface font-bold hover:text-primary transition-colors"
+                            >
+                              {hosp.name}
+                            </Link>
+                            {hosp.accreditation && (
+                              <span className="font-label-sm text-label-sm bg-surface-container-high text-secondary px-2 py-0.5 rounded font-medium">
+                                {hosp.accreditation}
+                              </span>
+                            )}
+                          </div>
+                          <p className="font-body-sm text-body-sm text-on-surface-variant">
+                            {hosp.address}
+                          </p>
+                          <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                            {hosp.description}
+                          </p>
+                        </div>
+
+                        <div className="flex flex-row md:flex-col items-baseline md:items-start gap-space-xs">
+                          <span className="font-label-sm text-label-sm text-on-surface-variant">
+                            Verified Tariff
+                          </span>
+                          <div className="flex items-baseline gap-1.5">
+                            <span className="font-headline-lg text-headline-lg text-primary font-bold">
+                              {hosp.cost_range}
+                            </span>
+                            <span className="font-label-sm text-label-sm text-secondary font-semibold">
+                              {hosp.pmjay_label}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-row md:flex-col items-baseline md:items-start gap-space-xs">
+                          <span className="font-label-sm text-label-sm text-on-surface-variant">
+                            Live ICU Status
+                          </span>
+                          <span className="font-body-md text-body-md text-on-surface font-semibold flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
+                            {hosp.beds_icu_available} Beds Free ({hosp.beds_icu} Total)
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-space-sm w-full md:w-auto pt-space-xs md:pt-0">
+                          <button
+                            type="button"
+                            onClick={() => toggleCompare(hosp.slug)}
+                            className={`flex-1 md:flex-none px-space-md py-space-xs rounded-lg font-label-md text-label-md transition-colors text-center border ${
+                              isCompared
+                                ? "bg-secondary-container text-on-secondary-container border-secondary font-semibold"
+                                : "bg-surface-container-low hover:bg-surface-container-high text-on-surface border-transparent"
+                            }`}
+                          >
+                            {isCompared ? "✓ Added" : "Compare"}
+                          </button>
+                          <Link
+                            href={`/hospitals/${hosp.slug}`}
+                            className="flex-1 md:flex-none px-space-md py-space-xs bg-primary hover:bg-primary-container text-on-primary rounded-lg font-label-md text-label-md transition-colors text-center shadow-sm"
+                          >
+                            View Facility
+                          </Link>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
             </section>
           </div>
 
