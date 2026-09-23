@@ -44,7 +44,10 @@ REFERENCE_HOSPITALS = [
         "phone": "0172-2755555",
         "emergency_phone": "0172-2746018",
         "cost_indicative": "₹15,000 – ₹45,000 (Subsidized)",
-        "specialties": ["cardiac", "renal", "neurological", "orthopedic", "emergency", "oncology"],
+        "specialties": [
+            "cardiac", "renal", "neurological", "orthopedic", "emergency", "oncology",
+            "ophthalmology", "general_surgery", "pulmonology", "urology", "gastroenterology"
+        ],
         "is_trauma": True,
     },
     {
@@ -60,7 +63,10 @@ REFERENCE_HOSPITALS = [
         "phone": "0172-6652000",
         "emergency_phone": "0172-6652100",
         "cost_indicative": "₹1,42,000 Package",
-        "specialties": ["cardiac", "oncology", "neurological", "orthopedic"],
+        "specialties": [
+            "cardiac", "oncology", "neurological", "orthopedic", "laparoscopic_surgery",
+            "general_surgery", "urology", "gastroenterology"
+        ],
         "is_trauma": True,
     },
     {
@@ -76,7 +82,7 @@ REFERENCE_HOSPITALS = [
         "phone": "0172-4692222",
         "emergency_phone": "0172-4692200",
         "cost_indicative": "₹1,55,000 Package",
-        "specialties": ["cardiac", "orthopedic", "cardiac_surgery"],
+        "specialties": ["cardiac", "orthopedic", "cardiac_surgery", "pulmonology", "general_surgery"],
         "is_trauma": True,
     },
     {
@@ -92,7 +98,7 @@ REFERENCE_HOSPITALS = [
         "phone": "0172-2665253",
         "emergency_phone": "0172-2665254",
         "cost_indicative": "₹10,000 – ₹35,000 (Subsidized)",
-        "specialties": ["emergency", "orthopedic", "pediatric", "general"],
+        "specialties": ["emergency", "orthopedic", "pediatric", "general", "general_surgery", "pulmonology", "internal_medicine"],
         "is_trauma": True,
     },
     {
@@ -108,7 +114,7 @@ REFERENCE_HOSPITALS = [
         "phone": "0172-5212000",
         "emergency_phone": "0172-5212100",
         "cost_indicative": "₹85,000 – ₹1,80,000",
-        "specialties": ["oncology", "orthopedic", "renal"],
+        "specialties": ["oncology", "orthopedic", "renal", "general_surgery", "gastroenterology", "urology"],
         "is_trauma": True,
     },
     {
@@ -124,7 +130,7 @@ REFERENCE_HOSPITALS = [
         "phone": "0172-5044444",
         "emergency_phone": "0172-5044400",
         "cost_indicative": "₹38,000 – ₹95,000",
-        "specialties": ["ophthalmology", "cardiac", "oncology", "renal"],
+        "specialties": ["ophthalmology", "cardiac", "oncology", "renal", "general_surgery", "proctology", "eye"],
         "is_trauma": True,
     },
     {
@@ -140,7 +146,7 @@ REFERENCE_HOSPITALS = [
         "phone": "0161-2115000",
         "emergency_phone": "0161-2115111",
         "cost_indicative": "₹85,000 – ₹1,60,000",
-        "specialties": ["cardiac", "orthopedic", "neurological", "renal"],
+        "specialties": ["cardiac", "orthopedic", "neurological", "renal", "pulmonology", "pediatric", "internal_medicine"],
         "is_trauma": True,
     },
     {
@@ -156,8 +162,255 @@ REFERENCE_HOSPITALS = [
         "phone": "011-26588500",
         "emergency_phone": "011-26588700",
         "cost_indicative": "₹15,000 – ₹60,000",
-        "specialties": ["cardiac", "neurological", "oncology", "organ_transplant"],
+        "specialties": ["cardiac", "neurological", "oncology", "organ_transplant", "ophthalmology", "urology", "general_surgery", "pulmonology"],
         "is_trauma": True,
+    },
+]
+
+# ─────────────────────────────────────────────────────────────
+# Clinical Diseases Knowledge Base Registry
+# ─────────────────────────────────────────────────────────────
+
+CLINICAL_DISEASES_KB = [
+    {
+        "id": "cataract",
+        "name": "Senile Cataract & Vision Impairment",
+        "common_name": "Cataract (Motiyabind)",
+        "keywords": ["cataract", "motiyabind", "phaco", "eye lens", "cloudy vision", "eye surgery", "vision loss", "lens replacement"],
+        "specialty": "ophthalmology",
+        "procedure_name": "Cataract Surgery (Phaco + Foldable IOL)",
+        "overview": "Gradual opacification of the crystalline eye lens leading to glare sensitivity, blurred acuity, and progressive visual loss.",
+        "govt_tariff": "₹8,000 – ₹18,000",
+        "private_tariff": "₹28,000 – ₹65,000 (Monofocal / Toric / Multifocal IOL)",
+        "pmjay_rate": "₹12,500 (100% Cashless including Foldable IOL)",
+        "success_ratio": "99.2%",
+        "stay_days": "Daycare (Discharge in 3–4 hours)",
+        "hospital_names": ["Sohana Multi Speciality Hospital", "PGIMER Chandigarh"],
+    },
+    {
+        "id": "hernia",
+        "name": "Inguinal & Abdominal Wall Hernia",
+        "common_name": "Hernia (Inguinal / Umbilical / Ventral)",
+        "keywords": ["hernia", "inguinal hernia", "umbilical hernia", "ventral hernia", "mesh repair", "herniotomy", "abdominal bulge"],
+        "specialty": "general_surgery",
+        "procedure_name": "Laparoscopic Hernia Mesh Repair (TEP / TAPP)",
+        "overview": "Protrusion of intra-abdominal contents through a localized abdominal muscular wall defect, presenting as a reducible or tender bulge.",
+        "govt_tariff": "₹15,000 – ₹28,000",
+        "private_tariff": "₹45,000 – ₹95,000 (3D Mesh / Laparoscopic)",
+        "pmjay_rate": "₹32,000 (100% Cashless including Certified Mesh)",
+        "success_ratio": "98.5%",
+        "stay_days": "1–2 days",
+        "hospital_names": ["Max Super Speciality Mohali", "GMCH Sector 32 Chandigarh"],
+    },
+    {
+        "id": "gallbladder_stone",
+        "name": "Cholelithiasis (Gallbladder Stones)",
+        "common_name": "Gallbladder Stones (Pitta Ki Pathri)",
+        "keywords": ["gallbladder", "gall bladder", "gallstone", "gallstones", "cholelithiasis", "cholecystectomy", "pitta ki pathri", "pitta"],
+        "specialty": "gastroenterology",
+        "procedure_name": "Laparoscopic Cholecystectomy (Keyhole Removal)",
+        "overview": "Biliary calculus concretions inside the gallbladder lumen causing recurrent right hypochondriac colic, dyspepsia, or acute cholecystitis.",
+        "govt_tariff": "₹18,000 – ₹32,000",
+        "private_tariff": "₹55,000 – ₹1,15,000",
+        "pmjay_rate": "₹38,000 (100% Cashless with 3-day hospitalization)",
+        "success_ratio": "99.1%",
+        "stay_days": "1–2 days",
+        "hospital_names": ["Max Super Speciality Mohali", "Ivy Hospital Mohali"],
+    },
+    {
+        "id": "kidney_stone",
+        "name": "Kidney & Ureteric Calculi (Stones)",
+        "common_name": "Kidney Stones (Gurde Ki Pathri / Renal Calculi)",
+        "keywords": ["kidney stone", "renal calculi", "ureteric stone", "pathri", "gurde ki pathri", "pcnl", "ursl", "lithotripsy", "renal stone", "kidney calculi"],
+        "specialty": "urology",
+        "procedure_name": "PCNL / Holmium Laser Lithotripsy (URSL)",
+        "overview": "Crystalline mineral aggregates in the renal calyces or ureter generating acute radiating loin-to-groin colic, hematuria, or obstructive uropathy.",
+        "govt_tariff": "₹15,000 – ₹30,000",
+        "private_tariff": "₹42,000 – ₹95,000 (Holmium Laser)",
+        "pmjay_rate": "₹35,000 (100% Cashless with DJ Stenting)",
+        "success_ratio": "98.2%",
+        "stay_days": "1–2 days",
+        "hospital_names": ["PGIMER Chandigarh", "Max Super Speciality Mohali"],
+    },
+    {
+        "id": "appendicitis",
+        "name": "Acute Appendicitis & Cecal Inflammation",
+        "common_name": "Appendicitis (Appendix Infection)",
+        "keywords": ["appendix", "appendicitis", "appendicectomy", "appendectomy", "right lower abdominal pain", "cecal"],
+        "specialty": "general_surgery",
+        "procedure_name": "Laparoscopic Appendectomy",
+        "overview": "Acute luminal obstruction and bacterial inflammation of the vermiform appendix requiring urgent surgical resection to prevent rupture.",
+        "govt_tariff": "₹12,000 – ₹25,000",
+        "private_tariff": "₹45,000 – ₹85,000",
+        "pmjay_rate": "₹28,000 (100% Cashless Emergency Admission)",
+        "success_ratio": "99.0%",
+        "stay_days": "1–2 days",
+        "hospital_names": ["GMCH Sector 32 Chandigarh", "Max Super Speciality Mohali"],
+    },
+    {
+        "id": "knee_osteoarthritis",
+        "name": "Severe Knee Osteoarthritis & Degeneration",
+        "common_name": "Knee Arthritis (Ghutne Ka Dard / TKR)",
+        "keywords": ["knee", "tkr", "knee replacement", "ghutna", "knee arthritis", "knee surgery", "joint pain", "knee pain"],
+        "specialty": "orthopedic",
+        "procedure_name": "Total Knee Replacement (Unilateral / Robotic)",
+        "overview": "End-stage tricompartmental articular cartilage degradation and osteophyte formation resulting in joint space loss, severe pain, and ambulation restriction.",
+        "govt_tariff": "₹75,000 – ₹95,000",
+        "private_tariff": "₹1,45,000 – ₹2,20,000 (Robotic / High-Flex Implants)",
+        "pmjay_rate": "₹80,000 (100% Cashless including US-FDA certified implants)",
+        "success_ratio": "97.5%",
+        "stay_days": "4–5 days",
+        "hospital_names": ["Max Super Speciality Mohali", "Sohana Multi Speciality Hospital"],
+    },
+    {
+        "id": "hip_arthritis",
+        "name": "Avascular Necrosis & Severe Hip Arthritis",
+        "common_name": "Hip Arthritis (Hip Replacement / THR)",
+        "keywords": ["hip", "thr", "hip replacement", "avascular necrosis", "hip arthritis", "hip fracture", "hip pain"],
+        "specialty": "orthopedic",
+        "procedure_name": "Total Hip Replacement (Bipolar / Ceramic)",
+        "overview": "Femoral head osteonecrosis or degenerative coxarthrosis resulting in severe groin pain, limb shortening, and mechanical joint restriction.",
+        "govt_tariff": "₹85,000 – ₹1,10,000",
+        "private_tariff": "₹1,60,000 – ₹2,50,000 (Ceramic on Ceramic)",
+        "pmjay_rate": "₹90,000 (100% Cashless Implants)",
+        "success_ratio": "96.8%",
+        "stay_days": "4–5 days",
+        "hospital_names": ["Max Super Speciality Mohali", "Fortis Hospital Mohali"],
+    },
+    {
+        "id": "coronary_artery_disease",
+        "name": "Coronary Artery Disease (CAD) & Myocardial Infarction",
+        "common_name": "Coronary Blockage / Angioplasty",
+        "keywords": ["stent", "angioplasty", "cardiac stent", "coronary", "blockage", "heart block", "ptca", "cad"],
+        "specialty": "cardiac",
+        "procedure_name": "Coronary Angioplasty (Single / Double DES Stent)",
+        "overview": "Atherosclerotic luminal narrowing of coronary arteries depriving myocardium of oxygen, manifesting as angina or acute myocardial infarction.",
+        "govt_tariff": "₹15,000 – ₹45,000",
+        "private_tariff": "₹1,20,000 – ₹1,85,000 (Drug-Eluting Stent)",
+        "pmjay_rate": "₹65,000 (100% Cashless pre-fixed tariff)",
+        "success_ratio": "98.5%",
+        "stay_days": "2 days",
+        "hospital_names": ["PGIMER Chandigarh", "Max Super Speciality Mohali", "Fortis Hospital Mohali"],
+    },
+    {
+        "id": "triple_vessel_disease",
+        "name": "Triple Vessel CAD & Complex Ischemia",
+        "common_name": "Bypass Surgery (CABG / Open Heart)",
+        "keywords": ["bypass", "cabg", "heart bypass", "open heart", "triple vessel"],
+        "specialty": "cardiac",
+        "procedure_name": "Coronary Artery Bypass Graft (CABG)",
+        "overview": "Multivessel critical stenosis of main coronary branches requiring arterial or venous conduit grafting to revascularize ischemic myocardium.",
+        "govt_tariff": "₹75,000 – ₹1,20,000",
+        "private_tariff": "₹2,20,000 – ₹3,50,000 (Beating Heart / Minimally Invasive)",
+        "pmjay_rate": "₹1,30,000 (100% Cashless surgical package)",
+        "success_ratio": "96.5%",
+        "stay_days": "6–7 days",
+        "hospital_names": ["PGIMER Chandigarh", "Fortis Hospital Mohali"],
+    },
+    {
+        "id": "chronic_kidney_disease",
+        "name": "Chronic Kidney Disease (Stage 5 / ESRD)",
+        "common_name": "Kidney Failure / Dialysis",
+        "keywords": ["dialysis", "hemodialysis", "kidney failure", "renal failure", "ckd", "esrd", "creatinine", "dialysis slot"],
+        "specialty": "renal",
+        "procedure_name": "Hemodialysis (Maintenance Session & AV Fistula)",
+        "overview": "Irreversible decline in glomerular filtration rate (eGFR < 15) leading to uremic toxicity, hyperkalemia, and fluid retention requiring extracorporeal clearance.",
+        "govt_tariff": "₹800 – ₹1,200 per session",
+        "private_tariff": "₹2,000 – ₹3,500 per session",
+        "pmjay_rate": "100% Free recurring sessions under Ayushman Bharat",
+        "success_ratio": "97.2%",
+        "stay_days": "4 hours per session (Outpatient recurring)",
+        "hospital_names": ["PGIMER Chandigarh", "Ivy Hospital Mohali"],
+    },
+    {
+        "id": "dengue_fever",
+        "name": "Dengue Hemorrhagic Fever & Thrombocytopenia",
+        "common_name": "Dengue Fever (Platelet Fall)",
+        "keywords": ["dengue", "thrombocytopenia", "low platelets", "platelet", "platelets", "mosquito fever"],
+        "specialty": "internal_medicine",
+        "procedure_name": "Platelet Telemetry & Targeted Inpatient Hydration",
+        "overview": "Arboviral illness transmitted by Aedes mosquitoes triggering severe thrombocytopenia, plasma leakage, and potential hemorrhagic complications.",
+        "govt_tariff": "₹0 – ₹5,000 (Subsidized)",
+        "private_tariff": "₹18,000 – ₹45,000 (Ward) / ₹80,000 (ICU)",
+        "pmjay_rate": "100% Covered under Ayushman Bharat Inpatient Protocol",
+        "success_ratio": "99.4%",
+        "stay_days": "3–5 days",
+        "hospital_names": ["GMCH Sector 32 Chandigarh", "Max Super Speciality Mohali"],
+    },
+    {
+        "id": "pneumonia",
+        "name": "Community-Acquired & Bacterial Pneumonia",
+        "common_name": "Pneumonia (Lung Infection)",
+        "keywords": ["pneumonia", "lung infection", "chest infection", "sputum", "pleural effusion"],
+        "specialty": "pulmonology",
+        "procedure_name": "High-Flow Oxygenation & IV Targeted Antibiotic Therapy",
+        "overview": "Acute alveolar parenchymal infection leading to exudative consolidation, hypoxia, persistent cough, and dyspnea.",
+        "govt_tariff": "₹5,000 – ₹15,000",
+        "private_tariff": "₹25,000 – ₹65,000 (Ward) / ₹1,20,000 (ICU Ventilator)",
+        "pmjay_rate": "100% Cashless under PMJAY Respiratory Care Package",
+        "success_ratio": "97.0%",
+        "stay_days": "4–6 days",
+        "hospital_names": ["PGIMER Chandigarh", "CMC Ludhiana"],
+    },
+    {
+        "id": "diabetes",
+        "name": "Type-2 Diabetes Mellitus & Metabolic Syndromes",
+        "common_name": "Diabetes (Sugar / Madhumeh)",
+        "keywords": ["diabetes", "sugar", "diabetic", "madhumeh", "insulin", "hba1c", "blood glucose", "hyperglycemia"],
+        "specialty": "internal_medicine",
+        "procedure_name": "Comprehensive Diabetic Staging & Glycemic Control",
+        "overview": "Chronic endocrine metabolic dysfunction caused by peripheral insulin resistance, requiring systematic glycemic regulation to prevent organ complications.",
+        "govt_tariff": "₹0 – ₹1,200 (Diagnostics & Medications)",
+        "private_tariff": "₹3,500 – ₹12,000 (Annual Screening & Staging)",
+        "pmjay_rate": "Covered under PMJAY Non-Communicable Disease OPD & IPD",
+        "success_ratio": "96.5%",
+        "stay_days": "Outpatient (1–3 days if Inpatient Ketoacidosis)",
+        "hospital_names": ["PGIMER Chandigarh", "GMCH Sector 32 Chandigarh"],
+    },
+    {
+        "id": "asthma",
+        "name": "Bronchial Asthma & Chronic Bronchospasm",
+        "common_name": "Asthma (Dama / Wheeze)",
+        "keywords": ["asthma", "dama", "bronchial asthma", "wheezing", "inhaler", "bronchospasm", "nebulization"],
+        "specialty": "pulmonology",
+        "procedure_name": "Spirometry Pulmonary Function & Nebulization Protocol",
+        "overview": "Chronic hyperreactive inflammatory disorder of the bronchial tree causing episodic wheezing, nocturnal dyspnea, and reversible airflow obstruction.",
+        "govt_tariff": "₹500 – ₹2,500 (Diagnostics & Maintenance)",
+        "private_tariff": "₹4,500 – ₹15,000 (Comprehensive Allergy & PFT)",
+        "pmjay_rate": "Acute asthmatic episodes covered 100% in network emergency",
+        "success_ratio": "98.0%",
+        "stay_days": "Daycare or 1–2 days if severe exacerbation",
+        "hospital_names": ["PGIMER Chandigarh", "Fortis Hospital Mohali"],
+    },
+    {
+        "id": "tuberculosis",
+        "name": "Pulmonary & Extrapulmonary Tuberculosis (TB)",
+        "common_name": "Tuberculosis (T.B. / Tapdik)",
+        "keywords": ["tuberculosis", "tb", "tapdik", "dots", "mycobacterium", "hemoptysis"],
+        "specialty": "pulmonology",
+        "procedure_name": "CBNAAT / GeneXpert Diagnosis & Daily Anti-TB Regimen (DOTS)",
+        "overview": "Mycobacterium tuberculosis airborne infection causing chronic cough, hemoptysis, night fevers, and pulmonary parenchymal cavitations.",
+        "govt_tariff": "100% Free under National Tuberculosis Elimination Program (NTEP)",
+        "private_tariff": "₹15,000 – ₹35,000 (Diagnostic Staging & Second-Line)",
+        "pmjay_rate": "100% Free with Monthly ₹500 Nikshay Nutrition Support",
+        "success_ratio": "94.2%",
+        "stay_days": "Outpatient DOTS (5–7 days only if severe hemoptysis)",
+        "hospital_names": ["PGIMER Chandigarh", "GMCH Sector 32 Chandigarh"],
+    },
+    {
+        "id": "piles",
+        "name": "Hemorrhoidal Disease & Anal Fissure / Fistula",
+        "common_name": "Piles (Bawaseer / Fissure / Fistula)",
+        "keywords": ["piles", "hemorrhoids", "bawaseer", "fissure", "fistula", "kshar sutra", "anal bleeding"],
+        "specialty": "general_surgery",
+        "procedure_name": "Laser Hemorrhoidoplasty (LHP) / Fistulectomy",
+        "overview": "Pathological vascular dilation of the submucosal hemorrhoidal cushions generating painless rectal bleeding, prolapse, or painful perianal thrombosis.",
+        "govt_tariff": "₹8,000 – ₹18,000",
+        "private_tariff": "₹35,000 – ₹75,000 (Minimally Invasive Laser)",
+        "pmjay_rate": "₹24,000 (100% Cashless surgical package)",
+        "success_ratio": "98.5%",
+        "stay_days": "Daycare or 1 day",
+        "hospital_names": ["Sohana Multi Speciality Hospital", "Max Super Speciality Mohali"],
     },
 ]
 
@@ -334,7 +587,43 @@ class ClinicalChatbot:
                 ai_provider="clinical_rules",
             )
 
-        # ── 2. Cardiac Elective / Angioplasty Queries ──
+        # ── 2. Direct Clinical Disease Knowledge Base Matching ──
+        for item in CLINICAL_DISEASES_KB:
+            if any(kw in text for kw in item["keywords"]):
+                hospitals = self._resolve_hospitals(item["hospital_names"], specialty=item["specialty"])
+                reply = (
+                    f"**Clinical Profile: {item['name']}**\n\n"
+                    f"• **Specialty Department**: {item['specialty'].replace('_', ' ').title()}\n"
+                    f"• **Standard Procedure**: {item['procedure_name']}\n"
+                    f"• **Clinical Overview**: {item['overview']}\n"
+                    f"• **Indicative Package Tariffs**:\n"
+                    f"  - Government Subsidized: **{item['govt_tariff']}**\n"
+                    f"  - Private NABH Accredited: **{item['private_tariff']}**\n"
+                    f"  - Ayushman Bharat PMJAY: **{item['pmjay_rate']}**\n"
+                    f"• **Clinical Outcome Benchmark**: **{item['success_ratio']}** audited success ratio • Expected stay: **{item['stay_days']}**\n\n"
+                    f"Top accredited network hospitals with audited volumes for {item['common_name']}:"
+                )
+                actions = [
+                    ChatAction(type="compare", label=f"⚖️ Compare {item['common_name'].split()[0]} Centers", value="/compare"),
+                    ChatAction(type="view_hospital", label=f"🏥 View {hospitals[0].name.split()[0]}", value=f"/hospitals/{hospitals[0].slug}"),
+                ]
+                return ChatResponse(
+                    reply=reply,
+                    triage_level="routine",
+                    intent="procedure_cost",
+                    specialty=item["specialty"],
+                    disease_or_condition=item["name"],
+                    recommended_hospitals=hospitals,
+                    action_buttons=actions,
+                    quick_suggestions=[
+                        f"Is {item['common_name'].split()[0]} 100% cashless under PMJAY?",
+                        f"What diagnostic tests are needed for {item['common_name'].split()[0]}?",
+                        f"Typical recovery time and post-procedure care?",
+                    ],
+                    ai_provider="clinical_rules",
+                )
+
+        # ── 3. Cardiac Elective / Angioplasty Queries ──
         if any(k in text for k in ["angioplasty", "stent", "bypass", "cabg", "heart doctor", "cardiologist"]):
             hospitals = self._resolve_hospitals(["PGIMER Chandigarh", "Max Super Speciality Mohali", "Fortis Hospital Mohali"], specialty="cardiac")
             reply = (
@@ -363,7 +652,7 @@ class ClinicalChatbot:
                 ai_provider="clinical_rules",
             )
 
-        # ── 3. Orthopedics / Knee / Hip Replacement ──
+        # ── 4. Orthopedics / Knee / Hip Replacement ──
         if any(k in text for k in ["knee", "joint", "orthopedic", "ghutna", "hip replacement", "tkr", "acl", "bone"]):
             hospitals = self._resolve_hospitals(["Max Super Speciality Mohali", "Sohana Multi Speciality Hospital", "Ivy Hospital Mohali"], specialty="orthopedic")
             reply = (
@@ -392,7 +681,7 @@ class ClinicalChatbot:
                 ai_provider="clinical_rules",
             )
 
-        # ── 4. Nephrology / Dialysis / Kidney ──
+        # ── 5. Nephrology / Dialysis / Kidney ──
         if any(k in text for k in ["dialysis", "kidney", "renal", "gurda", "creatinine"]):
             hospitals = self._resolve_hospitals(["PGIMER Chandigarh", "Ivy Hospital Mohali", "CMC Ludhiana"], specialty="renal")
             reply = (
@@ -421,7 +710,7 @@ class ClinicalChatbot:
                 ai_provider="clinical_rules",
             )
 
-        # ── 5. General Inquiry Fallback ──
+        # ── 6. General Inquiry Fallback ──
         hospitals = self._resolve_hospitals(["PGIMER Chandigarh", "Max Super Speciality Mohali"])
         reply = (
             "**MedRoute Clinical Assistant Ready to Help:**\n\n"

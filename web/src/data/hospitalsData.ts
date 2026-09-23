@@ -208,8 +208,120 @@ export function getGroupedHospitals(): HospitalRegionGroup[] {
 
 export function getHospitalBySlug(slug: string): HospitalOption | undefined {
   const target = slug.toLowerCase().trim();
-  return (
+  const found = (
     ALL_HOSPITALS.find((h) => h.slug.toLowerCase() === target) ||
     ALL_HOSPITALS.find((h) => h.slug.toLowerCase().includes(target) || target.includes(h.slug.toLowerCase()))
   );
+  return found ? getHospitalWithOverrides(found) : undefined;
 }
+
+export function getHospitalWithOverrides(hospital: HospitalOption): HospitalOption {
+  if (typeof window === "undefined") return hospital;
+  try {
+    const raw = localStorage.getItem("medroute_telemetry_overrides");
+    if (!raw) return hospital;
+    const overrides = JSON.parse(raw);
+    const override = overrides[hospital.id] || (hospital.slug ? overrides[hospital.slug] : undefined);
+    if (!override) return hospital;
+    return {
+      ...hospital,
+      beds_icu_available: override.beds_icu_available !== undefined ? override.beds_icu_available : hospital.beds_icu_available,
+      icu: override.beds_icu_available !== undefined ? override.beds_icu_available : hospital.beds_icu_available,
+      is_pmjay_empanelled: override.is_pmjay_empanelled !== undefined ? override.is_pmjay_empanelled : hospital.is_pmjay_empanelled,
+      pmjay: override.is_pmjay_empanelled !== undefined ? override.is_pmjay_empanelled : hospital.is_pmjay_empanelled,
+    };
+  } catch {
+    return hospital;
+  }
+}
+
+export function getAllHospitalsWithOverrides(): HospitalOption[] {
+  if (typeof window === "undefined") return ALL_HOSPITALS;
+  try {
+    const raw = localStorage.getItem("medroute_telemetry_overrides");
+    if (!raw) return ALL_HOSPITALS;
+    const overrides = JSON.parse(raw);
+    return ALL_HOSPITALS.map((h) => {
+      const override = overrides[h.id] || (h.slug ? overrides[h.slug] : undefined);
+      if (!override) return h;
+      return {
+        ...h,
+        beds_icu_available: override.beds_icu_available !== undefined ? override.beds_icu_available : h.beds_icu_available,
+        icu: override.beds_icu_available !== undefined ? override.beds_icu_available : h.beds_icu_available,
+        beds_total: override.beds_total !== undefined ? override.beds_total : h.beds_total,
+        is_pmjay_empanelled: override.is_pmjay_empanelled !== undefined ? override.is_pmjay_empanelled : h.is_pmjay_empanelled,
+        pmjay: override.is_pmjay_empanelled !== undefined ? override.is_pmjay_empanelled : h.is_pmjay_empanelled,
+      };
+    });
+  } catch {
+    return ALL_HOSPITALS;
+  }
+}
+
+export function saveHospitalTelemetryOverride(
+  hospitalId: string,
+  slug?: string,
+  data?: { beds_icu_available?: number; is_pmjay_empanelled?: boolean; beds_total?: number; is_active?: boolean }
+) {
+  if (typeof window === "undefined" || !data) return;
+  try {
+    const raw = localStorage.getItem("medroute_telemetry_overrides");
+    const overrides = raw ? JSON.parse(raw) : {};
+    const existing = overrides[hospitalId] || {};
+    const updated = { ...existing, ...data };
+    overrides[hospitalId] = updated;
+    if (slug) {
+      overrides[slug] = updated;
+    }
+    localStorage.setItem("medroute_telemetry_overrides", JSON.stringify(overrides));
+    window.dispatchEvent(new Event("medroute_telemetry_updated"));
+  } catch (e) {
+    console.error("Failed to save telemetry override locally", e);
+  }
+
+  // Dispatch to central backend API on port 8000
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  try {
+    fetch(`${apiUrl}/api/admin/hospitals/${encodeURIComponent(hospitalId)}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-key": "medroute-admin-superkey",
+      },
+      body: JSON.stringify(data),
+    }).catch(() => {});
+  } catch {}
+}
+
+export async function syncLiveHospitalsTelemetry(): Promise<HospitalOption[]> {
+  if (typeof window === "undefined") return ALL_HOSPITALS;
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  try {
+    const res = await fetch(`${apiUrl}/api/admin/hospitals?per_page=1000`, {
+      headers: { "x-admin-key": "medroute-admin-superkey" },
+      cache: "no-store",
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (Array.isArray(json.data) && json.data.length > 0) {
+        const raw = localStorage.getItem("medroute_telemetry_overrides");
+        const overrides = raw ? JSON.parse(raw) : {};
+        json.data.forEach((item: any) => {
+          overrides[item.id] = {
+            beds_icu_available: item.beds_icu_available,
+            beds_total: item.beds_total,
+            is_pmjay_empanelled: item.is_pmjay_empanelled,
+            is_active: item.is_active,
+          };
+          if (item.slug) {
+            overrides[item.slug] = overrides[item.id];
+          }
+        });
+        localStorage.setItem("medroute_telemetry_overrides", JSON.stringify(overrides));
+        window.dispatchEvent(new Event("medroute_telemetry_updated"));
+      }
+    }
+  } catch {}
+  return getAllHospitalsWithOverrides();
+}
+

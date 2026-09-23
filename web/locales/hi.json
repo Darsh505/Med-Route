@@ -14,7 +14,12 @@
     "callEmergency": "कॉल करें 1800-MEDI-ROUTE",
     "emergencyCashlessAdmission": "आपातकालीन और कैशलेस भर्ती",
     "profile": "प्रोफ़ाइल",
-    "toggleNavigation": "नेविगेशन टॉगल करें"
+    "toggleNavigation": "नेविगेशन टॉगल करें",
+    "home": "होम",
+    "radarSearch": "AI रडार खोज",
+    "compareMatrix": "तुलना मैट्रिक्स",
+    "adminPortal": "व्यवस्थापक पोर्टल",
+    "adminTelemetryPortal": "व्यवस्थापक टेलीमेट्री पोर्टल"
   },
   "footer": {
     "hospitalDiscovery": "अस्पताल खोज",

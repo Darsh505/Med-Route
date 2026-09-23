@@ -23,6 +23,9 @@ const nextConfig: NextConfig = {
     ],
   },
 
+  // Enable standalone build for minimal container images
+  output: "standalone",
+
   // Enable compression
   compress: true,
 };

@@ -14,7 +14,12 @@
     "callEmergency": "Call 1800-MEDI-ROUTE",
     "emergencyCashlessAdmission": "Emergency & Cashless Admission",
     "profile": "Profile",
-    "toggleNavigation": "Toggle navigation"
+    "toggleNavigation": "Toggle navigation",
+    "home": "Home",
+    "radarSearch": "AI Radar Search",
+    "compareMatrix": "Compare Matrix",
+    "adminPortal": "Admin Portal",
+    "adminTelemetryPortal": "Admin Telemetry Portal"
   },
   "footer": {
     "hospitalDiscovery": "Hospital Discovery",

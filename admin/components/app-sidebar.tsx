@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   Activity,
+  ArrowUpRight,
   Building2,
   CalendarCheck,
   FileText,
@@ -112,7 +113,16 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter>
+      <SidebarFooter className="flex flex-col gap-2">
+        <a
+          href={process.env.NEXT_PUBLIC_WEB_URL || "http://localhost:3000"}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-between rounded-lg border border-sidebar-border bg-sidebar-accent/40 px-3 py-2 text-xs font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-white transition-colors"
+        >
+          <span>Open Citizen App</span>
+          <ArrowUpRight className="size-3.5" />
+        </a>
         <div className="flex items-center gap-3 rounded-lg bg-sidebar-accent/60 p-2.5">
           <Avatar className="size-9">
             <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground text-xs">

@@ -91,7 +91,7 @@ export default function LoginPage() {
           <div className="bg-surface-container-low rounded-xl p-3 border border-surface-container-high/60 flex flex-col gap-1.5">
             <div className="flex items-center justify-between">
               <span className="font-label-sm uppercase tracking-wider text-outline font-semibold text-[11px]">
-                ⚡ 1-Click Judge &amp; Demo Access
+                1-Click Quick Demo Access
               </span>
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary-container text-on-secondary-container font-bold">
                 Instant

@@ -203,21 +203,24 @@ class HospitalService:
         return h
 
     async def update(self, db, hospital, data):
+        updates = data.model_dump(exclude_unset=True) if hasattr(data, "model_dump") else dict(data)
         if _is_memory_mode():
-            updates = data.model_dump(exclude_unset=True)
-            if isinstance(hospital, dict):
-                hospital.update(updates)
-                return hospital
-        for field, value in data.model_dump(exclude_unset=True).items():
-            setattr(hospital, field, value)
+            from app.services.memory_store import memory_store
+            h_id = hospital.get("id") if isinstance(hospital, dict) else str(getattr(hospital, "id", ""))
+            updated = memory_store.update_hospital(h_id, updates)
+            return updated or hospital
+        for field, value in updates.items():
+            if hasattr(hospital, field):
+                setattr(hospital, field, value)
         await db.flush()
         await db.refresh(hospital)
         return hospital
 
     async def soft_delete(self, db, hospital):
         if _is_memory_mode():
-            if isinstance(hospital, dict):
-                hospital["is_active"] = False
+            from app.services.memory_store import memory_store
+            h_id = hospital.get("id") if isinstance(hospital, dict) else str(getattr(hospital, "id", ""))
+            memory_store.delete_hospital(h_id)
             return
         hospital.is_active = False
         await db.flush()

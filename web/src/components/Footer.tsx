@@ -64,6 +64,11 @@ export default function Footer() {
                   {t("footer.doctorSpecialties")}
                 </Link>
               </li>
+              <li>
+                <Link href="/portal/admin" className="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors">
+                  Hospital Provider Portal
+                </Link>
+              </li>
             </ul>
           </div>
 

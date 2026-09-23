@@ -1,7 +1,8 @@
 import { Platform } from "react-native";
 import rawAllHospitals from "../data/allHospitals.json";
 
-const BASE_URL = Platform.OS === "android" ? "http://10.0.2.2:8000" : "http://localhost:8000";
+const DEFAULT_URL = Platform.OS === "android" ? "http://10.0.2.2:8000" : "http://localhost:8000";
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || DEFAULT_URL;
 
 // Default user location (Bangalore, Indiranagar) — updated dynamically by HomeScreen
 export let USER_LAT = 12.9716;
@@ -225,16 +226,38 @@ export const api = {
     const q = (query || category || "").toLowerCase().trim();
     let list = MOCK_HOSPITALS;
 
-    if (city && city !== "All") {
-      const cityFiltered = list.filter((h) => h.city.toLowerCase().includes(city.toLowerCase()));
+    // Natural Language City Extraction (e.g., "near Chandigarh", "in Mohali")
+    let extractedCity = city;
+    const citiesToCheck = ["chandigarh", "mohali", "panchkula", "hoshiarpur", "ludhiana", "amritsar", "jalandhar", "delhi"];
+    for (const c of citiesToCheck) {
+      if (q.includes(c)) {
+        extractedCity = c;
+        break;
+      }
+    }
+
+    if (extractedCity && extractedCity !== "All") {
+      const cityFiltered = list.filter((h) => h.city.toLowerCase().includes(extractedCity.toLowerCase()));
       if (cityFiltered.length > 0) list = cityFiltered;
     }
 
-    if (maxBudget !== undefined && maxBudget !== null) {
-      if (maxBudget === -1) {
+    // Natural Language Budget Extraction (e.g., "under 2 lakh", "under 1 lakh", "under 50k")
+    let effectiveBudget = maxBudget;
+    if (effectiveBudget === undefined || effectiveBudget === null) {
+      const lakhMatch = q.match(/(?:under|below|within|<)\s*(\d+(?:\.\d+)?)\s*(?:lakh|lakhs|lac|lacs|l)\b/);
+      if (lakhMatch) {
+        effectiveBudget = Math.round(parseFloat(lakhMatch[1]) * 100000);
+      } else {
+        const kMatch = q.match(/(?:under|below|within|<)\s*(\d+)\s*(?:k|thousand)\b/);
+        if (kMatch) effectiveBudget = parseInt(kMatch[1], 10) * 1000;
+      }
+    }
+
+    if (effectiveBudget !== undefined && effectiveBudget !== null) {
+      if (effectiveBudget === -1) {
         list = list.filter((h) => h.is_pmjay_empanelled);
       } else {
-        list = list.filter((h) => (h.base_package_inr || 85000) <= maxBudget || h.type === "Government");
+        list = list.filter((h) => (h.base_package_inr || 85000) <= effectiveBudget || h.type === "Government");
       }
     }
 
@@ -260,6 +283,15 @@ export const api = {
         (h.specialties?.some((s) => s.toLowerCase().includes("ortho") || s.toLowerCase().includes("joint")) ||
          h.top_disease_treated?.toLowerCase().includes("knee") ||
          (h.procedures || []).some((p) => p.disease.toLowerCase().includes("osteoarthritis") || p.name.toLowerCase().includes("knee")));
+      const matchRenal = (q.includes("kidney") || q.includes("renal") || q.includes("dialysis") || q.includes("gurde") || q.includes("nephro") || q.includes("stone")) &&
+        (h.specialties?.some((s) => s.toLowerCase().includes("kidney") || s.toLowerCase().includes("renal") || s.toLowerCase().includes("nephro") || s.toLowerCase().includes("dialysis")) ||
+         h.top_disease_treated?.toLowerCase().includes("kidney") ||
+         h.top_disease_treated?.toLowerCase().includes("calculi") ||
+         h.top_disease_treated?.toLowerCase().includes("esrd") ||
+         (h.procedures || []).some((p) => p.disease.toLowerCase().includes("kidney") || p.name.toLowerCase().includes("renal") || p.name.toLowerCase().includes("dialysis") || p.name.toLowerCase().includes("stone")));
+      const matchCancer = (q.includes("cancer") || q.includes("onco") || q.includes("tumor") || q.includes("chemo")) &&
+        (h.specialties?.some((s) => s.toLowerCase().includes("onco") || s.toLowerCase().includes("cancer")) ||
+         (h.procedures || []).some((p) => p.disease.toLowerCase().includes("cancer") || p.disease.toLowerCase().includes("tumor") || p.name.toLowerCase().includes("chemo")));
 
       return (
         matchName ||
@@ -272,7 +304,9 @@ export const api = {
         matchTrauma ||
         matchPmjay ||
         matchCardiac ||
-        matchOrtho
+        matchOrtho ||
+        matchRenal ||
+        matchCancer
       );
     });
   },
@@ -393,69 +427,112 @@ export const api = {
   async sendChatMessage(
     message: string,
     history: Array<{ role: string; content: string }> = [],
-    latitude: number = 30.7333,
-    longitude: number = 76.7794
+    latitude: number = USER_LAT,
+    longitude: number = USER_LNG
   ) {
     try {
-      const res = await fetch(`${BASE_URL}/api/chat`, {
+      let res = await fetch(`${BASE_URL}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message, history, latitude, longitude }),
       });
+      if (!res.ok) {
+        res = await fetch(`${BASE_URL}/api/chat/triage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message, history, latitude, longitude }),
+        });
+      }
       if (res.ok) {
         const json = await res.json();
-        return json.data;
+        return { success: true, data: json.data };
       }
     } catch {}
 
-    const msgLower = message.toLowerCase();
+    const q = message.toLowerCase();
     const isEmergency =
-      msgLower.includes("chest pain") ||
-      msgLower.includes("heart attack") ||
-      msgLower.includes("accident") ||
-      msgLower.includes("unconscious") ||
-      msgLower.includes("bleeding");
+      q.includes("chest pain") ||
+      q.includes("heart attack") ||
+      q.includes("dil ka daura") ||
+      q.includes("stroke") ||
+      q.includes("paralysis") ||
+      q.includes("lakwa") ||
+      q.includes("accident") ||
+      q.includes("unconscious") ||
+      q.includes("head injury") ||
+      q.includes("bleeding") ||
+      q.includes("ambulance");
+
+    // Dynamic hospital resolution from dataset
+    let matchedCity = "Hoshiarpur";
+    for (const [alias, canonical] of Object.entries(CITY_ALIASES)) {
+      if (q.includes(alias)) {
+        matchedCity = canonical;
+        break;
+      }
+    }
+
+    let cityHosp = (rawAllHospitals as any[]).filter(
+      (h) => (h.city && h.city.toLowerCase() === matchedCity.toLowerCase()) || (h.state && h.state.toLowerCase() === matchedCity.toLowerCase())
+    );
+    if (cityHosp.length === 0) cityHosp = (rawAllHospitals as any[]).slice(0, 10);
+
+    const cLat = cityHosp[0]?.latitude || latitude;
+    const cLng = cityHosp[0]?.longitude || longitude;
+
+    let ranked = cityHosp.map((h: any) => ({
+      name: h.name,
+      slug: h.slug,
+      address: h.address || `${h.city}, ${h.state}`,
+      distance_km: parseFloat(haversineKm(cLat, cLng, h.latitude, h.longitude).toFixed(1)),
+      beds_icu_available: h.beds_icu_available || 6,
+      is_pmjay_empanelled: h.is_pmjay_empanelled ?? true,
+      emergency_phone: h.emergency_phone || h.phone || "108",
+      cost_indicative: h.base_package_inr ? `₹${Math.round(h.base_package_inr / 1000)}k` : "100% Cashless",
+    }));
+
+    if (isEmergency) {
+      ranked.sort((a, b) => b.beds_icu_available - a.beds_icu_available || a.distance_km - b.distance_km);
+    } else {
+      ranked.sort((a, b) => a.distance_km - b.distance_km);
+    }
+
+    const recs = ranked.slice(0, 2);
+
+    let reply = `Identified clinical inquiry for: "${message}". Based on verified telemetry and NABH benchmarks, the following network facilities are recommended.`;
+    if (isEmergency) {
+      reply = "🚨 **CRITICAL CLINICAL TRIAGE**: Symptoms indicate an acute medical emergency. Proceed immediately to the nearest tertiary trauma unit or call 108 ambulance. Zero upfront deposit protocol active.";
+    } else if (q.includes("stent") || q.includes("angioplasty") || q.includes("cardiac") || q.includes("heart")) {
+      reply = "• **Angioplasty Stent Tariff**: Standard DES stent package is ₹15,000–₹45,000 (Govt) vs ₹1,20,000–₹1,85,000 (Private). PMJAY pre-fixed package is ₹65,000 (100% cashless).\n• Recommended cardiac catheterization centers in network:";
+    } else if (q.includes("knee") || q.includes("joint") || q.includes("ortho") || q.includes("tkr")) {
+      reply = "• **Total Knee Replacement (TKR)**: Subsidized ₹75,000–₹95,000 vs Private Robotic ₹1,45,000–₹2,20,000. 100% covered under Ayushman Bharat.\n• Recommended orthopedic surgery centers:";
+    } else if (q.includes("dialysis") || q.includes("kidney") || q.includes("renal")) {
+      reply = "• **Dialysis**: ₹800–₹1,200 (Govt) vs ₹2,000–₹3,500 (Private). Recurring sessions are 100% free under PMJAY Ayushman Bharat.\n• Verified dialysis centers with free slots:";
+    } else if (q.includes("cashless") || q.includes("insurance") || q.includes("pmjay") || q.includes("pre-auth")) {
+      reply = "• **Medi Route 20-Min Cashless Guarantee**: Present ABHA ID or Insurance TPA card. Pre-auth sanction in under 20 minutes with ₹0 upfront cash deposit.";
+    }
 
     return {
-      reply: isEmergency
-        ? "⚠️ **CRITICAL CLINICAL TRIAGE**: Symptoms indicate a high-priority acute medical emergency. Proceed immediately to the nearest tertiary emergency department or call ambulance 108."
-        : `Identified medical inquiry for: "${message}". Based on regional bed occupancy and NABH telemetry, the following facilities are recommended.`,
-      triage_level: isEmergency ? "emergency" : "routine",
-      recommended_hospitals: [
-        {
-          name: "PGIMER Chandigarh",
-          slug: "pgimer-chandigarh",
-          address: "Sector 12, Chandigarh",
-          distance_km: 3.2,
-          beds_icu_available: 14,
-          is_pmjay_empanelled: true,
-          emergency_phone: "0172-2746018",
-          cost_indicative: "₹15,000 – ₹45,000 (Subsidized)",
-        },
-        {
-          name: "Max Super Speciality Mohali",
-          slug: "max-super-speciality-mohali",
-          address: "Phase VI, SAS Nagar, Mohali",
-          distance_km: 7.4,
-          beds_icu_available: 6,
-          is_pmjay_empanelled: true,
-          emergency_phone: "0172-6652100",
-          cost_indicative: "₹1,42,000 Package",
-        },
-      ],
-      action_buttons: isEmergency
-        ? [
-            { type: "call_emergency", label: "📞 Call 108 Ambulance", value: "108" },
-            { type: "call_hospital", label: "🚨 Call PGIMER Emergency", value: "01722746018" },
-          ]
-        : [
-            { type: "view_hospital", label: "🏥 View PGIMER Details", value: "pgimer-chandigarh" },
-          ],
-      quick_suggestions: [
-        "Find free ICU beds near me",
-        "PMJAY hospital list",
-        "Emergency ambulance 108",
-      ],
+      success: true,
+      data: {
+        reply,
+        triage_level: isEmergency ? ("emergency" as const) : ("routine" as const),
+        recommended_hospitals: recs,
+        action_buttons: isEmergency
+          ? [
+              { type: "call_emergency", label: "📞 Call 108 Ambulance", value: "108" },
+              { type: "sos", label: "🆘 Launch Emergency Desk", value: "/sos" },
+            ]
+          : [
+              { type: "compare", label: "⚖️ Compare Hospitals", value: "/compare" },
+              { type: "view_hospital", label: `🏥 View ${recs[0]?.name.split(" ")[0] || "Hospital"}`, value: `/hospitals/${recs[0]?.slug || ""}` },
+            ],
+        quick_suggestions: [
+          "Check free ICU beds near me",
+          "PMJAY package rates & coverage",
+          "Explain 20-minute cashless guarantee",
+        ],
+      },
     };
   },
 };

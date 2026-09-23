@@ -1,5 +1,5 @@
 # ──────────────────────────────────────────────
-# Dockerfile — Med Route Next.js Web App
+# Dockerfile — Med Route Admin Dashboard Console
 # ──────────────────────────────────────────────
 FROM node:20-alpine AS deps
 WORKDIR /app
@@ -24,6 +24,6 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 USER nextjs
-EXPOSE 3000
-ENV PORT=3000
+EXPOSE 3001
+ENV PORT=3001
 CMD ["npm", "start"]

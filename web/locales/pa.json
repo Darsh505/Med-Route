@@ -14,7 +14,12 @@
     "callEmergency": "ਕਾਲ ਕਰੋ 1800-MEDI-ROUTE",
     "emergencyCashlessAdmission": "ਐਮਰਜੈਂਸੀ ਅਤੇ ਕੈਸ਼ਲੈੱਸ ਦਾਖ਼ਲਾ",
     "profile": "ਪ੍ਰੋਫ਼ਾਈਲ",
-    "toggleNavigation": "ਨੈਵੀਗੇਸ਼ਨ ਟੌਗਲ ਕਰੋ"
+    "toggleNavigation": "ਨੈਵੀਗੇਸ਼ਨ ਟੌਗਲ ਕਰੋ",
+    "home": "ਮੁੱਖ ਪੰਨਾ",
+    "radarSearch": "AI ਰਾਡਾਰ ਖੋਜ",
+    "compareMatrix": "ਤੁਲਨਾ ਮੈਟ੍ਰਿਕਸ",
+    "adminPortal": "ਐਡਮਿਨ ਪੋਰਟਲ",
+    "adminTelemetryPortal": "ਐਡਮਿਨ ਟੈਲੀਮੈਟਰੀ ਪੋਰਟਲ"
   },
   "footer": {
     "hospitalDiscovery": "ਹਸਪਤਾਲ ਖੋਜ",
