@@ -167,6 +167,19 @@ export default function ChatScreen({ navigation }: any) {
   }, [currentLang]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isGeminiActive, setIsGeminiActive] = useState<boolean>(false);
+
+  React.useEffect(() => {
+    let isMounted = true;
+    api.getChatbotStatus()
+      .then((status) => {
+        if (isMounted) setIsGeminiActive(Boolean(status?.gemini_active));
+      })
+      .catch(() => {
+        if (isMounted) setIsGeminiActive(false);
+      });
+    return () => { isMounted = false; };
+  }, []);
   const flatListRef = useRef<FlatList>(null);
 
   const handleSend = async (customText?: string) => {
@@ -193,6 +206,11 @@ export default function ChatScreen({ navigation }: any) {
       const res = await api.sendChatMessage(textToSend, history);
       const data = res?.data || res;
       if (data && data.reply) {
+        if (data.ai_provider === "gemini") {
+          setIsGeminiActive(true);
+        } else if (data.ai_provider === "clinical_rules") {
+          setIsGeminiActive(false);
+        }
         const aiMessage: MessageItem = {
           id: "a-" + Date.now(),
           role: "assistant",
@@ -208,6 +226,7 @@ export default function ChatScreen({ navigation }: any) {
         throw new Error("Chatbot API response error");
       }
     } catch {
+      setIsGeminiActive(false);
       const fallbackResponse = generateClientSideNLP(textToSend);
       setMessages((prev) => [...prev, fallbackResponse]);
     } finally {
@@ -234,7 +253,7 @@ export default function ChatScreen({ navigation }: any) {
 
           {item.recommended_hospitals && item.recommended_hospitals.length > 0 && (
             <View style={styles.hospitalsContainer}>
-              <Text style={styles.hospitalsHeader}>Recommended Network Facilities:</Text>
+              <Text style={styles.hospitalsHeader}>{currentLang === "hi" ? "अनुशंसित नेटवर्क अस्पताल:" : currentLang === "pa" ? "ਸਿਫਾਰਸ਼ ਕੀਤੇ ਨੈੱਟਵਰਕ ਹਸਪਤਾਲ:" : "Recommended Network Facilities:"}</Text>
               {item.recommended_hospitals.map((hosp, idx) => (
                 <View key={idx} style={styles.hospitalMiniCard}>
                   <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
@@ -246,9 +265,9 @@ export default function ChatScreen({ navigation }: any) {
                   <Text style={styles.miniCardAddress}>📍 {localizeAddress(hosp.address, currentLang)}</Text>
 
                   <View style={styles.miniCardMeta}>
-                    <Text style={styles.miniCardIcu}>● {hosp.beds_icu_available} ICU Beds Free</Text>
+                    <Text style={styles.miniCardIcu}>● {t("sos.icuBedsFree", { count: hosp.beds_icu_available })}</Text>
                     {hosp.is_pmjay_empanelled && (
-                      <Text style={styles.miniCardPmjay}>✓ 100% Cashless</Text>
+                      <Text style={styles.miniCardPmjay}>✓ {t("compare.covered100")}</Text>
                     )}
                   </View>
 
@@ -336,10 +355,10 @@ export default function ChatScreen({ navigation }: any) {
         <View style={styles.headerTitleRow}>
           <MedRouteLogo size="sm" showBadge={false} />
           <View style={{ flex: 1, marginLeft: 8 }}>
-            <Text style={styles.headerTitle}>Med Route AI</Text>
+            <Text style={styles.headerTitle}>{t("brand.name")} AI</Text>
             <View style={styles.headerStatusRow}>
               <View style={styles.liveDot} />
-              <Text style={styles.headerSubtitle}>24/7 Verified Healthcare Guide</Text>
+              <Text style={styles.headerSubtitle}>{currentLang === "hi" ? "24/7 सत्यापित स्वास्थ्य सेवा मार्गदर्शक" : currentLang === "pa" ? "24/7 ਤਸਦੀਕਸ਼ੁਦਾ ਸਿਹਤ ਸੰਭਾਲ ਗਾਈਡ" : "24/7 Verified Healthcare Guide"}</Text>
             </View>
           </View>
         </View>

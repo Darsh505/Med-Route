@@ -21,54 +21,110 @@ import { MOCK_HOSPITALS } from "../services/api";
 import LanguageSwitcher from "../components/LanguageSwitcher";
 import { localizeHospital, localizeAccreditation } from "../i18n/hospitalLocalization";
 
-const FIRST_AID_PROTOCOLS = [
+const getFirstAidProtocols = (lang: string) => [
   {
     id: "cardiac",
     icon: "💔",
-    title: "Heart Attack / Severe Chest Pain",
-    badge: "CRITICAL 0-10 MIN",
-    steps: [
-      "Keep the patient seated upright at rest. Do not let them walk.",
-      "If conscious and not allergic, have them chew a 300mg soluble Aspirin tablet.",
-      "Loosen tight clothing around neck and chest to assist breathing.",
-      "Call 108 ambulance immediately — do not drive yourself.",
-    ],
+    title: lang === "hi" ? "हार्ट अटैक / सीने में तेज़ दर्द" : lang === "pa" ? "ਦਿਲ ਦਾ ਦੌਰਾ / ਛਾਤੀ ਵਿੱਚ ਤੇਜ਼ ਦਰਦ" : "Heart Attack / Severe Chest Pain",
+    badge: lang === "hi" ? "अति-गंभीर 0-10 मिनट" : lang === "pa" ? "ਬਹੁਤ ਗੰਭੀਰ 0-10 ਮਿੰਟ" : "CRITICAL 0-10 MIN",
+    steps: lang === "hi"
+      ? [
+          "मरीज को आराम से सीधा बैठाएं। उन्हें चलने न दें।",
+          "यदि होश में हैं और एलर्जी नहीं है, तो 300mg एस्पिरिन टैबलेट चबाने को कहें।",
+          "सांस लेने में सहायता के लिए गर्दन और छाती के आसपास के कपड़े ढीले करें।",
+          "तुरंत 108 एम्बुलेंस को कॉल करें — खुद गाड़ी न चलाएं।",
+        ]
+      : lang === "pa"
+      ? [
+          "ਮਰੀਜ਼ ਨੂੰ ਆਰਾਮ ਨਾਲ ਸਿੱਧਾ ਬਿਠਾਓ। ਉਹਨਾਂ ਨੂੰ ਤੁਰਨ ਨਾ ਦਿਓ।",
+          "ਜੇਕਰ ਹੋਸ਼ ਵਿੱਚ ਹਨ ਅਤੇ ਕੋਈ ਐਲਰਜੀ ਨਹੀਂ ਹੈ, ਤਾਂ 300 ਮਿਲੀਗ੍ਰਾਮ ਐਸਪਰੀਨ ਚਬਾਉਣ ਲਈ ਕਹੋ।",
+          "ਸਾਹ ਲੈਣ ਵਿੱਚ ਮਦਦ ਲਈ ਗਰਦਨ ਅਤੇ ਛਾਤੀ ਦੇ ਆਲੇ-ਦੁਆਲੇ ਤੰਗ ਕੱਪੜੇ ਢਿੱਲੇ ਕਰੋ।",
+          "ਤੁਰੰਤ 108 ਐਂਬੂਲੈਂਸ ਨੂੰ ਕਾਲ ਕਰੋ — ਖੁਦ ਗੱਡੀ ਨਾ ਚਲਾਓ।",
+        ]
+      : [
+          "Keep the patient seated upright at rest. Do not let them walk.",
+          "If conscious and not allergic, have them chew a 300mg soluble Aspirin tablet.",
+          "Loosen tight clothing around neck and chest to assist breathing.",
+          "Call 108 ambulance immediately — do not drive yourself.",
+        ],
   },
   {
     id: "stroke",
     icon: "🧠",
-    title: "Stroke Emergency (F.A.S.T.)",
-    badge: "CRITICAL 0-4.5 HRS",
-    steps: [
-      "Face: Ask to smile. Does one side of the face droop?",
-      "Arms: Ask to raise both arms. Does one arm drift downward?",
-      "Speech: Ask to repeat a simple sentence. Is speech slurred or strange?",
-      "Time: Call 108 immediately. Note the exact time symptoms started.",
-    ],
+    title: lang === "hi" ? "स्ट्रोक आपातकाल (F.A.S.T.)" : lang === "pa" ? "ਸਟ੍ਰੋਕ ਐਮਰਜੈਂਸੀ (F.A.S.T.)" : "Stroke Emergency (F.A.S.T.)",
+    badge: lang === "hi" ? "अति-गंभीर 0-4.5 घंटे" : lang === "pa" ? "ਬਹੁਤ ਗੰਭੀਰ 0-4.5 ਘੰਟੇ" : "CRITICAL 0-4.5 HRS",
+    steps: lang === "hi"
+      ? [
+          "चेहरा: मुस्कुराने को कहें। क्या चेहरे का एक हिस्सा झुक रहा है?",
+          "हाथ: दोनों हाथ ऊपर उठाने को कहें। क्या एक हाथ नीचे गिरता है?",
+          "आवाज: एक सरल वाक्य दोहराने को कहें। क्या आवाज लड़खड़ा रही है?",
+          "समय: तुरंत 108 पर कॉल करें। लक्षण शुरू होने का सटीक समय नोट करें।",
+        ]
+      : lang === "pa"
+      ? [
+          "ਚਿਹਰਾ: ਮੁਸਕਰਾਉਣ ਲਈ ਕਹੋ। ਕੀ ਚਿਹਰੇ ਦਾ ਇੱਕ ਪਾਸਾ ਲਟਕ ਰਿਹਾ ਹੈ?",
+          "ਬਾਹਵਾਂ: ਦੋਵੇਂ ਬਾਹਵਾਂ ਚੁੱਕਣ ਲਈ ਕਹੋ। ਕੀ ਇੱਕ ਬਾਂਹ ਹੇਠਾਂ ਵੱਲ ਡਿੱਗਦੀ ਹੈ?",
+          "ਬੋਲਣਾ: ਇੱਕ ਸਧਾਰਨ ਵਾਕ ਬੋਲਣ ਲਈ ਕਹੋ। ਕੀ ਬੋਲਣ ਵਿੱਚ ਮੁਸ਼ਕਲ ਹੈ?",
+          "ਸਮਾਂ: ਤੁਰੰਤ 108 'ਤੇ ਕਾਲ ਕਰੋ। ਲੱਛਣ ਸ਼ੁਰੂ ਹੋਣ ਦਾ ਸਹੀ ਸਮਾਂ ਨੋਟ ਕਰੋ।",
+        ]
+      : [
+          "Face: Ask to smile. Does one side of the face droop?",
+          "Arms: Ask to raise both arms. Does one arm drift downward?",
+          "Speech: Ask to repeat a simple sentence. Is speech slurred or strange?",
+          "Time: Call 108 immediately. Note the exact time symptoms started.",
+        ],
   },
   {
     id: "trauma",
     icon: "🩸",
-    title: "Severe Bleeding & Trauma",
-    badge: "IMMEDIATE PRESSURE",
-    steps: [
-      "Apply firm, continuous direct pressure to wound using a clean cloth or gauze.",
-      "Elevate the injured limb above heart level if no fracture is suspected.",
-      "Do NOT remove any embedded or impaled objects — pack around them.",
-      "Keep patient warm with a blanket while waiting for the 108 team.",
-    ],
+    title: lang === "hi" ? "गंभीर रक्तस्राव एवं चोट (ट्रॉमा)" : lang === "pa" ? "ਗੰਭੀਰ ਖੂਨ ਵਹਿਣਾ ਅਤੇ ਸੱਟ (ਟਰੌਮਾ)" : "Severe Bleeding & Trauma",
+    badge: lang === "hi" ? "तत्काल दबाव बनाएं" : lang === "pa" ? "ਤੁਰੰਤ ਦਬਾਅ ਪਾਓ" : "IMMEDIATE PRESSURE",
+    steps: lang === "hi"
+      ? [
+          "साफ कपड़े या पट्टी से घाव पर लगातार सीधा दबाव डालें।",
+          "यदि फ्रैक्चर न हो, तो घायल अंग को दिल के स्तर से ऊपर उठाएं।",
+          "शरीर में चुभी हुई वस्तु को न निकालें — उसके चारों ओर पट्टी बांधें।",
+          "108 टीम की प्रतीक्षा करते समय मरीज को कंबल से ढक कर रखें।",
+        ]
+      : lang === "pa"
+      ? [
+          "ਸਾਫ਼ ਕੱਪੜੇ ਜਾਂ ਪੱਟੀ ਨਾਲ ਜ਼ਖ਼ਮ 'ਤੇ ਲਗਾਤਾਰ ਸਿੱਧਾ ਦਬਾਅ ਪਾਓ।",
+          "ਜੇਕਰ ਹੱਡੀ ਟੁੱਟਣ ਦਾ ਸ਼ੱਕ ਨਾ ਹੋਵੇ, ਤਾਂ ਜ਼ਖਮੀ ਅੰਗ ਨੂੰ ਦਿਲ ਦੇ ਪੱਧਰ ਤੋਂ ਉੱਚਾ ਚੁੱਕੋ।",
+          "ਸਰੀਰ ਵਿੱਚ ਖੁੱਭੀ ਹੋਈ ਕਿਸੇ ਵੀ ਚੀਜ਼ ਨੂੰ ਬਾਹਰ ਨਾ ਕੱਢੋ — ਉਸਦੇ ਆਲੇ-ਦੁਆਲੇ ਪੱਟੀ ਬੰਨ੍ਹੋ।",
+          "108 ਟੀਮ ਦੀ ਉਡੀਕ ਕਰਦੇ ਸਮੇਂ ਮਰੀਜ਼ ਨੂੰ ਕੰਬਲ ਨਾਲ ਨਿੱਘਾ ਰੱਖੋ।",
+        ]
+      : [
+          "Apply firm, continuous direct pressure to wound using a clean cloth or gauze.",
+          "Elevate the injured limb above heart level if no fracture is suspected.",
+          "Do NOT remove any embedded or impaled objects — pack around them.",
+          "Keep patient warm with a blanket while waiting for the 108 team.",
+        ],
   },
   {
     id: "breathing",
     icon: "🫁",
-    title: "Acute Breathlessness / Asthma",
-    badge: "AIRWAY PRIORITY",
-    steps: [
-      "Sit patient upright leaning slightly forward. Do not lay them flat.",
-      "Assist them with 2 puffs of their prescribed rescue inhaler (with spacer if available).",
-      "Ensure fresh air ventilation and keep onlookers at a distance.",
-      "If lips turn blue or patient cannot speak full words, dispatch 108 immediately.",
-    ],
+    title: lang === "hi" ? "गंभीर सांस फूलना / अस्थमा" : lang === "pa" ? "ਗੰਭੀਰ ਸਾਹ ਚੜ੍ਹਨਾ / ਦਮਾ" : "Acute Breathlessness / Asthma",
+    badge: lang === "hi" ? "सांस मार्ग प्राथमिकता" : lang === "pa" ? "ਸਾਹ ਨਾਲੀ ਤਰਜੀਹ" : "AIRWAY PRIORITY",
+    steps: lang === "hi"
+      ? [
+          "मरीज को थोड़ा आगे झुकाकर सीधा बैठाएं। उन्हें लेटने न दें।",
+          "उनके इनहेलर के 2 पफ लेने में सहायता करें।",
+          "ताजी हवा सुनिश्चित करें और भीड़ को दूर रखें।",
+          "यदि होंठ नीले पड़ें या मरीज बोल न पाए, तो तुरंत 108 बुलाएं।",
+        ]
+      : lang === "pa"
+      ? [
+          "ਮਰੀਜ਼ ਨੂੰ ਥੋੜ੍ਹਾ ਅੱਗੇ ਝੁਕਾ ਕੇ ਸਿੱਧਾ ਬਿਠਾਓ। ਉਹਨਾਂ ਨੂੰ ਸਿੱਧਾ ਨਾ ਲੰਮਾ ਪਾਓ।",
+          "ਉਹਨਾਂ ਦੇ ਇਨਹੇਲਰ ਦੇ 2 ਪੱਫ ਲੈਣ ਵਿੱਚ ਮਦਦ ਕਰੋ।",
+          "ਤਾਜ਼ੀ ਹਵਾ ਯਕੀਨੀ ਬਣਾਓ ਅਤੇ ਭੀੜ ਨੂੰ ਦੂਰ ਰੱਖੋ।",
+          "ਜੇਕਰ ਬੁੱਲ੍ਹ ਨੀਲੇ ਪੈ ਜਾਣ ਜਾਂ ਮਰੀਜ਼ ਬੋਲ ਨਾ ਸਕੇ, ਤਾਂ ਤੁਰੰਤ 108 ਸੱਦੋ।",
+        ]
+      : [
+          "Sit patient upright leaning slightly forward. Do not lay them flat.",
+          "Assist them with 2 puffs of their prescribed rescue inhaler (with spacer if available).",
+          "Ensure fresh air ventilation and keep onlookers at a distance.",
+          "If lips turn blue or patient cannot speak full words, dispatch 108 immediately.",
+        ],
   },
 ];
 
@@ -76,6 +132,7 @@ export default function SOSScreen({ navigation }: any) {
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language || "en";
   const [selectedProtocol, setSelectedProtocol] = useState<string>("cardiac");
+  const firstAidProtocols = React.useMemo(() => getFirstAidProtocols(currentLang), [currentLang]);
 
   // Get top 3 nearest trauma/emergency facilities
   const emergencyHospitals = MOCK_HOSPITALS.filter(
@@ -127,13 +184,13 @@ export default function SOSScreen({ navigation }: any) {
         {/* Master Call To Action — 108 Ambulance */}
         <View style={styles.dispatchCard}>
           <View style={styles.dispatchTopRow}>
-            <Text style={styles.dispatchSuper}>{currentLang === "hi" ? "मुफ़्त राष्ट्रीय एम्बुलेंस" : currentLang === "pa" ? "ਮੁਫ਼ਤ ਰਾਸ਼ਟਰੀ ਐਂਬੂਲੈਂਸ" : "FREE NATIONAL AMBULANCE"}</Text>
+            <Text style={styles.dispatchSuper}>{t("sos.freeAmbulance")}</Text>
             <View style={styles.freeBadge}>
-              <Text style={styles.freeBadgeText}>{currentLang === "hi" ? "सरकारी सेवा" : currentLang === "pa" ? "ਸਰਕਾਰੀ ਸੇਵਾ" : "GOVERNMENT SERVICE"}</Text>
+              <Text style={styles.freeBadgeText}>{t("sos.govtService")}</Text>
             </View>
           </View>
 
-          <Text style={styles.dispatchTitle}>{currentLang === "hi" ? "108 एम्बुलेंस हेल्पलाइन पर कॉल करें" : currentLang === "pa" ? "108 ਐਂਬੂਲੈਂਸ ਹੈਲਪਲਾਈਨ 'ਤੇ ਕਾਲ ਕਰੋ" : "Call 108 Ambulance Hotline"}</Text>
+          <Text style={styles.dispatchTitle}>{t("sos.call108Hotline")}</Text>
           <Text style={styles.dispatchSub}>
             Toll-free emergency response across India. Dispatches nearest ALS/BLS cardiac ambulance with trained paramedics.
           </Text>
@@ -145,8 +202,8 @@ export default function SOSScreen({ navigation }: any) {
           >
             <Text style={styles.call108Icon}>🚨</Text>
             <View>
-              <Text style={styles.call108Label}>{currentLang === "hi" ? "108 पर कॉल करने के लिए टैप करें" : currentLang === "pa" ? "108 'ਤੇ ਕਾਲ ਕਰਨ ਲਈ ਟੈਪ ਕਰੋ" : "TAP TO CALL 108"}</Text>
-              <Text style={styles.call108Number}>{currentLang === "hi" ? "राष्ट्रीय एम्बुलेंस प्रेषण" : currentLang === "pa" ? "ਰਾਸ਼ਟਰੀ ਐਂਬੂਲੈਂਸ ਰਵਾਨਗੀ" : "National Ambulance Dispatch"}</Text>
+              <Text style={styles.call108Label}>{t("sos.tapToCall108")}</Text>
+              <Text style={styles.call108Number}>{t("sos.nationalDispatch")}</Text>
             </View>
           </TouchableOpacity>
         </View>
@@ -154,7 +211,7 @@ export default function SOSScreen({ navigation }: any) {
         {/* WhatsApp Emergency Coordination Desk */}
         <View style={styles.whatsappCard}>
           <View style={styles.whatsappTopRow}>
-            <Text style={styles.whatsappSuper}>{currentLang === "hi" ? "शून्य-जमा बेड सहायता" : currentLang === "pa" ? "ਜ਼ੀਰੋ-ਡਿਪਾਜ਼ਿਟ ਬੈੱਡ ਸਹਾਇਤਾ" : "ZERO-DEPOSIT BED DESK"}</Text>
+            <Text style={styles.whatsappSuper}>{t("sos.zeroDepositDesk")}</Text>
             <Text style={styles.whatsappPhone}>9592543404</Text>
           </View>
 
@@ -170,8 +227,8 @@ export default function SOSScreen({ navigation }: any) {
           >
             <Text style={styles.whatsappBtnIcon}>💬</Text>
             <View>
-              <Text style={styles.whatsappBtnLabel}>Chat on WhatsApp (9592543404)</Text>
-              <Text style={styles.whatsappBtnSub}>Instant Bed &amp; Admission Help</Text>
+              <Text style={styles.whatsappBtnLabel}>{t("sos.chatOnWhatsapp")}</Text>
+              <Text style={styles.whatsappBtnSub}>{t("sos.instantBedHelp")}</Text>
             </View>
           </TouchableOpacity>
         </View>
@@ -180,7 +237,7 @@ export default function SOSScreen({ navigation }: any) {
         <View style={styles.legalCard}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 }}>
             <Text style={{ fontSize: 16 }}>⚖️</Text>
-            <Text style={styles.legalTitle}>Supreme Court Zero-Deposit Mandate</Text>
+            <Text style={styles.legalTitle}>{t("sos.supremeCourtMandate")}</Text>
           </View>
           <Text style={styles.legalText}>
             Under Supreme Court of India directives and PMJAY emergency guidelines, accredited hospitals cannot deny emergency stabilization or demand upfront cash deposits before admission.
@@ -189,7 +246,7 @@ export default function SOSScreen({ navigation }: any) {
 
         {/* Nearest Trauma & ICU Centers */}
         <View style={styles.sectionHeaderRow}>
-          <Text style={styles.sectionTitle}>{currentLang === "hi" ? "निकटतम आपातकालीन अस्पताल" : currentLang === "pa" ? "ਨਜ਼ਦੀਕੀ ਐਮਰਜੈਂਸੀ ਹਸਪਤਾਲ" : "Nearest Emergency Facilities"}</Text>
+          <Text style={styles.sectionTitle}>{t("sos.nearestFacilities")}</Text>
           <TouchableOpacity onPress={() => navigation.navigate("MainTabs")}>
             <Text style={styles.sectionLink}>{t("common.viewAll")} ➔</Text>
           </TouchableOpacity>
@@ -246,13 +303,13 @@ export default function SOSScreen({ navigation }: any) {
 
         {/* First-Aid Emergency Guidance */}
         <View style={[styles.sectionHeaderRow, { marginTop: 12 }]}>
-          <Text style={styles.sectionTitle}>Critical First-Aid Instructions</Text>
-          <Text style={styles.sectionSub}>While Waiting for Ambulance</Text>
+          <Text style={styles.sectionTitle}>{t("sos.firstAidTitle")}</Text>
+          <Text style={styles.sectionSub}>{t("sos.whileWaiting")}</Text>
         </View>
 
         {/* Protocol Selector Tabs */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.protocolTabs}>
-          {FIRST_AID_PROTOCOLS.map((p) => (
+          {firstAidProtocols.map((p) => (
             <TouchableOpacity
               key={p.id}
               style={[
@@ -276,7 +333,7 @@ export default function SOSScreen({ navigation }: any) {
 
         {/* Active Protocol Card */}
         {(() => {
-          const proto = FIRST_AID_PROTOCOLS.find((p) => p.id === selectedProtocol) || FIRST_AID_PROTOCOLS[0];
+          const proto = firstAidProtocols.find((p) => p.id === selectedProtocol) || firstAidProtocols[0];
           return (
             <View style={styles.protocolCard}>
               <View style={styles.protocolCardTop}>

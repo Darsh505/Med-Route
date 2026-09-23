@@ -259,7 +259,7 @@ export default function HomeScreen({ navigation }: any) {
   }, [
     cashlessOnly, liveIcuOnly, accreditedOnly, emergencyOnly,
     maxDistanceKm, sortBy, specialtyInput, cityInput,
-    hospitalType, minRating, userLat, userLng,
+    hospitalType, minRating, userLat, userLng, currentLang,
   ]);
 
   React.useEffect(() => {
@@ -304,7 +304,7 @@ export default function HomeScreen({ navigation }: any) {
         <View style={styles.headerLeft}>
           <MedRouteLogo size="sm" showBadge={false} />
           <View style={{ marginLeft: 8 }}>
-            <Text style={styles.brandTitle}>Med Route</Text>
+            <Text style={styles.brandTitle}>{t("brand.name")}</Text>
             <TouchableOpacity
               style={styles.locationPill}
               onPress={() => setFilterModalOpen(true)}
@@ -481,13 +481,13 @@ export default function HomeScreen({ navigation }: any) {
               style={styles.bannerCallBtn}
               onPress={() => Linking.openURL("tel:108")}
             >
-              <Text style={styles.bannerCallBtnText}>🚨 Call 108 Ambulance</Text>
+              <Text style={styles.bannerCallBtnText}>🚨 {t("home.call108Ambulance")}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.bannerWhatsAppBtn}
               onPress={() => Linking.openURL("https://wa.me/919592543404?text=Hello%20Medi%20Route,%20I%20need%20urgent%20hospital%20admission%20assistance.")}
             >
-              <Text style={styles.bannerWhatsAppBtnText}>💬 WhatsApp (9592543404)</Text>
+              <Text style={styles.bannerWhatsAppBtnText}>💬 {t("home.whatsappNumberDesk")}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -511,7 +511,7 @@ export default function HomeScreen({ navigation }: any) {
             style={styles.filterTriggerBtn}
             onPress={() => setFilterModalOpen(true)}
           >
-            <Text style={styles.filterTriggerText}>⚙️ Filter Options</Text>
+            <Text style={styles.filterTriggerText}>⚙️ {t("home.filterOptions")}</Text>
           </TouchableOpacity>
         </View>
 
@@ -816,8 +816,8 @@ export default function HomeScreen({ navigation }: any) {
           <View style={styles.filterModalCard}>
             <View style={styles.filterModalHeader}>
               <View>
-                <Text style={styles.filterModalTitle}>Filter Network Hospitals</Text>
-                <Text style={styles.filterModalSub}>Refine by location, accreditation &amp; tariffs</Text>
+                <Text style={styles.filterModalTitle}>{t("home.filterModalTitle")}</Text>
+                <Text style={styles.filterModalSub}>{t("home.filterModalSub")}</Text>
               </View>
               <TouchableOpacity onPress={() => setFilterModalOpen(false)} style={{ padding: 4 }}>
                 <Text style={styles.filterModalClose}>✕</Text>
@@ -826,7 +826,7 @@ export default function HomeScreen({ navigation }: any) {
 
             <ScrollView style={{ maxHeight: 480 }} showsVerticalScrollIndicator={false}>
               {/* City Selection */}
-              <Text style={styles.filterSectionTitle}>📍 City / Region</Text>
+              <Text style={styles.filterSectionTitle}>📍 {t("home.filterCityRegion")}</Text>
               <View style={styles.filterPillGrid}>
                 {["All India", "Delhi", "Mumbai", "Bengaluru", "Chandigarh", "Mohali", "Hoshiarpur", "Jaipur", "Pune", "Hyderabad"].map((city) => {
                   const isSel = (city === "All India" && (cityInput === "All Cities" || cityInput === "All India")) || cityInput.toLowerCase().includes(city.toLowerCase());
@@ -847,7 +847,7 @@ export default function HomeScreen({ navigation }: any) {
               </View>
 
               {/* Hospital Ownership */}
-              <Text style={[styles.filterSectionTitle, { marginTop: 14 }]}>🏥 Hospital Type</Text>
+              <Text style={[styles.filterSectionTitle, { marginTop: 14 }]}>🏥 {t("home.filterHospitalType")}</Text>
               <View style={styles.filterPillGrid}>
                 {[
                   { label: "All Facilities", value: "all" },
@@ -868,7 +868,7 @@ export default function HomeScreen({ navigation }: any) {
               </View>
 
               {/* Sort By */}
-              <Text style={[styles.filterSectionTitle, { marginTop: 14 }]}>📊 Sort Results By</Text>
+              <Text style={[styles.filterSectionTitle, { marginTop: 14 }]}>📊 {t("home.filterSortBy")}</Text>
               <View style={styles.filterPillGrid}>
                 {[
                   { label: "Closest Distance", val: "relevance" },
@@ -889,7 +889,7 @@ export default function HomeScreen({ navigation }: any) {
               </View>
 
               {/* Minimum Rating */}
-              <Text style={[styles.filterSectionTitle, { marginTop: 14 }]}>⭐ Minimum Rating</Text>
+              <Text style={[styles.filterSectionTitle, { marginTop: 14 }]}>⭐ {t("home.filterMinRating")}</Text>
               <View style={styles.filterPillGrid}>
                 {[
                   { label: "Any Rating", val: 0 },
@@ -910,7 +910,7 @@ export default function HomeScreen({ navigation }: any) {
               </View>
 
               {/* Maximum Distance */}
-              <Text style={[styles.filterSectionTitle, { marginTop: 14 }]}>📏 Distance Radius</Text>
+              <Text style={[styles.filterSectionTitle, { marginTop: 14 }]}>📏 {t("home.filterDistanceRadius")}</Text>
               <View style={styles.filterPillGrid}>
                 {[
                   { label: "Any Distance", val: null },
@@ -931,13 +931,13 @@ export default function HomeScreen({ navigation }: any) {
               </View>
 
               {/* Fast Toggles */}
-              <Text style={[styles.filterSectionTitle, { marginTop: 14 }]}>⚡ Quick Filters</Text>
+              <Text style={[styles.filterSectionTitle, { marginTop: 14 }]}>⚡ {t("home.filterQuickFilters")}</Text>
               <View style={{ gap: 8, marginTop: 4 }}>
                 <TouchableOpacity
                   style={[styles.toggleRowBox, cashlessOnly && styles.toggleRowBoxActive]}
                   onPress={() => setCashlessOnly(!cashlessOnly)}
                 >
-                  <Text style={styles.toggleRowLabel}>🛡️ PMJAY Cashless Empanelled Only</Text>
+                  <Text style={styles.toggleRowLabel}>🛡️ {t("home.filterPmjayToggle")}</Text>
                   <Text style={styles.toggleRowCheck}>{cashlessOnly ? "☑" : "☐"}</Text>
                 </TouchableOpacity>
 
@@ -945,7 +945,7 @@ export default function HomeScreen({ navigation }: any) {
                   style={[styles.toggleRowBox, liveIcuOnly && styles.toggleRowBoxActive]}
                   onPress={() => setLiveIcuOnly(!liveIcuOnly)}
                 >
-                  <Text style={styles.toggleRowLabel}>🛏️ Live ICU Beds Available (5+)</Text>
+                  <Text style={styles.toggleRowLabel}>🛏️ {t("home.filterIcuToggle")}</Text>
                   <Text style={styles.toggleRowCheck}>{liveIcuOnly ? "☑" : "☐"}</Text>
                 </TouchableOpacity>
 
@@ -953,7 +953,7 @@ export default function HomeScreen({ navigation }: any) {
                   style={[styles.toggleRowBox, emergencyOnly && styles.toggleRowBoxActive]}
                   onPress={() => setEmergencyOnly(!emergencyOnly)}
                 >
-                  <Text style={styles.toggleRowLabel}>🚨 24x7 Emergency &amp; Trauma Center</Text>
+                  <Text style={styles.toggleRowLabel}>🚨 {t("home.filterEmergencyToggle")}</Text>
                   <Text style={styles.toggleRowCheck}>{emergencyOnly ? "☑" : "☐"}</Text>
                 </TouchableOpacity>
               </View>
@@ -974,16 +974,14 @@ export default function HomeScreen({ navigation }: any) {
                   setSortBy("relevance");
                 }}
               >
-                <Text style={styles.modalFilterResetText}>Reset All</Text>
+                <Text style={styles.modalFilterResetText}>{t("home.filterResetAll")}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.modalFilterApplyBtn}
                 onPress={() => setFilterModalOpen(false)}
               >
-                <Text style={styles.modalFilterApplyText}>
-                  Apply Filters ({hospitalList.length} Found)
-                </Text>
+                <Text style={styles.modalFilterApplyText}>{t("home.filterApply", { count: hospitalList.length })}</Text>
               </TouchableOpacity>
             </View>
           </View>

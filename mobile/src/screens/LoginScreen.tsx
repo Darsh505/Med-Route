@@ -138,7 +138,7 @@ export default function LoginScreen({ navigation }: any) {
             </TouchableOpacity>
 
             <View style={styles.footerRow}>
-              <Text style={styles.footerText}>New to MedRoute? </Text>
+              <Text style={styles.footerText}>{t("auth.newToApp")} </Text>
               <TouchableOpacity onPress={() => navigation.navigate("Register")}>
                 <Text style={styles.footerLink}>Create Account</Text>
               </TouchableOpacity>

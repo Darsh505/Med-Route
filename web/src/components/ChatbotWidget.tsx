@@ -161,6 +161,18 @@ export default function ChatbotWidget() {
   const t = useTranslations();
   const { selectedCity, coords } = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+  const [isGeminiActive, setIsGeminiActive] = useState<boolean>(false);
+
+  useEffect(() => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    fetch(`${apiUrl}/api/chat/status`)
+      .then((res) => res.json())
+      .then((json) => {
+        const data = json.data || json;
+        setIsGeminiActive(Boolean(data?.gemini_active));
+      })
+      .catch(() => setIsGeminiActive(false));
+  }, []);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<MessageItem[]>(INITIAL_MESSAGES);
   const [isLoading, setIsLoading] = useState(false);
@@ -298,14 +310,13 @@ export default function ChatbotWidget() {
               </div>
               <div>
                 <div className="text-sm font-bold flex items-center gap-1.5 tracking-tight font-heading">
-                  <span>Medi Route Clinical AI</span>
-                  <span className="text-[10px] px-2 py-0.5 bg-secondary text-on-secondary rounded-full font-bold">
-                    TPA Verified
-                  </span>
+                  <span>Med Route Clinical AI</span>
                 </div>
-                <div className="text-[11px] text-surface-container flex items-center gap-1.5 mt-0.5">
-                  <span className="w-2 h-2 rounded-full bg-badge-cashless animate-pulse" />
-                  <span>Online • {selectedCity || "National"} Network Active</span>
+                <div className="text-[11px] flex items-center gap-1.5 mt-0.5">
+                  <span className={`w-2 h-2 rounded-full ${isGeminiActive ? "bg-emerald-400 animate-pulse" : "bg-red-500"}`} />
+                  <span className={isGeminiActive ? "text-emerald-300" : "text-red-300"}>
+                    {isGeminiActive ? "Gemini AI Active" : "Gemini Offline (Clinical Rules Active)"}
+                  </span>
                 </div>
               </div>
             </div>

@@ -172,12 +172,12 @@ export default function SearchScreen({ route, navigation }: any) {
             <View style={styles.aiSlotRow}>
               {parsedSlots.condition ? (
                 <View style={styles.aiSlotBadge}>
-                  <Text style={styles.aiSlotBadgeText}>🩺 {parsedSlots.condition}</Text>
+                  <Text style={styles.aiSlotBadgeText}>🩺 {localizeDisease(parsedSlots.condition, currentLang)}</Text>
                 </View>
               ) : null}
               {parsedSlots.location ? (
                 <View style={styles.aiSlotBadge}>
-                  <Text style={styles.aiSlotBadgeText}>📍 {parsedSlots.location}</Text>
+                  <Text style={styles.aiSlotBadgeText}>📍 {localizeCity(parsedSlots.location, currentLang)}</Text>
                 </View>
               ) : null}
               {parsedSlots.budget ? (

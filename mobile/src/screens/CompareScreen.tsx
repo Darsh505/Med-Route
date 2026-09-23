@@ -21,6 +21,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { colors } from "../theme/colors";
 import MedRouteLogo from "../components/MedRouteLogo";
+import { localizeHospital, localizeHospitalName, localizeAddress, localizeAccreditation, localizeTurnaround, localizeTariff } from "../i18n/hospitalLocalization";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -161,7 +162,8 @@ const ALL_COMPARE_HOSPITALS: CompareHospital[] = [
 ];
 
 export default function CompareScreen({ navigation, route }: any) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const currentLang = i18n.language || "en";
   const [hosp1Id, setHosp1Id] = useState<string>("pgimer-chandigarh");
   const [hosp2Id, setHosp2Id] = useState<string>("max-mohali");
   const [pickerModalSlot, setPickerModalSlot] = useState<1 | 2 | null>(null);
@@ -195,14 +197,14 @@ export default function CompareScreen({ navigation, route }: any) {
           </TouchableOpacity>
           <MedRouteLogo size="sm" showBadge={false} />
           <View style={{ marginLeft: 8 }}>
-            <Text style={styles.headerTitle}>Hospital Comparison</Text>
-            <Text style={styles.headerSub}>Side-by-side clinical benchmark</Text>
+            <Text style={styles.headerTitle}>{t("compare.title")}</Text>
+            <Text style={styles.headerSub}>{t("compare.subtitle")}</Text>
           </View>
         </View>
 
         <View style={{ flexDirection: "row", gap: 6 }}>
           <TouchableOpacity style={styles.swapBtn} onPress={swapHospitals}>
-            <Text style={styles.swapBtnText}>⇄ Swap</Text>
+            <Text style={styles.swapBtnText}>⇄ {t("compare.swap")}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.shareBtn} onPress={handleShare}>
             <Text style={styles.shareIcon}>🔗</Text>
@@ -216,34 +218,34 @@ export default function CompareScreen({ navigation, route }: any) {
           {/* Hospital 1 */}
           <View style={styles.hospColumnCard}>
             <Image source={{ uri: hosp1.imageUrl }} style={styles.hospImage} />
-            <Text style={styles.columnTag}>HOSPITAL A</Text>
+            <Text style={styles.columnTag}>{t("compare.hospitalA")}</Text>
             <Text style={styles.hospName} numberOfLines={2}>{hosp1.name}</Text>
             <Text style={styles.hospLoc} numberOfLines={1}>📍 {hosp1.location}</Text>
             <View style={styles.ratingBadge}>
-              <Text style={styles.ratingText}>★ {hosp1.rating} Rating</Text>
+              <Text style={styles.ratingText}>{t("compare.ratingScore", { rating: hosp1.rating })}</Text>
             </View>
             <TouchableOpacity
               style={styles.changeBtn}
               onPress={() => setPickerModalSlot(1)}
             >
-              <Text style={styles.changeBtnText}>Change ▾</Text>
+              <Text style={styles.changeBtnText}>{t("compare.change")}</Text>
             </TouchableOpacity>
           </View>
 
           {/* Hospital 2 */}
           <View style={styles.hospColumnCard}>
             <Image source={{ uri: hosp2.imageUrl }} style={styles.hospImage} />
-            <Text style={[styles.columnTag, { color: colors.secondary }]}>HOSPITAL B</Text>
+            <Text style={[styles.columnTag, { color: colors.secondary }]}>{t("compare.hospitalB")}</Text>
             <Text style={styles.hospName} numberOfLines={2}>{hosp2.name}</Text>
             <Text style={styles.hospLoc} numberOfLines={1}>📍 {hosp2.location}</Text>
             <View style={styles.ratingBadge}>
-              <Text style={styles.ratingText}>★ {hosp2.rating} Rating</Text>
+              <Text style={styles.ratingText}>{t("compare.ratingScore", { rating: hosp2.rating })}</Text>
             </View>
             <TouchableOpacity
               style={styles.changeBtn}
               onPress={() => setPickerModalSlot(2)}
             >
-              <Text style={styles.changeBtnText}>Change ▾</Text>
+              <Text style={styles.changeBtnText}>{t("compare.change")}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -266,14 +268,14 @@ export default function CompareScreen({ navigation, route }: any) {
 
         {/* METRIC 2: Pre-Auth Clearance Time */}
         <View style={styles.metricCard}>
-          <Text style={styles.metricTitle}>⚡ PRE-AUTH TURNAROUND</Text>
+          <Text style={styles.metricTitle}>⚡ {t("compare.turnaroundTitle")}</Text>
           <View style={styles.metricComparisonRow}>
             <View style={styles.metricValBox}>
               <Text style={[styles.metricValPrimary, hosp1.turnaroundMinutes <= hosp2.turnaroundMinutes && { color: "#16A34A" }]}>
                 {hosp1.approvalTurnaround}
               </Text>
               <Text style={styles.metricSub}>
-                {hosp1.turnaroundMinutes <= hosp2.turnaroundMinutes ? "✓ Faster Approval" : "Standard Speed"}
+                {hosp1.turnaroundMinutes <= hosp2.turnaroundMinutes ? t("compare.fasterApproval") : t("compare.standardSpeed")}
               </Text>
             </View>
             <View style={styles.metricDivider} />
@@ -282,7 +284,7 @@ export default function CompareScreen({ navigation, route }: any) {
                 {hosp2.approvalTurnaround}
               </Text>
               <Text style={styles.metricSub}>
-                {hosp2.turnaroundMinutes <= hosp1.turnaroundMinutes ? "✓ Faster Approval" : "Standard Speed"}
+                {hosp2.turnaroundMinutes <= hosp1.turnaroundMinutes ? t("compare.fasterApproval") : t("compare.standardSpeed")}
               </Text>
             </View>
           </View>
@@ -290,39 +292,39 @@ export default function CompareScreen({ navigation, route }: any) {
 
         {/* METRIC 3: Cashless & PMJAY Eligibility */}
         <View style={styles.metricCard}>
-          <Text style={styles.metricTitle}>🛡️ CASHLESS &amp; PMJAY ELIGIBILITY</Text>
+          <Text style={styles.metricTitle}>🛡️ {t("compare.cashlessTitle")}</Text>
           <View style={styles.metricComparisonRow}>
             <View style={styles.metricValBox}>
               <Text style={styles.metricValPrimary}>{hosp1.cashlessEligibility}</Text>
-              <Text style={styles.metricSub}>Zero Out-of-Pocket</Text>
+              <Text style={styles.metricSub}>{t("compare.zeroOutOfPocket")}</Text>
             </View>
             <View style={styles.metricDivider} />
             <View style={styles.metricValBox}>
               <Text style={styles.metricValPrimary}>{hosp2.cashlessEligibility}</Text>
-              <Text style={styles.metricSub}>Zero Out-of-Pocket</Text>
+              <Text style={styles.metricSub}>{t("compare.zeroOutOfPocket")}</Text>
             </View>
           </View>
         </View>
 
         {/* METRIC 4: Upfront Security Deposit */}
         <View style={styles.metricCard}>
-          <Text style={styles.metricTitle}>💰 UPFRONT SECURITY DEPOSIT</Text>
+          <Text style={styles.metricTitle}>💰 {t("compare.depositTitle")}</Text>
           <View style={styles.metricComparisonRow}>
             <View style={styles.metricValBox}>
               <Text style={[styles.metricValPrimary, { color: "#16A34A" }]}>{hosp1.upfrontDeposit}</Text>
-              <Text style={styles.metricSub}>100% Waived at Intake</Text>
+              <Text style={styles.metricSub}>{t("compare.waivedAtIntake")}</Text>
             </View>
             <View style={styles.metricDivider} />
             <View style={styles.metricValBox}>
               <Text style={[styles.metricValPrimary, { color: "#16A34A" }]}>{hosp2.upfrontDeposit}</Text>
-              <Text style={styles.metricSub}>100% Waived at Intake</Text>
+              <Text style={styles.metricSub}>{t("compare.waivedAtIntake")}</Text>
             </View>
           </View>
         </View>
 
         {/* METRIC 5: Estimated Package Cost */}
         <View style={styles.metricCard}>
-          <Text style={styles.metricTitle}>📊 INDICATIVE TREATMENT PACKAGE</Text>
+          <Text style={styles.metricTitle}>📊 {t("compare.packageTitle")}</Text>
           <View style={styles.metricComparisonRow}>
             <View style={styles.metricValBox}>
               <Text style={styles.metricValPrimary}>{hosp1.procedureTariff}</Text>
@@ -338,7 +340,7 @@ export default function CompareScreen({ navigation, route }: any) {
 
         {/* METRIC 6: Quality & Accreditation */}
         <View style={styles.metricCard}>
-          <Text style={styles.metricTitle}>🏅 ACCREDITATIONS &amp; TRAUMA LEVEL</Text>
+          <Text style={styles.metricTitle}>🏅 {t("compare.accreditationTitle")}</Text>
           <View style={styles.metricComparisonRow}>
             <View style={styles.metricValBox}>
               <Text style={styles.metricValPrimary}>{hosp1.accreditations.join(" • ")}</Text>
@@ -359,13 +361,13 @@ export default function CompareScreen({ navigation, route }: any) {
               style={styles.actionCallBtn}
               onPress={() => Linking.openURL(`tel:${hosp1.phone || "108"}`)}
             >
-              <Text style={styles.actionCallText}>📞 Call {hosp1.shortName}</Text>
+              <Text style={styles.actionCallText}>📞 {t("compare.callHospital", { name: hosp1.shortName })}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.actionDetailBtn}
               onPress={() => navigation.navigate("HospitalDetail", { slug: hosp1.id })}
             >
-              <Text style={styles.actionDetailText}>View Details</Text>
+              <Text style={styles.actionDetailText}>{t("compare.viewDetails")}</Text>
             </TouchableOpacity>
           </View>
 
@@ -374,13 +376,13 @@ export default function CompareScreen({ navigation, route }: any) {
               style={styles.actionCallBtn}
               onPress={() => Linking.openURL(`tel:${hosp2.phone || "108"}`)}
             >
-              <Text style={styles.actionCallText}>📞 Call {hosp2.shortName}</Text>
+              <Text style={styles.actionCallText}>📞 {t("compare.callHospital", { name: hosp2.shortName })}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.actionDetailBtn}
               onPress={() => navigation.navigate("HospitalDetail", { slug: hosp2.id })}
             >
-              <Text style={styles.actionDetailText}>View Details</Text>
+              <Text style={styles.actionDetailText}>{t("compare.viewDetails")}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -393,7 +395,7 @@ export default function CompareScreen({ navigation, route }: any) {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Hospital for Column {pickerModalSlot}</Text>
+              <Text style={styles.modalTitle}>{t("compare.selectHospital", { slot: pickerModalSlot })}</Text>
               <TouchableOpacity onPress={() => setPickerModalSlot(null)} style={{ padding: 4 }}>
                 <Text style={styles.modalCloseText}>✕</Text>
               </TouchableOpacity>

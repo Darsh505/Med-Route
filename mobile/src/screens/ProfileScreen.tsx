@@ -225,7 +225,7 @@ export default function ProfileScreen({ navigation }: any) {
 
         {/* App Info */}
         <View style={styles.appInfo}>
-          <Text style={styles.appVersion}>Med Route Mobile • v1.2.0 (Expo SDK 52 / React Native 0.86)</Text>
+          <Text style={styles.appVersion}>{t("brand.name")} Mobile • v1.2.0 (Expo SDK 52 / React Native 0.86)</Text>
           <Text style={styles.appCopyright}>AI-Powered Hospital Discovery &amp; Triage for India</Text>
         </View>
       </ScrollView>

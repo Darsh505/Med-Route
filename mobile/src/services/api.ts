@@ -626,4 +626,27 @@ export const api = {
       },
     };
   },
+
+  async getChatbotStatus(): Promise<{ gemini_active: boolean; provider: string; model?: string }> {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 2500);
+      const res = await fetch(`${BASE_URL}/api/chat/status`, {
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+      if (res.ok) {
+        const json = await res.json();
+        const data = json.data || json;
+        return {
+          gemini_active: Boolean(data.gemini_active),
+          provider: data.provider || (data.gemini_active ? "gemini" : "clinical_rules"),
+          model: data.model,
+        };
+      }
+      return { gemini_active: false, provider: "clinical_rules" };
+    } catch {
+      return { gemini_active: false, provider: "clinical_rules" };
+    }
+  },
 };

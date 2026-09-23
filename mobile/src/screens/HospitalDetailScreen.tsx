@@ -289,7 +289,7 @@ export default function HospitalDetailScreen({ route, navigation }: any) {
 
             {/* Disease Treatment & Clinical Volume Card */}
             <View style={[styles.prosConsCard, { marginBottom: spacing.md }]}>
-              <Text style={styles.prosConsTitle}>🩺 Disease Care &amp; Clinical Track Record</Text>
+              <Text style={styles.prosConsTitle}>🩺 {t("hospitalDetail.diseaseCareTitle")}</Text>
               <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 8, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: colors.borderLight }}>
                 <Text style={{ fontSize: 12, color: colors.textSecondary }}>{t("hospitalDetail.topTreatedDisease")}</Text>
                 <Text style={{ fontSize: 12, fontWeight: "700", color: colors.primaryDark }}>{locHosp.top_disease_treated || "Cardiology & Surgery"}</Text>
@@ -310,11 +310,11 @@ export default function HospitalDetailScreen({ route, navigation }: any) {
 
             {/* Quick Pros and Cons (Clinical Strengths vs Watchouts) */}
             <View style={styles.prosConsCard}>
-              <Text style={styles.prosConsTitle}>⚖️ Clinical Assessment: Quick Pros &amp; Cons</Text>
+              <Text style={styles.prosConsTitle}>⚖️ {t("hospitalDetail.prosConsTitle")}</Text>
 
               {/* Pros */}
               <View style={styles.prosSection}>
-                <Text style={styles.prosHeading}>✓ Clinical Strengths (Pros)</Text>
+                <Text style={styles.prosHeading}>✓ {t("hospitalDetail.clinicalStrengths")}</Text>
                 {(hospital.pros && hospital.pros.length > 0
                   ? hospital.pros
                   : [
@@ -332,7 +332,7 @@ export default function HospitalDetailScreen({ route, navigation }: any) {
 
               {/* Cons */}
               <View style={styles.consSection}>
-                <Text style={styles.consHeading}>⚠️ Important Considerations (Cons)</Text>
+                <Text style={styles.consHeading}>⚠️ {t("hospitalDetail.importantConsiderations")}</Text>
                 {(hospital.cons && hospital.cons.length > 0
                   ? hospital.cons
                   : [
@@ -349,7 +349,7 @@ export default function HospitalDetailScreen({ route, navigation }: any) {
             </View>
 
             {/* Departments */}
-            <Text style={styles.subheading}>Departments &amp; Consultants</Text>
+            <Text style={styles.subheading}>{t("hospitalDetail.departmentsTitle")}</Text>
             <View style={styles.departmentItem}>
               <Text style={styles.deptName}>Department of Cardiology</Text>
               <Text style={styles.deptDoctor}>Head: Dr. Yash Paul Sharma, DM</Text>
@@ -369,11 +369,11 @@ export default function HospitalDetailScreen({ route, navigation }: any) {
             </View>
 
             {/* Location & Navigation */}
-            <Text style={styles.subheading}>Location & Directions</Text>
+            <Text style={styles.subheading}>{t("hospitalDetail.directionsTitle")}</Text>
             <View style={styles.locationCard}>
               <Text style={styles.locAddress}>📍 {hospital.address}, {hospital.city}</Text>
               <TouchableOpacity style={styles.navButton} onPress={handleDirections}>
-                <Text style={styles.navButtonText}>🗺️ Get Directions in Maps ↗</Text>
+                <Text style={styles.navButtonText}>🗺️ {t("hospitalDetail.getDirectionsInMaps")}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -383,7 +383,7 @@ export default function HospitalDetailScreen({ route, navigation }: any) {
         {activeTab === "procedures" && (
           <View style={styles.tabContent}>
             <View style={{ marginBottom: 12 }}>
-              <Text style={styles.subheading}>Disease Treatments &amp; Benchmark Pricing</Text>
+              <Text style={styles.subheading}>{t("hospitalDetail.treatmentsPricing")}</Text>
               <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 2 }}>
                 Includes clinical outcomes, audited success rates, and PM-JAY 2.2 cashless package rates.
               </Text>
@@ -486,7 +486,7 @@ export default function HospitalDetailScreen({ route, navigation }: any) {
         {/* TAB 3: FACILITIES */}
         {activeTab === "facilities" && (
           <View style={styles.tabContent}>
-            <Text style={styles.subheading}>Critical Diagnostic Facilities</Text>
+            <Text style={styles.subheading}>{t("hospitalDetail.criticalDiagnosticFacilities")}</Text>
             {[
               { name: "3.0 Tesla Silent MRI", desc: "In-house 24x7 Diagnostic Imaging" },
               { name: "128-Slice High-Speed CT Scan", desc: "Emergency Trauma Protocol" },
@@ -509,12 +509,12 @@ export default function HospitalDetailScreen({ route, navigation }: any) {
         {activeTab === "reviews" && (
           <View style={styles.tabContent}>
             <View style={styles.reviewsHeader}>
-              <Text style={styles.subheading}>Patient Feedback</Text>
+              <Text style={styles.subheading}>{t("hospitalDetail.patientFeedback")}</Text>
               <TouchableOpacity
                 style={styles.writeReviewButton}
                 onPress={() => setShowReviewModal(true)}
               >
-                <Text style={styles.writeReviewText}>✍️ Write Review</Text>
+                <Text style={styles.writeReviewText}>✍️ {t("hospitalDetail.writeReview")}</Text>
               </TouchableOpacity>
             </View>
 
