@@ -48,19 +48,107 @@ function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): nu
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+/**
+ * FormattedClinicalText: Parses and renders Markdown bold (**), bullets (•),
+ * numbered steps (1.), and emergency alert lines without raw asterisks or unformatted text.
+ */
+function FormattedClinicalText({ content, isUser }: { content: string; isUser?: boolean }) {
+  if (isUser) {
+    return <div className="whitespace-pre-wrap">{content}</div>;
+  }
+
+  const lines = content.split("\n");
+
+  const renderInline = (text: string) => {
+    const parts = text.split(/(\*\*[^*]+\*\*)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith("**") && part.endsWith("**")) {
+        const inner = part.slice(2, -2);
+        return (
+          <strong key={i} className="font-bold text-on-surface">
+            {inner}
+          </strong>
+        );
+      }
+      return <span key={i}>{part}</span>;
+    });
+  };
+
+  return (
+    <div className="space-y-1.5 text-xs sm:text-sm leading-relaxed text-on-surface">
+      {lines.map((rawLine, idx) => {
+        const line = rawLine.trim();
+        if (!line) {
+          return <div key={idx} className="h-1" />;
+        }
+
+        // Emergency Callout Box
+        if (line.startsWith("🚨")) {
+          return (
+            <div
+              key={idx}
+              className="p-2.5 rounded-xl bg-error-container text-on-error-container font-bold text-xs flex items-center gap-2 border border-error/30 mb-1.5"
+            >
+              <span className="material-symbols-outlined text-[18px] text-error shrink-0">crisis_alert</span>
+              <div className="flex-1">{renderInline(line.replace(/^🚨\s*/, ""))}</div>
+            </div>
+          );
+        }
+
+        // Bullet point lines
+        if (line.startsWith("• ") || line.startsWith("- ")) {
+          const bulletContent = line.replace(/^[•\-]\s*/, "");
+          return (
+            <div key={idx} className="flex items-start gap-2 pl-0.5 py-0.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-secondary shrink-0 mt-2" />
+              <div className="flex-1 text-on-surface leading-snug">{renderInline(bulletContent)}</div>
+            </div>
+          );
+        }
+
+        // Numbered step lines (1. , 2. , etc.)
+        const numMatch = line.match(/^(\d+)\.\s+(.*)$/);
+        if (numMatch) {
+          const [, num, stepContent] = numMatch;
+          return (
+            <div key={idx} className="flex items-start gap-2 pl-0.5 py-0.5">
+              <span className="w-4 h-4 rounded-full bg-surface-ice text-secondary font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5 border border-border-subtle">
+                {num}
+              </span>
+              <div className="flex-1 text-on-surface leading-snug">{renderInline(stepContent)}</div>
+            </div>
+          );
+        }
+
+        // Standard paragraph line
+        return (
+          <p key={idx} className="text-on-surface leading-relaxed">
+            {renderInline(line)}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
 const INITIAL_MESSAGES: MessageItem[] = [
   {
     id: "m-welcome",
     role: "assistant",
     content:
-      "Hello! I am your **Medi Route Clinical Triage & Care Assistant**.\n\nI can help you check **live ICU bed telemetry**, calculate **cashless pre-authorization**, look up **procedure package tariffs & PMJAY coverage**, or dispatch **emergency trauma admissions** with ₹0 upfront deposit.",
+      "👋 **Hello! Welcome to Medi Route Clinical AI.**\n\n" +
+      "I am your real-time medical guide and hospital dispatch assistant. I can help you with:\n\n" +
+      "• **Live ICU & Ventilator Telemetry**: Check verified vacant ICU beds in your city with zero-deposit bed reservations.\n" +
+      "• **Emergency Red-Flag Triage**: Immediate clinical guidance for chest pain, stroke symptoms, and 108 ambulance dispatch.\n" +
+      "• **Surgical & Treatment Tariffs**: Audited cost benchmarks for Angioplasty (stents), Knee/Hip Replacement, Dialysis, and Maternity under PMJAY.\n" +
+      "• **20-Minute Cashless Guarantee**: Pre-authorization processing with ₹0 upfront cash deposit at accredited network hospitals.\n\n" +
+      "How can I assist you right now? Tap a suggestion below or type any question:",
     triage_level: "routine",
     quick_suggestions: [
-      "Check live ICU beds available near me",
+      "Show hospitals with free ICU beds",
+      "Cost of angioplasty stent under PMJAY",
       "Explain 20-minute cashless guarantee",
-      "Cost of angioplasty & stent packages",
-      "Knee replacement under Ayushman Bharat",
-      "I have severe chest pain and breathlessness",
+      "Knee replacement surgery package rate",
     ],
     timestamp: "Just now",
   },
@@ -73,13 +161,28 @@ export default function ChatbotWidget() {
   const [messages, setMessages] = useState<MessageItem[]>(INITIAL_MESSAGES);
   const [isLoading, setIsLoading] = useState(false);
   const [activeMode, setActiveMode] = useState<"all" | "doctor" | "hospital" | "tests">("all");
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+    }
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   useEffect(() => {
     if (isOpen) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      scrollToBottom();
+      const t1 = setTimeout(scrollToBottom, 50);
+      const t2 = setTimeout(scrollToBottom, 150);
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
     }
-  }, [messages, isOpen]);
+  }, [messages, isOpen, isLoading]);
 
   const handleSend = async (overrideText?: string) => {
     const text = overrideText || input;
@@ -184,7 +287,7 @@ export default function ChatbotWidget() {
         <div className="fixed inset-x-2 bottom-2 sm:inset-x-auto sm:bottom-6 sm:right-6 z-50 w-auto sm:w-[450px] max-h-[85vh] h-[590px] bg-surface-card rounded-2xl shadow-2xl border border-border-subtle flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-200">
           
           {/* Header */}
-          <div className="bg-primary-container text-on-primary p-4 flex items-center justify-between shadow-xs">
+          <div className="bg-primary-container text-on-primary p-4 flex items-center justify-between shadow-xs shrink-0">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-surface-card/15 backdrop-blur-xs text-on-primary flex items-center justify-center font-bold text-xl border border-surface-card/20">
                 <span className="material-symbols-outlined text-[22px]">stethoscope</span>
@@ -213,13 +316,13 @@ export default function ChatbotWidget() {
           </div>
 
           {/* Quick Filter Pill Tabs */}
-          <div className="bg-surface-canvas border-b border-border-subtle px-3 py-2 flex items-center gap-1.5 overflow-x-auto text-[11px] no-scrollbar">
+          <div className="bg-surface-canvas border-b border-border-subtle px-3 py-2 flex items-center gap-1.5 overflow-x-auto text-[11px] no-scrollbar shrink-0">
             <button
               onClick={() => {
                 setActiveMode("all");
                 handleSend("Explain Medi Route 20-minute cashless guarantee");
               }}
-              className="px-2.5 py-1 rounded-lg bg-surface-card border border-border-subtle text-on-surface font-semibold hover:text-secondary hover:bg-surface-ice shrink-0"
+              className="px-2.5 py-1 rounded-lg bg-surface-card border border-border-subtle text-on-surface font-semibold hover:text-secondary hover:bg-surface-ice shrink-0 cursor-pointer"
             >
               🛡️ Cashless Pre-Auth
             </button>
@@ -228,7 +331,7 @@ export default function ChatbotWidget() {
                 setActiveMode("hospital");
                 handleSend(`Show hospitals in ${selectedCity || "my area"} with free ICU beds`);
               }}
-              className="px-2.5 py-1 rounded-lg bg-surface-card border border-border-subtle text-on-surface font-semibold hover:text-secondary hover:bg-surface-ice shrink-0"
+              className="px-2.5 py-1 rounded-lg bg-surface-card border border-border-subtle text-on-surface font-semibold hover:text-secondary hover:bg-surface-ice shrink-0 cursor-pointer"
             >
               🏥 Live ICU Status
             </button>
@@ -237,7 +340,7 @@ export default function ChatbotWidget() {
                 setActiveMode("doctor");
                 handleSend(`Show nearest cardiac & trauma emergency hubs in ${selectedCity || "my area"}`);
               }}
-              className="px-2.5 py-1 rounded-lg bg-surface-card border border-border-subtle text-on-surface font-semibold hover:text-secondary hover:bg-surface-ice shrink-0"
+              className="px-2.5 py-1 rounded-lg bg-surface-card border border-border-subtle text-on-surface font-semibold hover:text-secondary hover:bg-surface-ice shrink-0 cursor-pointer"
             >
               ⚡ Emergency Trauma
             </button>
@@ -246,14 +349,14 @@ export default function ChatbotWidget() {
                 setActiveMode("tests");
                 handleSend("What are the costs for angioplasty and knee replacement under PMJAY?");
               }}
-              className="px-2.5 py-1 rounded-lg bg-surface-card border border-border-subtle text-on-surface font-semibold hover:text-secondary hover:bg-surface-ice shrink-0"
+              className="px-2.5 py-1 rounded-lg bg-surface-card border border-border-subtle text-on-surface font-semibold hover:text-secondary hover:bg-surface-ice shrink-0 cursor-pointer"
             >
               💰 Procedure Tariffs
             </button>
           </div>
 
           {/* Message Thread */}
-          <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-surface-canvas">
+          <div ref={scrollContainerRef} className="flex-1 p-4 overflow-y-auto space-y-3 bg-surface-canvas">
             {messages.map((m) => {
               const isUser = m.role === "user";
               const isEmergency = m.triage_level === "emergency";
@@ -277,7 +380,7 @@ export default function ChatbotWidget() {
                         : "bg-surface-card text-on-surface border border-border-subtle rounded-tl-xs"
                     }`}
                   >
-                    <div className="whitespace-pre-wrap">{m.content}</div>
+                    <FormattedClinicalText content={m.content} isUser={isUser} />
                   </div>
 
                   {/* Recommended Hospital Mini-Cards */}
@@ -290,7 +393,7 @@ export default function ChatbotWidget() {
 
                       {m.recommended_hospitals.map((hosp) => (
                         <div
-                          key={hosp.name}
+                          key={hosp.slug}
                           className="bg-surface-card p-3 rounded-xl border border-border-subtle shadow-sm flex flex-col gap-1.5 hover:border-secondary transition-colors"
                         >
                           <div className="flex items-start justify-between gap-2">
@@ -375,7 +478,7 @@ export default function ChatbotWidget() {
                     </div>
                   )}
 
-                  {/* Quick Suggestion Chips */}
+                  {/* Quick Suggestions Chips */}
                   {m.quick_suggestions && m.quick_suggestions.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mt-2.5">
                       {m.quick_suggestions.map((sug) => (
@@ -415,7 +518,7 @@ export default function ChatbotWidget() {
               e.preventDefault();
               handleSend();
             }}
-            className="p-3 bg-surface-card border-t border-border-subtle flex items-center gap-2"
+            className="p-3 bg-surface-card border-t border-border-subtle flex items-center gap-2 shrink-0"
           >
             <div className="flex-1 flex items-center bg-surface-canvas rounded-xl border border-border-subtle px-3 py-1.5 focus-within:border-brand-blue-interactive focus-within:bg-surface-card transition-all">
               <input
@@ -452,16 +555,16 @@ export default function ChatbotWidget() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// High-Precision Clinical NLP & Pan-India Hospital Resolution Engine
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// Clinical Offline NLP & Triage Rule Engine
+// ─────────────────────────────────────────────────────────────
 
 function resolveHospitalsFromDataset(
   text: string,
   defaultCity: string = "Hoshiarpur",
   refLat: number = 31.5273,
   refLng: number = 75.9149,
-  category: "emergency" | "cardiac" | "orthopedic" | "renal" | "oncology" | "general" = "general"
+  category: "emergency" | "cardiac" | "orthopedic" | "renal" | "gastro" | "maternity" | "oncology" | "general" = "general"
 ) {
   const q = text.toLowerCase();
 
@@ -484,6 +587,19 @@ function resolveHospitalsFromDataset(
     lucknow: "lucknow",
     ahmedabad: "ahmedabad",
     jaipur: "jaipur",
+    jalandhar: "jalandhar",
+    ludhiana: "ludhiana",
+    amritsar: "amritsar",
+    patna: "patna",
+    bhopal: "bhopal",
+    indore: "indore",
+    nagpur: "nagpur",
+    surat: "surat",
+    vadodara: "vadodara",
+    kochi: "kochi",
+    trivandrum: "thiruvananthapuram",
+    coimbatore: "coimbatore",
+    mysore: "mysuru",
   };
 
   for (const [alias, canonical] of Object.entries(cityAliases)) {
@@ -526,22 +642,34 @@ function resolveHospitalsFromDataset(
     });
   } else if (category === "cardiac") {
     scored.sort((a: any, b: any) => {
-      const aCardiac = (a.specialties ?? []).some((s: string) => s.toLowerCase().includes("cardiac") || s.toLowerCase().includes("cardiology")) ? 1 : 0;
-      const bCardiac = (b.specialties ?? []).some((s: string) => s.toLowerCase().includes("cardiac") || s.toLowerCase().includes("cardiology")) ? 1 : 0;
+      const aCardiac = (a.specialties ?? []).some((s: string) => s.toLowerCase().includes("cardiac") || s.toLowerCase().includes("heart")) ? 1 : 0;
+      const bCardiac = (b.specialties ?? []).some((s: string) => s.toLowerCase().includes("cardiac") || s.toLowerCase().includes("heart")) ? 1 : 0;
       if (bCardiac !== aCardiac) return bCardiac - aCardiac;
       return (b.overall_rating ?? 0) - (a.overall_rating ?? 0) || a.distance_km - b.distance_km;
     });
   } else if (category === "orthopedic") {
     scored.sort((a: any, b: any) => {
-      const aOrtho = (a.specialties ?? []).some((s: string) => s.toLowerCase().includes("ortho")) ? 1 : 0;
-      const bOrtho = (b.specialties ?? []).some((s: string) => s.toLowerCase().includes("ortho")) ? 1 : 0;
+      const aOrtho = (a.specialties ?? []).some((s: string) => s.toLowerCase().includes("ortho") || s.toLowerCase().includes("bone")) ? 1 : 0;
+      const bOrtho = (b.specialties ?? []).some((s: string) => s.toLowerCase().includes("ortho") || s.toLowerCase().includes("bone")) ? 1 : 0;
       if (bOrtho !== aOrtho) return bOrtho - aOrtho;
       return (b.overall_rating ?? 0) - (a.overall_rating ?? 0) || a.distance_km - b.distance_km;
     });
-  } else {
+  } else if (category === "renal") {
     scored.sort((a: any, b: any) => {
+      const aRenal = (a.specialties ?? []).some((s: string) => s.toLowerCase().includes("kidney") || s.toLowerCase().includes("renal") || s.toLowerCase().includes("nephro")) ? 1 : 0;
+      const bRenal = (b.specialties ?? []).some((s: string) => s.toLowerCase().includes("kidney") || s.toLowerCase().includes("renal") || s.toLowerCase().includes("nephro")) ? 1 : 0;
+      if (bRenal !== aRenal) return bRenal - aRenal;
       return (b.overall_rating ?? 0) - (a.overall_rating ?? 0) || a.distance_km - b.distance_km;
     });
+  } else if (category === "oncology") {
+    scored.sort((a: any, b: any) => {
+      const aOnco = (a.specialties ?? []).some((s: string) => s.toLowerCase().includes("cancer") || s.toLowerCase().includes("onco")) ? 1 : 0;
+      const bOnco = (b.specialties ?? []).some((s: string) => s.toLowerCase().includes("cancer") || s.toLowerCase().includes("onco")) ? 1 : 0;
+      if (bOnco !== aOnco) return bOnco - aOnco;
+      return (b.overall_rating ?? 0) - (a.overall_rating ?? 0) || a.distance_km - b.distance_km;
+    });
+  } else {
+    scored.sort((a: any, b: any) => (b.overall_rating ?? 0) - (a.overall_rating ?? 0) || a.distance_km - b.distance_km);
   }
 
   return scored.slice(0, 2).map((h: any) => ({
@@ -564,26 +692,80 @@ function generateClientSideNLPResponse(
 ): MessageItem {
   const q = text.toLowerCase().trim();
 
-  // ── 1. Critical Red-Flag Emergency Triage ──
+  // ── 1. Greeting & Introductory Queries ──
+  const isGreeting =
+    q === "hi" ||
+    q === "hello" ||
+    q === "hey" ||
+    q === "namaste" ||
+    q === "sup" ||
+    q === "yo" ||
+    q === "hola" ||
+    q.startsWith("hi ") ||
+    q.startsWith("hello ") ||
+    q.startsWith("hey ") ||
+    q.includes("good morning") ||
+    q.includes("good afternoon") ||
+    q.includes("good evening") ||
+    q === "help" ||
+    q === "who are you" ||
+    q === "what can you do" ||
+    q === "how does this work";
+
+  if (isGreeting) {
+    return {
+      id: getNextMessageId("a"),
+      role: "assistant",
+      content:
+        `👋 **Hello! Welcome to Medi Route Clinical AI.**\n\n` +
+        `I am your real-time medical guide and hospital dispatch assistant. Here is what I can assist you with right now:\n\n` +
+        `• **Emergency Red-Flag Triage**: Immediate clinical guidance for chest pain, stroke symptoms, head injury, and direct 108 ambulance dispatch.\n` +
+        `• **Live ICU & Ventilator Telemetry**: Check verified vacant ICU beds in ${userCity || "your city"} with zero-deposit bed reservations.\n` +
+        `• **Surgical & Treatment Tariffs**: Audited cost benchmarks for Angioplasty (stents), Knee/Hip Replacement, Dialysis, and Maternity under PMJAY Ayushman Bharat.\n` +
+        `• **20-Minute Cashless Guarantee**: Pre-authorization processing with ₹0 upfront cash deposit at accredited network hospitals.\n\n` +
+        `How can I assist you right now? Tap a suggestion below or type your symptom or question:`,
+      triage_level: "routine",
+      recommended_hospitals: [],
+      action_buttons: [
+        { type: "sos", label: "🛏️ Live ICU Beds", value: "/emergency-cashless" },
+        { type: "compare", label: "⚖️ Compare Hospitals", value: "/compare" },
+        { type: "preauth", label: "🛡️ Cashless Pre-Auth", value: "/emergency-cashless#checker-tool" },
+      ],
+      quick_suggestions: [
+        `Show hospitals in ${userCity || "my city"} with free ICU beds`,
+        "Cost of angioplasty stent under PMJAY",
+        "Knee replacement surgery package rate",
+        "Chest pain emergency first aid",
+      ],
+      timestamp: "Just now",
+    };
+  }
+
+  // ── 2. Critical Red-Flag Emergency Triage ──
   const isEmergency =
     q.includes("chest pain") ||
     q.includes("heart attack") ||
     q.includes("dil ka daura") ||
+    q.includes("chhati") ||
     q.includes("stroke") ||
     q.includes("paralysis") ||
     q.includes("lakwa") ||
     q.includes("breathing") ||
     q.includes("breathless") ||
+    q.includes("saans") ||
     q.includes("accident") ||
     q.includes("head injury") ||
     q.includes("bleeding") ||
     q.includes("unconscious") ||
+    q.includes("behosh") ||
     q.includes("poison") ||
     q.includes("snake bite") ||
-    q.includes("ambulance");
+    q.includes("ambulance") ||
+    q === "emergency" ||
+    q === "sos";
 
   if (isEmergency) {
-    const isCardiac = q.includes("chest") || q.includes("heart") || q.includes("dil");
+    const isCardiac = q.includes("chest") || q.includes("heart") || q.includes("dil") || q.includes("chhati");
     const hospitals = resolveHospitalsFromDataset(q, userCity, userLat, userLng, "emergency");
 
     return {
@@ -618,7 +800,7 @@ function generateClientSideNLPResponse(
     };
   }
 
-  // ── 2. Cardiology & Angioplasty / Stents / Bypass ──
+  // ── 3. Cardiology & Angioplasty / Stents / Bypass ──
   if (
     q.includes("stent") ||
     q.includes("angioplasty") ||
@@ -628,7 +810,8 @@ function generateClientSideNLPResponse(
     q.includes("heart") ||
     q.includes("cardiologist") ||
     q.includes("ecg") ||
-    q.includes("echo")
+    q.includes("echo") ||
+    q.includes("blockage")
   ) {
     const hospitals = resolveHospitalsFromDataset(q, userCity, userLat, userLng, "cardiac");
     return {
@@ -656,7 +839,7 @@ function generateClientSideNLPResponse(
     };
   }
 
-  // ── 3. Orthopedics & Joint Replacement ──
+  // ── 4. Orthopedics & Joint Replacement ──
   if (
     q.includes("knee") ||
     q.includes("joint") ||
@@ -696,7 +879,7 @@ function generateClientSideNLPResponse(
     };
   }
 
-  // ── 4. Kidney & Dialysis (Nephrology) ──
+  // ── 5. Kidney & Dialysis (Nephrology) ──
   if (
     q.includes("dialysis") ||
     q.includes("kidney") ||
@@ -732,7 +915,117 @@ function generateClientSideNLPResponse(
     };
   }
 
-  // ── 5. ICU Beds & Ventilator Telemetry ──
+  // ── 6. Gastroenterology, Stomach Pain & Abdominal Surgery ──
+  if (
+    q.includes("stomach") ||
+    q.includes("abdomen") ||
+    q.includes("abdominal") ||
+    q.includes("pet") ||
+    q.includes("vomiting") ||
+    q.includes("appendix") ||
+    q.includes("gallbladder") ||
+    q.includes("hernia") ||
+    q.includes("piles") ||
+    q.includes("gastro")
+  ) {
+    const hospitals = resolveHospitalsFromDataset(q, userCity, userLat, userLng, "general");
+    return {
+      id: getNextMessageId("a"),
+      role: "assistant",
+      content:
+        `**Gastroenterology & Abdominal Care Guidance:**\n\n` +
+        `• **Laparoscopic Cholecystectomy (Gallbladder)**: **₹35,000 – ₹55,000** (Govt/PMJAY) vs **₹75,000 – ₹1,25,000** (Private).\n` +
+        `• **Appendectomy (Appendix Surgery)**: **₹25,000 – ₹45,000** (Subsidized) vs **₹60,000 – ₹95,000** (Private).\n` +
+        `• **Ayushman Bharat Support**: Both procedures are 100% cashless under PMJAY surgical packages.\n` +
+        `• **Red Flags**: If severe pain is accompanied by high fever or vomiting, proceed immediately to an emergency desk.\n\n` +
+        `Recommended general surgery & gastro centers near you:`,
+      triage_level: "routine",
+      recommended_hospitals: hospitals,
+      action_buttons: [
+        { type: "compare", label: "⚖️ Compare Surgery Centers", value: `/compare?ids=${hospitals.map((h) => h.slug).join(",")}` },
+        { type: "preauth", label: "🛡️ Check PMJAY Coverage", value: "/emergency-cashless#checker-tool" },
+      ],
+      quick_suggestions: [
+        "Laparoscopic vs open appendix surgery",
+        "Gallbladder removal recovery time",
+        "Is endoscopy cashless under insurance?",
+      ],
+      timestamp: "Just now",
+    };
+  }
+
+  // ── 7. Maternity & Obstetrics ──
+  if (
+    q.includes("pregnancy") ||
+    q.includes("delivery") ||
+    q.includes("maternity") ||
+    q.includes("cesarean") ||
+    q.includes("c-section") ||
+    q.includes("labor") ||
+    q.includes("gynecologist") ||
+    q.includes("baby") ||
+    q.includes("pregnant")
+  ) {
+    const hospitals = resolveHospitalsFromDataset(q, userCity, userLat, userLng, "general");
+    return {
+      id: getNextMessageId("a"),
+      role: "assistant",
+      content:
+        `**Maternity & Obstetrics Care Guidance:**\n\n` +
+        `• **Normal Delivery Tariff**: **₹15,000 – ₹25,000** (Govt) vs **₹45,000 – ₹75,000** (Private).\n` +
+        `• **Cesarean Delivery (C-Section)**: **₹25,000 – ₹40,000** (Govt/PMJAY) vs **₹75,000 – ₹1,40,000** (Private).\n` +
+        `• **Janani Suraksha & PMJAY**: Maternity packages are fully covered with neonatal ICU (NICU) backup at empanelled centers.\n\n` +
+        `Top accredited maternity hospitals with Level-3 NICU in your area:`,
+      triage_level: "routine",
+      recommended_hospitals: hospitals,
+      action_buttons: [
+        { type: "compare", label: "⚖️ Compare Maternity Hospitals", value: `/compare?ids=${hospitals.map((h) => h.slug).join(",")}` },
+        { type: "hospitals", label: "🏥 View Hospital Details", value: `/hospitals/${hospitals[0]?.slug || ""}` },
+      ],
+      quick_suggestions: [
+        "Does insurance cover C-section delivery?",
+        "Which hospital has 24/7 NICU available?",
+        "Documents required for cashless maternity",
+      ],
+      timestamp: "Just now",
+    };
+  }
+
+  // ── 8. Oncology & Cancer Care ──
+  if (
+    q.includes("cancer") ||
+    q.includes("oncology") ||
+    q.includes("chemotherapy") ||
+    q.includes("radiation") ||
+    q.includes("tumor") ||
+    q.includes("biopsy")
+  ) {
+    const hospitals = resolveHospitalsFromDataset(q, userCity, userLat, userLng, "oncology");
+    return {
+      id: getNextMessageId("a"),
+      role: "assistant",
+      content:
+        `**Comprehensive Oncology Care Guidance:**\n\n` +
+        `• **Chemotherapy Cycles**: **₹8,000 – ₹25,000** per cycle (Govt subsidized) vs **₹35,000 – ₹85,000** (Private).\n` +
+        `• **Radiation Therapy (IMRT / TrueBeam)**: **₹75,000 – ₹2,50,000** full package.\n` +
+        `• **Ayushman Bharat PMJAY**: 100% free treatment covered up to **₹5,00,000** per family per year across accredited cancer centers.\n\n` +
+        `Top specialized oncology hospitals in your network:`,
+      triage_level: "routine",
+      recommended_hospitals: hospitals,
+      action_buttons: [
+        { type: "compare", label: "⚖️ Compare Cancer Centers", value: `/compare?ids=${hospitals.map((h) => h.slug).join(",")}` },
+        { type: "preauth", label: "🛡️ Check PMJAY Oncology Pre-Auth", value: "/emergency-cashless#checker-tool" },
+      ],
+      quick_suggestions: [
+        "How to claim PMJAY for cancer treatment",
+        "PET-CT scan cost under Ayushman Bharat",
+        "Radiation therapy package timeline",
+      ],
+      timestamp: "Just now",
+    };
+  }
+
+  // ── 9. ICU Beds & Ventilator Telemetry ──
   if (
     q.includes("icu") ||
     q.includes("ventilator") ||
@@ -768,7 +1061,7 @@ function generateClientSideNLPResponse(
     };
   }
 
-  // ── 6. Cashless Pre-Auth & Insurance Guarantees ──
+  // ── 10. Cashless Pre-Auth & Insurance Guarantees ──
   if (
     q.includes("cashless") ||
     q.includes("pre-auth") ||
@@ -809,18 +1102,46 @@ function generateClientSideNLPResponse(
     };
   }
 
-  // ── 7. General / City / Hospital Inquiries ──
+  // ── 11. General Hospital Discovery by City ──
+  if (q.includes("hospital") || q.includes("clinic") || q.includes("doctor") || q.includes("near me")) {
+    const hospitals = resolveHospitalsFromDataset(q, userCity, userLat, userLng, "general");
+    return {
+      id: getNextMessageId("a"),
+      role: "assistant",
+      content:
+        `**Network Hospitals Directory:**\n\n` +
+        `Here are the top-rated accredited hospitals near **${userCity}** verified for quality standards, live ICU telemetry, and cashless admission:\n\n` +
+        `• **NABH / NABL Accredited**: Full compliance with clinical outcome benchmarks.\n` +
+        `• **Cashless Guarantee**: Zero cash deposit admission under PMJAY and private health insurance.\n` +
+        `• **24/7 Trauma Readiness**: Dedicated emergency desks and in-house diagnostics.\n\n` +
+        `Top verified facilities:`,
+      triage_level: "routine",
+      recommended_hospitals: hospitals,
+      action_buttons: [
+        { type: "compare", label: "⚖️ Compare Hospitals", value: `/compare?ids=${hospitals.map((h) => h.slug).join(",")}` },
+        { type: "preauth", label: "🛡️ Cashless Pre-Auth", value: "/emergency-cashless#checker-tool" },
+      ],
+      quick_suggestions: [
+        `Show hospitals with free ICU beds in ${userCity}`,
+        "Check cashless pre-auth under insurance",
+        "Call emergency ambulance 108",
+      ],
+      timestamp: "Just now",
+    };
+  }
+
+  // ── 12. General Clinical Advisory ──
   const hospitals = resolveHospitalsFromDataset(q, userCity, userLat, userLng, "general");
   return {
     id: getNextMessageId("a"),
     role: "assistant",
     content:
-      `**Medi Route Clinical Assistant:**\n\n` +
-      `We identified your clinical inquiry: "${text}".\n\n` +
-      `• **Network Coverage**: We connect over 10,000+ NABH accredited hospitals across India with real-time ICU telemetry and audited procedure tariffs.\n` +
-      `• **Cashless Guarantee**: 20-minute pre-authorization with ₹0 cash deposit at empanelled network desks.\n` +
-      `• **Ayushman Bharat Support**: Real-time checking for PMJAY package rates and empanelment.\n\n` +
-      `Top-rated verified hospitals in your area:`,
+      `**Medi Route Clinical Advisory:**\n\n` +
+      `Regarding your inquiry on **"${text}"**, our network connects you with verified clinical specialists and accredited facilities across India:\n\n` +
+      `• **Accredited Quality**: Connect with NABH/JCI accredited centers with transparent clinical audits.\n` +
+      `• **Tariff Transparency**: All surgery & treatment packages benchmarked against standard CGHS/PMJAY rates with ₹0 hidden charges.\n` +
+      `• **20-Minute Cashless Sanction**: Dedicated Medi Route admission desks expedite pre-authorization without upfront deposit.\n\n` +
+      `Recommended verified network facilities:`,
     triage_level: "routine",
     recommended_hospitals: hospitals,
     action_buttons: [

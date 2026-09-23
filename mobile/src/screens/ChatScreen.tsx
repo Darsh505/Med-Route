@@ -50,17 +50,82 @@ const INITIAL_MESSAGES: MessageItem[] = [
     id: "m-welcome",
     role: "assistant",
     content:
-      "Hello! I am your **Medi Route Clinical AI Assistant**.\n\nI can help you check **live ICU bed telemetry**, calculate **cashless pre-authorization**, or route **emergency ambulance admission** with ₹0 upfront deposit.",
+      "👋 **Hello! Welcome to Medi Route Clinical AI.**\n\n" +
+      "I am your real-time medical guide and hospital dispatch assistant. I can help you with:\n\n" +
+      "• **Live ICU & Ventilator Telemetry**: Check verified vacant ICU beds in your city with zero-deposit bed reservations.\n" +
+      "• **Emergency Red-Flag Triage**: Immediate clinical guidance for chest pain, stroke symptoms, and 108 ambulance dispatch.\n" +
+      "• **Surgical & Treatment Tariffs**: Audited cost benchmarks for Angioplasty (stents), Knee/Hip Replacement, Dialysis, and Maternity under PMJAY.\n" +
+      "• **20-Minute Cashless Guarantee**: Pre-authorization processing with ₹0 upfront cash deposit at accredited network hospitals.\n\n" +
+      "How can I assist you right now? Tap a suggestion below or type any question:",
     triage_level: "routine",
     quick_suggestions: [
-      "Check live ICU beds in Bangalore",
-      "Calculate cashless pre-auth under Star Health",
-      "Need emergency cardiac ambulance dispatch",
-      "NABH accredited orthopedics hospitals",
+      "Show hospitals with free ICU beds",
+      "Cost of angioplasty stent under PMJAY",
+      "Explain 20-minute cashless guarantee",
+      "Knee replacement surgery package rate",
     ],
     timestamp: "Just now",
   },
 ];
+
+function FormattedClinicalTextRN({ content, isUser }: { content: string; isUser: boolean }) {
+  if (isUser) {
+    return <Text style={styles.userBubbleText}>{content}</Text>;
+  }
+
+  const lines = content.split("\n");
+
+  const renderInline = (text: string) => {
+    const parts = text.split(/(\*\*[^*]+\*\*)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith("**") && part.endsWith("**")) {
+        return (
+          <Text key={i} style={styles.boldText}>
+            {part.slice(2, -2)}
+          </Text>
+        );
+      }
+      return <Text key={i}>{part}</Text>;
+    });
+  };
+
+  return (
+    <View style={{ gap: 4 }}>
+      {lines.map((rawLine, idx) => {
+        const line = rawLine.trim();
+        if (!line) return <View key={idx} style={{ height: 4 }} />;
+
+        if (line.startsWith("• ") || line.startsWith("- ")) {
+          return (
+            <View key={idx} style={{ flexDirection: "row", alignItems: "flex-start", gap: 6 }}>
+              <Text style={{ color: colors.secondary, fontSize: 13, marginTop: 1 }}>•</Text>
+              <Text style={[styles.aiBubbleText, { flex: 1 }]}>{renderInline(line.replace(/^[•\-]\s*/, ""))}</Text>
+            </View>
+          );
+        }
+
+        const numMatch = line.match(/^(\d+)\.\s+(.*)$/);
+        if (numMatch) {
+          const [, num, stepContent] = numMatch;
+          return (
+            <View key={idx} style={{ flexDirection: "row", alignItems: "flex-start", gap: 6 }}>
+              <View style={styles.stepBadge}>
+                <Text style={styles.stepBadgeText}>{num}</Text>
+              </View>
+              <Text style={[styles.aiBubbleText, { flex: 1 }]}>{renderInline(stepContent)}</Text>
+            </View>
+          );
+        }
+
+        return (
+          <Text key={idx} style={styles.aiBubbleText}>
+            {renderInline(line)}
+          </Text>
+        );
+      })}
+    </View>
+  );
+}
 
 export default function ChatScreen({ navigation }: any) {
   const [messages, setMessages] = useState<MessageItem[]>(INITIAL_MESSAGES);
@@ -129,9 +194,7 @@ export default function ChatScreen({ navigation }: any) {
         )}
 
         <View style={[styles.bubble, isUser ? styles.userBubble : styles.aiBubble]}>
-          <Text style={[styles.bubbleText, isUser ? styles.userBubbleText : styles.aiBubbleText]}>
-            {item.content}
-          </Text>
+          <FormattedClinicalTextRN content={item.content} isUser={isUser} />
 
           {item.recommended_hospitals && item.recommended_hospitals.length > 0 && (
             <View style={styles.hospitalsContainer}>
@@ -389,6 +452,54 @@ function resolveMobileHospitals(
 function generateClientSideNLP(text: string): MessageItem {
   const q = text.toLowerCase().trim();
 
+  // 0. Greeting & Introductory Queries
+  const isGreeting =
+    q === "hi" ||
+    q === "hello" ||
+    q === "hey" ||
+    q === "namaste" ||
+    q === "sup" ||
+    q === "yo" ||
+    q === "hola" ||
+    q.startsWith("hi ") ||
+    q.startsWith("hello ") ||
+    q.startsWith("hey ") ||
+    q.includes("good morning") ||
+    q.includes("good afternoon") ||
+    q.includes("good evening") ||
+    q === "help" ||
+    q === "who are you" ||
+    q === "what can you do";
+
+  if (isGreeting) {
+    return {
+      id: "a-" + Date.now(),
+      role: "assistant",
+      content:
+        `👋 **Hello! Welcome to Medi Route Clinical AI.**\n\n` +
+        `I am your real-time medical guide and hospital dispatch assistant. Here is what I can assist you with right now:\n\n` +
+        `• **Emergency Red-Flag Triage**: Immediate clinical guidance for chest pain, stroke symptoms, head injury, and direct 108 ambulance dispatch.\n` +
+        `• **Live ICU & Ventilator Telemetry**: Check verified vacant ICU beds near you with zero-deposit bed reservations.\n` +
+        `• **Surgical & Treatment Tariffs**: Audited cost benchmarks for Angioplasty (stents), Knee/Hip Replacement, Dialysis, and Maternity under PMJAY Ayushman Bharat.\n` +
+        `• **20-Minute Cashless Guarantee**: Pre-authorization processing with ₹0 upfront cash deposit at accredited network hospitals.\n\n` +
+        `How can I assist you right now? Tap a suggestion below or type your symptom or question:`,
+      triage_level: "routine",
+      recommended_hospitals: [],
+      action_buttons: [
+        { type: "sos", label: "🛏️ Live ICU Beds", value: "/emergency-cashless" },
+        { type: "compare", label: "⚖️ Compare Hospitals", value: "/compare" },
+        { type: "sos", label: "🛡️ Cashless Pre-Auth", value: "/emergency-cashless" },
+      ],
+      quick_suggestions: [
+        "Show hospitals with free ICU beds",
+        "Cost of angioplasty stent under PMJAY",
+        "Knee replacement surgery package rate",
+        "Chest pain emergency first aid",
+      ],
+      timestamp: "Just now",
+    };
+  }
+
   // 1. Critical Red-Flag Emergency Triage
   const isEmergency =
     q.includes("chest pain") ||
@@ -620,18 +731,18 @@ function generateClientSideNLP(text: string): MessageItem {
     };
   }
 
-  // 7. General inquiries
+  // 7. General Clinical Advisory
   const recs = resolveMobileHospitals(q, "general");
   return {
     id: "a-" + Date.now(),
     role: "assistant",
     content:
-      `**Medi Route Clinical Assistant:**\n\n` +
-      `We identified your clinical inquiry: "${text}".\n\n` +
-      `• **Network Coverage**: We connect over 10,000+ NABH accredited hospitals across India with real-time ICU telemetry and audited procedure tariffs.\n` +
-      `• **Cashless Guarantee**: 20-minute pre-authorization with ₹0 cash deposit at empanelled network desks.\n` +
-      `• **Ayushman Bharat Support**: Real-time checking for PMJAY package rates and empanelment.\n\n` +
-      `Top-rated verified hospitals in your area:`,
+      `**Medi Route Clinical Advisory:**\n\n` +
+      `Regarding your inquiry on **"${text}"**, our network connects you with verified clinical specialists and accredited facilities across India:\n\n` +
+      `• **Accredited Quality**: Connect with NABH/JCI accredited centers with transparent clinical audits.\n` +
+      `• **Tariff Transparency**: All surgery & treatment packages benchmarked against standard CGHS/PMJAY rates with ₹0 hidden charges.\n` +
+      `• **20-Minute Cashless Sanction**: Dedicated Medi Route admission desks expedite pre-authorization without upfront deposit.\n\n` +
+      `Recommended verified network facilities:`,
     triage_level: "routine",
     recommended_hospitals: recs,
     action_buttons: [
@@ -948,5 +1059,25 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "800",
     color: "#FFFFFF",
+  },
+  boldText: {
+    fontWeight: "700",
+    color: colors.onSurface,
+  },
+  stepBadge: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: colors.surfaceIce,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 2,
+  },
+  stepBadgeText: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: colors.secondary,
   },
 });
