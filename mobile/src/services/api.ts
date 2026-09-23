@@ -3,6 +3,63 @@ import rawAllHospitals from "../data/allHospitals.json";
 
 const BASE_URL = Platform.OS === "android" ? "http://10.0.2.2:8000" : "http://localhost:8000";
 
+// Default user location (Bangalore, Indiranagar) — updated dynamically by HomeScreen
+export let USER_LAT = 12.9716;
+export let USER_LNG = 77.5946;
+export function setUserLocation(lat: number, lng: number) {
+  USER_LAT = lat;
+  USER_LNG = lng;
+}
+
+// Haversine formula — returns real geodesic distance in km
+export function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+export const CITY_ALIASES: Record<string, string> = {
+  bangalore: "bengaluru",
+  bengalore: "bengaluru",
+  bombay: "mumbai",
+  calcutta: "kolkata",
+  madras: "chennai",
+  gurgaon: "gurugram",
+  "delhi ncr": "delhi",
+  ncr: "delhi",
+  baroda: "vadodara",
+  trivandrum: "thiruvananthapuram",
+  cochin: "kochi",
+  mysore: "mysuru",
+  mangalore: "mangaluru",
+  pondicherry: "puducherry",
+  banaras: "varanasi",
+  kashi: "varanasi",
+};
+
+export function resolveCityCoordinates(cityName: string): { lat: number; lng: number } | null {
+  if (!cityName || !cityName.trim()) return null;
+  let term = cityName.split(",")[0].toLowerCase().trim();
+  if (CITY_ALIASES[term]) term = CITY_ALIASES[term];
+
+  const match = (rawAllHospitals as any[]).find(
+    (h: any) =>
+      (h.city && (h.city.toLowerCase() === term || h.city.toLowerCase().includes(term) || term.includes(h.city.toLowerCase()))) ||
+      (h.state && (h.state.toLowerCase() === term || h.state.toLowerCase().includes(term)))
+  );
+  if (match && match.latitude && match.longitude) {
+    return { lat: match.latitude, lng: match.longitude };
+  }
+  return null;
+}
+
 export interface DiseaseProcedureItem {
   name: string;
   disease: string;
@@ -60,44 +117,51 @@ export interface MobileHospital {
   overall_success_ratio?: string;
 }
 
-export const MOCK_HOSPITALS: MobileHospital[] = (rawAllHospitals as any[]).map((h: any) => ({
-  id: h.id || `hosp-${h.slug}`,
-  name: h.name,
-  slug: h.slug,
-  type: h.type ? (h.type.charAt(0).toUpperCase() + h.type.slice(1).toLowerCase()) : "Private",
-  city: h.city,
-  state: h.state,
-  address: h.address || `${h.city}, ${h.state}`,
-  distance_km: h.distance_km || 3.2,
-  overall_rating: h.overall_rating || (h.type?.toLowerCase() === "government" ? 4.7 : 4.6),
-  total_reviews: h.total_reviews || (h.type?.toLowerCase() === "government" ? 280 : 145),
-  accreditation: h.accreditation || "NABH Accredited",
-  is_pmjay_empanelled: h.is_pmjay_empanelled ?? true,
-  is_trauma_center: h.is_trauma_center ?? true,
-  trauma_level: h.trauma_level || (h.type?.toLowerCase() === "government" ? "Level 1" : "Level 2"),
-  phone: h.phone || h.emergency_phone || "108",
-  emergency_phone: h.emergency_phone || "108",
-  ambulance_phone: h.ambulance_phone || h.emergency_phone || "108",
-  pros: h.pros || [],
-  cons: h.cons || [],
-  reviews: h.reviews || [],
-  beds_total: h.beds_total || 200,
-  beds_icu: h.beds_icu || 24,
-  beds_icu_available: h.beds_icu_available ?? 6,
-  beds_ventilator: h.beds_ventilator || 8,
-  ranking_score: h.ranking_score || 92,
-  data_source_label: "VERIFIED",
-  cost_indicative: h.cost_range || (h.type?.toLowerCase() === "government" ? "Free / PMJAY" : "₹75,000 – ₹1,80,000"),
-  base_package_inr: h.base_package_inr || (h.type?.toLowerCase() === "government" ? 25000 : 95000),
-  specialties: h.specialties || ["Heart Care", "Bone & Joint", "Emergency", "General Surgery"],
-  latitude: h.latitude || 30.7333,
-  longitude: h.longitude || 76.7794,
-  procedures: h.procedures || [],
-  top_disease_treated: h.top_disease_treated,
-  total_patients_treated: h.total_patients_treated,
-  avg_treatment_cost: h.avg_treatment_cost,
-  overall_success_ratio: h.overall_success_ratio,
-}));
+export const MOCK_HOSPITALS: MobileHospital[] = (rawAllHospitals as any[]).map((h: any) => {
+  const hLat: number = h.latitude || 12.9716;
+  const hLng: number = h.longitude || 77.5946;
+  // Real Haversine distance from current user location module-level var
+  const computedDistKm = parseFloat(haversineKm(USER_LAT, USER_LNG, hLat, hLng).toFixed(1));
+  return {
+    id: h.id || `hosp-${h.slug}`,
+    name: h.name,
+    slug: h.slug,
+    type: h.type ? (h.type.charAt(0).toUpperCase() + h.type.slice(1).toLowerCase()) : "Private",
+    city: h.city,
+    state: h.state,
+    address: h.address || `${h.city}, ${h.state}`,
+    distance_km: computedDistKm,
+    overall_rating: h.overall_rating || (h.type?.toLowerCase() === "government" ? 4.7 : 4.6),
+    total_reviews: h.total_reviews || (h.type?.toLowerCase() === "government" ? 280 : 145),
+    accreditation: h.accreditation || "NABH Accredited",
+    is_pmjay_empanelled: h.is_pmjay_empanelled ?? false,
+    is_trauma_center: h.is_trauma_center ?? false,
+    trauma_level: h.trauma_level,
+    phone: h.phone || h.emergency_phone || "108",
+    emergency_phone: h.emergency_phone || "108",
+    ambulance_phone: h.ambulance_phone || h.emergency_phone || "108",
+    pros: h.pros || [],
+    cons: h.cons || [],
+    reviews: h.reviews || [],
+    beds_total: h.beds_total || 200,
+    beds_icu: h.beds_icu || 24,
+    beds_icu_available: h.beds_icu_available ?? 6,
+    beds_ventilator: h.beds_ventilator || 8,
+    ranking_score: h.ranking_score || 92,
+    data_source_label: "VERIFIED",
+    cost_indicative: h.cost_range || (h.type?.toLowerCase() === "government" ? "Free / PMJAY" : "₹75,000 – ₹1,80,000"),
+    base_package_inr: h.base_package_inr || (h.type?.toLowerCase() === "government" ? 25000 : 95000),
+    specialties: h.specialties || ["Heart Care", "Bone & Joint", "Emergency", "General Surgery"],
+    latitude: hLat,
+    longitude: hLng,
+    procedures: h.procedures || [],
+    top_disease_treated: h.top_disease_treated,
+    total_patients_treated: h.total_patients_treated,
+    avg_treatment_cost: h.avg_treatment_cost,
+    overall_success_ratio: h.overall_success_ratio,
+  };
+});
+
 
 export const api = {
   async getNearbyHospitals(lat = 31.5305, lng = 75.9125, city?: string): Promise<MobileHospital[]> {

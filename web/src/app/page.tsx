@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { useLocation } from "@/context/LocationContext";
+import { useLocation, INDIAN_CITIES } from "@/context/LocationContext";
 import { ALL_HOSPITALS } from "@/data/hospitalsData";
 
 interface CompareItem {
@@ -13,32 +13,116 @@ interface CompareItem {
   location: string;
 }
 
-export default function HomePage() {
-  const { selectedCity } = useLocation();
+// City alias mapping for common variations across India
+const CITY_ALIASES: Record<string, string> = {
+  bangalore: "bengaluru",
+  bengalore: "bengaluru",
+  bombay: "mumbai",
+  calcutta: "kolkata",
+  madras: "chennai",
+  gurgaon: "gurugram",
+  "delhi ncr": "delhi",
+  ncr: "delhi",
+  baroda: "vadodara",
+  trivandrum: "thiruvananthapuram",
+  cochin: "kochi",
+  mysore: "mysuru",
+  mangalore: "mangaluru",
+  pondicherry: "puducherry",
+  banaras: "varanasi",
+  kashi: "varanasi",
+};
 
-  // Search Hub State
-  const [cityInput, setCityInput] = useState("Bangalore, Indiranagar");
+// Haversine formula — real geodesic distance in km
+function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function resolveCityCoordinates(cityName: string): { lat: number; lng: number } | null {
+  if (!cityName || !cityName.trim()) return null;
+  let term = cityName.split(",")[0].toLowerCase().trim();
+  if (CITY_ALIASES[term]) term = CITY_ALIASES[term];
+
+  // 1. Check INDIAN_CITIES
+  const cityMatch = INDIAN_CITIES.find(
+    (c) =>
+      c.name.toLowerCase() === term ||
+      c.name.toLowerCase().includes(term) ||
+      term.includes(c.name.toLowerCase())
+  );
+  if (cityMatch) {
+    return { lat: cityMatch.lat, lng: cityMatch.lng };
+  }
+
+  // 2. Check ALL_HOSPITALS
+  const hospMatch = ALL_HOSPITALS.find(
+    (h: any) =>
+      (h.city && (h.city.toLowerCase() === term || h.city.toLowerCase().includes(term) || term.includes(h.city.toLowerCase()))) ||
+      (h.state && (h.state.toLowerCase() === term || h.state.toLowerCase().includes(term)))
+  );
+  if (hospMatch && (hospMatch as any).latitude && (hospMatch as any).longitude) {
+    return {
+      lat: (hospMatch as any).latitude,
+      lng: (hospMatch as any).longitude,
+    };
+  }
+
+  return null;
+}
+
+function fmtCount(n: number): string {
+  if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "k";
+  return String(n);
+}
+function fmtCost(n: number): string {
+  if (n >= 100000) return "\u20B9" + (n / 100000).toFixed(1).replace(/\.0$/, "") + "L";
+  if (n >= 1000) return "\u20B9" + Math.round(n / 1000) + "k";
+  return "\u20B9" + n;
+}
+
+export default function HomePage() {
+  const { selectedCity, coords, selectCity } = useLocation();
+
+  // Search Hub State — defaults to selectedCity from context (Hoshiarpur)
+  const [cityInput, setCityInput] = useState(selectedCity || "Hoshiarpur");
   const [specialtyInput, setSpecialtyInput] = useState("");
   const [budgetFilter, setBudgetFilter] = useState("all");
   const [specialtyPopoverOpen, setSpecialtyPopoverOpen] = useState(false);
 
-  // Fast Filters State
-  const [cashlessOnly, setCashlessOnly] = useState(true);
+  // Fast Filters State — all start OFF so all verified hospitals show initially
+  const [cashlessOnly, setCashlessOnly] = useState(false);
   const [liveIcuOnly, setLiveIcuOnly] = useState(false);
   const [accreditedOnly, setAccreditedOnly] = useState(false);
   const [emergencyOnly, setEmergencyOnly] = useState(false);
   const [roboticSurgery, setRoboticSurgery] = useState(false);
 
   // Sidebar Filter State
-  const [distanceRadius, setDistanceRadius] = useState(15);
-  const [filterNabh, setFilterNabh] = useState(true);
+  const [distanceRadius, setDistanceRadius] = useState(25);
+  const [filterNabh, setFilterNabh] = useState(false);
   const [filterJci, setFilterJci] = useState(false);
   const [filterNabl, setFilterNabl] = useState(false);
   const [selectedRoomType, setSelectedRoomType] = useState<string>("all");
   const [selectedProcedure, setSelectedProcedure] = useState<string | null>(null);
+  // New important filters
+  const [hospitalType, setHospitalType] = useState<"all" | "government" | "private" | "trust">("all");
+  const [minRating, setMinRating] = useState<number>(0);
+  const [traumaOnly, setTraumaOnly] = useState(false);
+
+  // User GPS coordinates (synced with LocationContext and active city)
+  const [userLat, setUserLat] = useState(() => coords?.lat ?? 31.5273);
+  const [userLng, setUserLng] = useState(() => coords?.lng ?? 75.9149);
 
   // Sort State
-  const [sortBy, setSortBy] = useState<"relevance" | "beds" | "rating" | "turnaround">("relevance");
+  const [sortBy, setSortBy] = useState<"relevance" | "beds" | "rating" | "turnaround" | "cost">("relevance");
 
   // Pagination State (4 hospitals per tab)
   const [currentPage, setCurrentPage] = useState(1);
@@ -55,31 +139,72 @@ export default function HomePage() {
   const [modalType, setModalType] = useState<"beds" | "admission" | null>(null);
   const [admissionSuccess, setAdmissionSuccess] = useState(false);
 
-  // Sync cityInput when selectedCity changes
+  // Sync cityInput and coordinates when selectedCity or coords change in LocationContext
+  useEffect(() => {
+    if (coords && coords.lat && coords.lng) {
+      setUserLat(coords.lat);
+      setUserLng(coords.lng);
+    }
+  }, [coords]);
+
   useEffect(() => {
     if (selectedCity) {
       setCityInput(selectedCity);
+      const c = resolveCityCoordinates(selectedCity);
+      if (c) {
+        setUserLat(c.lat);
+        setUserLng(c.lng);
+      }
     }
   }, [selectedCity]);
+
+  // Handle typing in city input — updates input AND live coordinates
+  const handleCityChange = (val: string) => {
+    setCityInput(val);
+    const c = resolveCityCoordinates(val);
+    if (c) {
+      setUserLat(c.lat);
+      setUserLng(c.lng);
+    }
+  };
+
+  // Handle GPS detection
+  const handleGpsDetect = () => {
+    if (typeof window !== "undefined" && "geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          setUserLat(lat);
+          setUserLng(lng);
+          // Find closest city
+          let nearest = INDIAN_CITIES[0];
+          let minDist = Infinity;
+          for (const c of INDIAN_CITIES) {
+            const d = haversineKm(lat, lng, c.lat, c.lng);
+            if (d < minDist) {
+              minDist = d;
+              nearest = c;
+            }
+          }
+          setCityInput(nearest.name);
+          selectCity(nearest.name, { lat, lng });
+        },
+        () => {
+          alert("Unable to detect GPS position. Please check your browser location permissions.");
+        },
+        { timeout: 8000, enableHighAccuracy: true }
+      );
+    }
+  };
 
   // Reset pagination to page 1 whenever any filter or sort changes
   useEffect(() => {
     setCurrentPage(1);
   }, [
-    cashlessOnly,
-    liveIcuOnly,
-    accreditedOnly,
-    emergencyOnly,
-    roboticSurgery,
-    distanceRadius,
-    filterNabh,
-    filterJci,
-    filterNabl,
-    selectedRoomType,
-    selectedProcedure,
-    sortBy,
-    specialtyInput,
-    cityInput,
+    cashlessOnly, liveIcuOnly, accreditedOnly, emergencyOnly, roboticSurgery,
+    distanceRadius, filterNabh, filterJci, filterNabl, selectedRoomType, selectedProcedure,
+    hospitalType, minRating, traumaOnly, budgetFilter, sortBy, specialtyInput, cityInput, userLat, userLng,
   ]);
 
   // Handle comparison toggle
@@ -97,135 +222,40 @@ export default function HomePage() {
     });
   };
 
-  // Hospital List Data
-  const hospitals = useMemo(() => {
-    let list = ALL_HOSPITALS.map((h) => {
-      // Map existing rich data to Stitch visual fields
-      const isSakra = h.name.toLowerCase().includes("sakra");
-      const isAster = h.name.toLowerCase().includes("aster");
-      const isManipal = h.name.toLowerCase().includes("manipal");
-      const isApollo = h.name.toLowerCase().includes("apollo");
-      const isFortis = h.name.toLowerCase().includes("fortis");
+  // Step 1: Base list of hospitals with real Haversine distance from current userLat/userLng
+  const allHospitalsWithDistance = useMemo(() => {
+    return ALL_HOSPITALS.map((h) => {
+      const hLat = (h as any).latitude ?? 31.5273;
+      const hLng = (h as any).longitude ?? 75.9149;
+      const distance = parseFloat(haversineKm(userLat, userLng, hLat, hLng).toFixed(1));
 
-      let liveIcu = (h as any).beds_icu_available || (h as any).available_beds_icu || 10;
-      let turnaround = "15-20 min";
-      let roomAvailable = "14 Deluxe Free";
-      let qualityBadge = "NABH Accredited";
-      let distance = (h as any).distance_km || 4.2;
-      let rating = (h as any).overall_rating || (h as any).rating || 4.8;
-      let reviewCount = (h as any).total_reviews || 1840;
+      const liveIcu = (h as any).beds_icu_available ?? 5;
+      const rating = (h as any).overall_rating ?? 4.5;
+      const reviewCount = (h as any).total_reviews ?? 100;
+      const accreditation: string = (h as any).accreditation ?? "";
+      const isPmjay: boolean = (h as any).is_pmjay_empanelled ?? false;
+      const isTrauma: boolean = (h as any).is_trauma_center ?? false;
+      const typeRaw: string = ((h as any).type ?? "private").toLowerCase();
+      const basePackage: number = (h as any).base_package_inr ?? 75000;
+      const specialties: string[] = (h as any).specialties ?? [];
+      const procedures: any[] = (h as any).procedures ?? [];
 
-      let metrics: { label: string; value: string; isIcu?: boolean; isQuality?: boolean; isDesk?: boolean }[] = [];
-      let tags: { label: string; isCheck?: boolean }[] = [];
+      const qualityBadge = accreditation || "NABH Accredited";
+      const turnaround = isPmjay ? "Instant (Cashless)" : "20-30 min";
+      const roomAvailable = `${Math.max(2, liveIcu - 2)} Beds Available`;
 
-      if (isSakra) {
-        liveIcu = 12;
-        turnaround = "Instant (Avg 14m)";
-        roomAvailable = "18 Deluxe Free";
-        qualityBadge = "NABH & JCI Gold";
-        distance = 4.2;
-        rating = 4.9;
-        reviewCount = 1840;
-        metrics = [
-          { label: "Room Eligibility", value: "18 Deluxe Free" },
-          { label: "Live ICU Status", value: "12 Open ICUs", isIcu: true },
-          { label: "Pre-Auth Track", value: "Instant (Avg 14m)" },
-          { label: "Quality Standard", value: "NABH & JCI Gold", isQuality: true },
-        ];
-        tags = [
-          { label: "Star / HDFC / Care Cashless Approved", isCheck: true },
-          { label: "Robotic Orthopedics" },
-          { label: "Emergency 24x7 Cath Lab" },
-        ];
-      } else if (isAster) {
-        liveIcu = 9;
-        turnaround = "20-min Fast Track";
-        roomAvailable = "12 Deluxe Free";
-        qualityBadge = "NABH • NABL";
-        distance = 8.1;
-        rating = 4.8;
-        reviewCount = 2110;
-        metrics = [
-          { label: "TPA Desk", value: "20-min Fast Track" },
-          { label: "Medi Route Desk", value: "Counter #4 (Dedicated)", isDesk: true },
-          { label: "ICU Readiness", value: "9 Open CCU/ICU", isIcu: true },
-          { label: "Accreditations", value: "NABH • NABL", isQuality: true },
-        ];
-        tags = [
-          { label: "Zero-Deposit Admission Protocol", isCheck: true },
-          { label: "Organ Transplant Center" },
-          { label: "Neuro Surgery Team" },
-        ];
-      } else if (isManipal) {
-        liveIcu = 10;
-        turnaround = "28 mins (Fast)";
-        roomAvailable = "22 Deluxe Free";
-        qualityBadge = "NABH • JCI";
-        distance = 5.2;
-        rating = 4.8;
-        reviewCount = 3450;
-        metrics = [
-          { label: "Room Eligibility", value: "22 Deluxe Free" },
-          { label: "Live ICU Status", value: "10 Open ICUs", isIcu: true },
-          { label: "Pre-Auth Track", value: "28 mins (Fast)" },
-          { label: "Quality Standard", value: "NABH • JCI", isQuality: true },
-        ];
-        tags = [
-          { label: "Star / HDFC / Care Cashless Approved", isCheck: true },
-          { label: "Cardiac Science Center" },
-          { label: "Emergency 24x7 Trauma Desk" },
-        ];
-      } else if (isApollo) {
-        liveIcu = 14;
-        turnaround = "45 mins (Priority)";
-        roomAvailable = "16 Deluxe Free";
-        qualityBadge = "NABH • JCI Global";
-        distance = 11.4;
-        rating = 4.7;
-        reviewCount = 4120;
-        metrics = [
-          { label: "Room Eligibility", value: "16 Deluxe Free" },
-          { label: "Live ICU Status", value: "14 Open ICUs", isIcu: true },
-          { label: "Pre-Auth Track", value: "45 mins (Priority)" },
-          { label: "Quality Standard", value: "NABH • JCI Global", isQuality: true },
-        ];
-        tags = [
-          { label: "Star / HDFC / Care Cashless Approved", isCheck: true },
-          { label: "Advanced Oncology Wing" },
-          { label: "Zero Upfront Security" },
-        ];
-      } else if (isFortis) {
-        liveIcu = 12;
-        turnaround = "38 mins (Priority)";
-        roomAvailable = "15 Deluxe Free";
-        qualityBadge = "NABH • NABL";
-        distance = 7.1;
-        rating = 4.6;
-        reviewCount = 2980;
-        metrics = [
-          { label: "Room Eligibility", value: "15 Deluxe Free" },
-          { label: "Live ICU Status", value: "12 Open ICUs", isIcu: true },
-          { label: "Pre-Auth Track", value: "38 mins (Priority)" },
-          { label: "Quality Standard", value: "NABH • NABL", isQuality: true },
-        ];
-        tags = [
-          { label: "Star / HDFC / Care Cashless Approved", isCheck: true },
-          { label: "Robotic Surgery Desk" },
-          { label: "Emergency 24x7 Cath Lab" },
-        ];
-      } else {
-        metrics = [
-          { label: "Room Eligibility", value: roomAvailable },
-          { label: "Live ICU Status", value: `${liveIcu} Open ICUs`, isIcu: true },
-          { label: "Pre-Auth Track", value: turnaround },
-          { label: "Quality Standard", value: qualityBadge, isQuality: true },
-        ];
-        tags = [
-          { label: "Star / HDFC / Care Cashless Approved", isCheck: true },
-          { label: "Robotic Surgery Desk" },
-          { label: "Emergency 24x7 Cath Lab" },
-        ];
-      }
+      const metrics: { label: string; value: string; isIcu?: boolean; isQuality?: boolean; isDesk?: boolean }[] = [
+        { label: "Live ICU Beds", value: `${liveIcu} Open ICUs`, isIcu: true },
+        { label: "Accreditation", value: qualityBadge, isQuality: true },
+        { label: "Pre-Auth", value: turnaround },
+        { label: "Beds Available", value: `${(h as any).beds_total ?? 100} Total` },
+      ];
+
+      const tags: { label: string; isCheck?: boolean }[] = [
+        ...(isPmjay ? [{ label: "PMJAY / Cashless Approved", isCheck: true }] : []),
+        ...(isTrauma ? [{ label: `Trauma ${(h as any).trauma_level ?? "Center"}` }] : []),
+        ...(specialties.slice(0, 2).map((s: string) => ({ label: s }))),
+      ];
 
       return {
         ...h,
@@ -238,31 +268,168 @@ export default function HomePage() {
         reviewCount,
         metrics,
         tags,
+        isPmjay,
+        isTrauma,
+        typeRaw,
+        basePackage,
+        specialties,
+        procedures,
+        accreditation,
       };
     });
+  }, [userLat, userLng]);
 
-    // Apply Filters
+  // Step 2: Hospitals matching current city query (used for dynamic sidebar counts)
+  const cityFilteredHospitals = useMemo(() => {
+    let list = allHospitalsWithDistance;
+    let rawTerm = cityInput.split(",")[0].toLowerCase().trim();
+    const cityTerm = CITY_ALIASES[rawTerm] || rawTerm;
+
+    if (cityTerm && cityTerm !== "all" && cityTerm !== "india" && cityTerm !== "all cities") {
+      const cityMatches = list.filter((h) => {
+        const c = ((h as any).city ?? "").toLowerCase();
+        const s = ((h as any).state ?? "").toLowerCase();
+        return c.includes(cityTerm) || s.includes(cityTerm) || cityTerm.includes(c);
+      });
+      if (cityMatches.length > 0) {
+        list = cityMatches;
+      }
+    }
+    return list;
+  }, [allHospitalsWithDistance, cityInput]);
+
+  // Dynamic counts for sidebar distance chips
+  const distanceCounts = useMemo(() => {
+    let count5 = 0;
+    let count15 = 0;
+    let count25 = 0;
+    let count50 = 0;
+    cityFilteredHospitals.forEach((h) => {
+      if (h.distance <= 5) count5++;
+      if (h.distance <= 15) count15++;
+      if (h.distance <= 25) count25++;
+      if (h.distance <= 50) count50++;
+    });
+    return {
+      5: count5,
+      15: count15,
+      25: count25,
+      50: count50 || cityFilteredHospitals.length,
+    };
+  }, [cityFilteredHospitals]);
+
+  // Dynamic counts for accreditation checkboxes
+  const accredCounts = useMemo(() => {
+    let nabh = 0;
+    let jci = 0;
+    let nabl = 0;
+    cityFilteredHospitals.forEach((h) => {
+      const a = (h.accreditation || "").toLowerCase();
+      if (a.includes("nabh")) nabh++;
+      if (a.includes("jci")) jci++;
+      if (a.includes("nabl")) nabl++;
+    });
+    return { nabh, jci, nabl };
+  }, [cityFilteredHospitals]);
+
+  // Step 3: Fully filtered hospitals list
+  const hospitals = useMemo(() => {
+    let list = cityFilteredHospitals;
+
+    // Cashless / PMJAY filter
     if (cashlessOnly) {
-      list = list.filter((h) => (h as any).is_pmjay_empanelled || (h as any).pmjay || (h as any).has_pmjay);
+      list = list.filter((h) => h.isPmjay);
     }
+
+    // Live ICU filter (>= 5 open ICU beds)
     if (liveIcuOnly) {
-      list = list.filter((h) => h.liveIcu > 8);
+      list = list.filter((h) => h.liveIcu >= 5);
     }
+
+    // Accreditation filters (NABH / JCI / NABL)
+    const hasAccredFilter = filterNabh || filterJci || filterNabl;
+    if (hasAccredFilter) {
+      list = list.filter((h) => {
+        const a = h.accreditation.toLowerCase();
+        return (
+          (filterNabh && a.includes("nabh")) ||
+          (filterJci && a.includes("jci")) ||
+          (filterNabl && a.includes("nabl"))
+        );
+      });
+    }
+
+    // accreditedOnly fast-filter
     if (accreditedOnly) {
-      list = list.filter((h) => h.qualityBadge.includes("NABH") || h.qualityBadge.includes("JCI"));
+      list = list.filter((h) => {
+        const a = h.accreditation.toLowerCase();
+        return a.includes("nabh") || a.includes("jci");
+      });
     }
+
+    // Emergency / Trauma filter
+    if (emergencyOnly || traumaOnly) {
+      list = list.filter((h) => h.isTrauma);
+    }
+
+    // Hospital type filter
+    if (hospitalType !== "all") {
+      list = list.filter((h) => h.typeRaw.includes(hospitalType));
+    }
+
+    // Min rating filter
+    if (minRating > 0) {
+      list = list.filter((h) => h.rating >= minRating);
+    }
+
+    // Budget filter
+    if (budgetFilter !== "all") {
+      list = list.filter((h) => {
+        const p = h.basePackage;
+        if (budgetFilter === "50k") return p <= 50000 || h.isPmjay;
+        if (budgetFilter === "50k-150k") return p <= 150000;
+        if (budgetFilter === "150k-300k") return p <= 300000;
+        if (budgetFilter === "300k-500k") return p <= 500000;
+        return true;
+      });
+    }
+
+    // Specialty / disease search
     if (specialtyInput.trim()) {
       const term = specialtyInput.toLowerCase();
       list = list.filter(
         (h) =>
           h.name.toLowerCase().includes(term) ||
-          h.specialties?.some((s) => s.toLowerCase().includes(term)) ||
-          h.procedures?.some((p) => p.name.toLowerCase().includes(term))
+          ((h as any).top_disease_treated ?? "").toLowerCase().includes(term) ||
+          h.specialties.some((s: string) => s.toLowerCase().includes(term)) ||
+          h.procedures.some(
+            (p: any) =>
+              p.name.toLowerCase().includes(term) ||
+              p.disease.toLowerCase().includes(term) ||
+              p.category.toLowerCase().includes(term)
+          )
       );
     }
 
-    // Distance filter
-    list = list.filter((h) => h.distance <= distanceRadius);
+    // Procedure filter from sidebar chips
+    if (selectedProcedure) {
+      const procTerm = selectedProcedure.toLowerCase();
+      list = list.filter(
+        (h) =>
+          h.specialties.some((s: string) => s.toLowerCase().includes(procTerm)) ||
+          h.procedures.some(
+            (p: any) =>
+              p.name.toLowerCase().includes(procTerm) ||
+              p.category.toLowerCase().includes(procTerm) ||
+              p.disease.toLowerCase().includes(procTerm)
+          )
+      );
+    }
+
+    // Distance filter: only filter if distanceRadius < 50 km
+    if (distanceRadius < 50) {
+      list = list.filter((h) => h.distance <= distanceRadius);
+    }
 
     // Sorting
     if (sortBy === "beds") {
@@ -270,17 +437,37 @@ export default function HomePage() {
     } else if (sortBy === "rating") {
       list.sort((a, b) => b.rating - a.rating);
     } else if (sortBy === "turnaround") {
-      list.sort((a, b) => (a.turnaround.includes("Instant") ? -1 : 1));
+      list.sort((a, b) => (a.isPmjay === b.isPmjay ? 0 : a.isPmjay ? -1 : 1));
+    } else if (sortBy === "cost") {
+      list.sort((a, b) => a.basePackage - b.basePackage);
     } else {
+      // Default: sort by distance (closest first)
       list.sort((a, b) => a.distance - b.distance);
     }
 
     return list;
-  }, [cashlessOnly, liveIcuOnly, accreditedOnly, specialtyInput, distanceRadius, sortBy]);
+  }, [
+    cityFilteredHospitals,
+    cashlessOnly,
+    liveIcuOnly,
+    accreditedOnly,
+    emergencyOnly,
+    filterNabh,
+    filterJci,
+    filterNabl,
+    selectedProcedure,
+    hospitalType,
+    minRating,
+    traumaOnly,
+    budgetFilter,
+    specialtyInput,
+    distanceRadius,
+    sortBy,
+  ]);
 
   const resetFilters = () => {
-    setDistanceRadius(30);
-    setFilterNabh(true);
+    setDistanceRadius(25);
+    setFilterNabh(false);
     setFilterJci(false);
     setFilterNabl(false);
     setSelectedRoomType("all");
@@ -288,10 +475,16 @@ export default function HomePage() {
     setCashlessOnly(false);
     setLiveIcuOnly(false);
     setAccreditedOnly(false);
+    setEmergencyOnly(false);
+    setRoboticSurgery(false);
     setSpecialtyInput("");
     setBudgetFilter("all");
+    setHospitalType("all");
+    setMinRating(0);
+    setTraumaOnly(false);
     setCurrentPage(1);
   };
+
 
   const totalPages = Math.ceil(hospitals.length / HOSPITALS_PER_PAGE) || 1;
   const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
@@ -363,22 +556,15 @@ export default function HomePage() {
                         className="bg-transparent font-title-md text-title-md text-on-surface outline-none w-full truncate font-bold"
                         type="text"
                         value={cityInput}
-                        onChange={(e) => setCityInput(e.target.value)}
-                        placeholder="e.g. Bangalore, Indiranagar"
+                        onChange={(e) => handleCityChange(e.target.value)}
+                        placeholder="e.g. Hoshiarpur, Delhi, Mumbai, Bengaluru..."
                       />
                     </div>
                     <button
                       className="text-on-surface-variant hover:text-brand-blue-interactive p-1.5 rounded-lg hover:bg-surface-container transition-colors"
                       title="Detect GPS location"
                       type="button"
-                      onClick={() => {
-                        if (navigator.geolocation) {
-                          navigator.geolocation.getCurrentPosition(
-                            () => setCityInput("Bangalore (Current GPS)"),
-                            () => setCityInput("Bangalore, KA")
-                          );
-                        }
-                      }}
+                      onClick={handleGpsDetect}
                     >
                       <span className="material-symbols-outlined text-[20px]">my_location</span>
                     </button>
@@ -730,13 +916,13 @@ export default function HomePage() {
                     <div className="flex justify-between items-center">
                       <span className="font-title-md text-title-md text-on-surface font-semibold">Distance Radius</span>
                       <span className="font-label-md text-label-md text-secondary font-bold" id="radius-val">
-                        Within {distanceRadius} km
+                        {distanceRadius >= 50 ? "Within 50+ km (All)" : `Within ${distanceRadius} km`}
                       </span>
                     </div>
                     <input
                       className="w-full accent-secondary cursor-pointer"
                       id="distance-slider"
-                      max="30"
+                      max="50"
                       min="2"
                       type="range"
                       value={distanceRadius}
@@ -744,15 +930,16 @@ export default function HomePage() {
                     />
                     <div className="flex justify-between text-label-sm font-label-sm text-on-surface-variant">
                       <span>2 km</span>
-                      <span>10 km</span>
-                      <span>20 km</span>
+                      <span>15 km</span>
                       <span>30 km</span>
+                      <span>50 km (All)</span>
                     </div>
                     <div className="flex flex-wrap gap-2 mt-space-xs">
                       {[
-                        { km: 5, count: 4 },
-                        { km: 15, count: 9 },
-                        { km: 25, count: 14 },
+                        { km: 5, label: "5km", count: distanceCounts[5] },
+                        { km: 15, label: "15km", count: distanceCounts[15] },
+                        { km: 25, label: "25km", count: distanceCounts[25] },
+                        { km: 50, label: "50km", count: distanceCounts[50] },
                       ].map((item) => (
                         <button
                           key={item.km}
@@ -767,7 +954,7 @@ export default function HomePage() {
                           <span className={`material-symbols-outlined text-[16px] ${distanceRadius === item.km ? "text-on-secondary" : "text-outline-variant"}`}>
                             {distanceRadius === item.km ? "check_box" : "check_box_outline_blank"}
                           </span>
-                          <span>Within {item.km}km</span>
+                          <span>Within {item.label}</span>
                           <span className={`text-xs ${distanceRadius === item.km ? "text-on-secondary/80" : "text-on-surface-variant"}`}>({item.count})</span>
                         </button>
                       ))}
@@ -789,7 +976,7 @@ export default function HomePage() {
                         />
                         <span className="font-body-md text-body-md text-on-surface">NABH Accredited</span>
                       </div>
-                      <span className="font-label-sm text-label-sm text-on-surface-variant">12</span>
+                      <span className="font-label-sm text-label-sm text-on-surface-variant">{accredCounts.nabh}</span>
                     </label>
 
                     <label className="flex items-center justify-between p-space-xs rounded-lg hover:bg-surface-canvas cursor-pointer select-none">
@@ -802,7 +989,7 @@ export default function HomePage() {
                         />
                         <span className="font-body-md text-body-md text-on-surface">JCI International</span>
                       </div>
-                      <span className="font-label-sm text-label-sm text-on-surface-variant">3</span>
+                      <span className="font-label-sm text-label-sm text-on-surface-variant">{accredCounts.jci}</span>
                     </label>
 
                     <label className="flex items-center justify-between p-space-xs rounded-lg hover:bg-surface-canvas cursor-pointer select-none">
@@ -815,79 +1002,89 @@ export default function HomePage() {
                         />
                         <span className="font-body-md text-body-md text-on-surface">NABL Diagnostic Labs</span>
                       </div>
-                      <span className="font-label-sm text-label-sm text-on-surface-variant">11</span>
+                      <span className="font-label-sm text-label-sm text-on-surface-variant">{accredCounts.nabl}</span>
                     </label>
                   </div>
 
-                  {/* Room Preference Entitlement */}
+                  {/* Hospital Type */}
                   <div className="flex flex-col gap-space-xs border-t border-border-subtle/50 pt-space-sm">
-                    <span className="font-title-md text-title-md text-on-surface font-semibold mb-space-xs">
-                      Room Preference Entitlement
-                    </span>
-                    <label className="flex items-center justify-between p-space-xs rounded-lg hover:bg-surface-canvas cursor-pointer">
-                      <div className="flex items-center gap-space-xs">
+                    <span className="font-title-md text-title-md text-on-surface font-semibold mb-space-xs">Hospital Type</span>
+                    {(["all", "government", "private", "trust"] as const).map((t) => (
+                      <label key={t} className="flex items-center gap-space-xs p-space-xs rounded-lg hover:bg-surface-canvas cursor-pointer select-none">
                         <input
-                          checked={selectedRoomType === "deluxe"}
-                          onChange={() => setSelectedRoomType(selectedRoomType === "deluxe" ? "all" : "deluxe")}
+                          type="radio"
+                          name="hospitalType"
+                          checked={hospitalType === t}
+                          onChange={() => setHospitalType(t)}
                           className="accent-secondary w-4 h-4 cursor-pointer"
-                          type="checkbox"
                         />
-                        <span className="font-body-md text-body-md text-on-surface">Single Private Deluxe</span>
-                      </div>
-                      <span className="font-label-sm text-label-sm text-secondary font-bold">100% Cashless</span>
-                    </label>
+                        <span className="font-body-md text-body-md text-on-surface capitalize">{t === "all" ? "All Types" : t}</span>
+                      </label>
+                    ))}
+                  </div>
 
-                    <label className="flex items-center justify-between p-space-xs rounded-lg hover:bg-surface-canvas cursor-pointer">
-                      <div className="flex items-center gap-space-xs">
-                        <input
-                          checked={selectedRoomType === "twin"}
-                          onChange={() => setSelectedRoomType(selectedRoomType === "twin" ? "all" : "twin")}
-                          className="accent-secondary w-4 h-4 cursor-pointer"
-                          type="checkbox"
-                        />
-                        <span className="font-body-md text-body-md text-on-surface">Twin Sharing AC</span>
-                      </div>
-                      <span className="font-label-sm text-label-sm text-on-surface-variant">Available</span>
-                    </label>
+                  {/* Min Patient Rating */}
+                  <div className="flex flex-col gap-space-xs border-t border-border-subtle/50 pt-space-sm">
+                    <span className="font-title-md text-title-md text-on-surface font-semibold mb-space-xs">Min Patient Rating</span>
+                    <div className="flex flex-wrap gap-2">
+                      {[0, 4.0, 4.5, 4.8].map((r) => (
+                        <button
+                          key={r}
+                          type="button"
+                          onClick={() => setMinRating(r)}
+                          className={`px-3 py-1.5 rounded-lg text-body-sm font-semibold border transition-all ${
+                            minRating === r
+                              ? "bg-secondary text-on-secondary border-secondary"
+                              : "bg-surface-canvas text-on-surface border-border-subtle hover:bg-surface-ice"
+                          }`}
+                        >
+                          {r === 0 ? "Any" : `${r}★+`}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
 
-                    <label className="flex items-center justify-between p-space-xs rounded-lg hover:bg-surface-canvas cursor-pointer">
+                  {/* Trauma Center */}
+                  <div className="flex flex-col gap-space-xs border-t border-border-subtle/50 pt-space-sm">
+                    <label className="flex items-center justify-between p-space-xs rounded-lg hover:bg-surface-canvas cursor-pointer select-none">
                       <div className="flex items-center gap-space-xs">
                         <input
-                          checked={selectedRoomType === "general"}
-                          onChange={() => setSelectedRoomType(selectedRoomType === "general" ? "all" : "general")}
-                          className="accent-secondary w-4 h-4 cursor-pointer"
                           type="checkbox"
+                          checked={traumaOnly}
+                          onChange={(e) => setTraumaOnly(e.target.checked)}
+                          className="accent-secondary w-4 h-4 cursor-pointer"
                         />
-                        <span className="font-body-md text-body-md text-on-surface">General / Semi-Private</span>
+                        <span className="font-body-md text-body-md text-on-surface">Trauma Center Only</span>
                       </div>
-                      <span className="font-label-sm text-label-sm text-on-surface-variant">Available</span>
+                      <span className="font-label-sm text-label-sm text-badge-cashless font-bold">24x7</span>
                     </label>
                   </div>
 
-                  {/* Clinical Procedures */}
+                  {/* Clinical Procedures (now actually wired to filter) */}
                   <div className="flex flex-col gap-space-xs border-t border-border-subtle/50 pt-space-sm">
                     <span className="font-title-md text-title-md text-on-surface font-semibold mb-space-xs">
                       Clinical Procedures
                     </span>
                     <div className="flex flex-wrap gap-space-xs">
                       {[
-                        "Cardiology (Angio/CABG)",
-                        "Knee Replacement",
-                        "Gallbladder Laparoscopy",
-                        "IVF & Fertility Care",
-                        "Spine Micro-decompression",
-                      ].map((proc) => (
+                        { label: "Cardiology / CABG", term: "cardiology" },
+                        { label: "Knee Replacement", term: "knee" },
+                        { label: "Gallbladder Surgery", term: "gallbladder" },
+                        { label: "IVF / Fertility", term: "ivf" },
+                        { label: "Neurology / Spine", term: "neurology" },
+                        { label: "Oncology", term: "oncology" },
+                      ].map(({ label, term }) => (
                         <button
-                          key={proc}
+                          key={term}
                           type="button"
                           className={`px-space-sm py-1 rounded-lg text-body-sm font-body-sm transition-colors text-left ${
-                            selectedProcedure === proc
+                            selectedProcedure === term
                               ? "bg-secondary text-on-secondary font-bold"
                               : "bg-surface-canvas text-on-surface hover:bg-secondary-container hover:text-on-secondary-container"
                           }`}
-                          onClick={() => setSelectedProcedure(selectedProcedure === proc ? null : proc)}
+                          onClick={() => setSelectedProcedure(selectedProcedure === term ? null : term)}
                         >
-                          {proc}
+                          {label}
                         </button>
                       ))}
                     </div>
@@ -895,6 +1092,7 @@ export default function HomePage() {
 
                 </div>
               </aside>
+
 
               {/* Right Column: Verified Hospitals List */}
               <section className="lg:col-span-8 flex flex-col gap-space-md">
@@ -921,7 +1119,8 @@ export default function HomePage() {
                       <option value="relevance">Relevance &amp; Distance</option>
                       <option value="beds">Bed Availability (High to Low)</option>
                       <option value="rating">Patient Rating (High to Low)</option>
-                      <option value="turnaround">Pre-auth Turnaround Time</option>
+                      <option value="turnaround">Cashless / Pre-auth First</option>
+                      <option value="cost">Treatment Cost (Low to High)</option>
                     </select>
                   </div>
                 </div>
@@ -1026,6 +1225,39 @@ export default function HomePage() {
                             </div>
                           ))}
                         </div>
+
+                        {/* Disease Stats Strip — shown directly on card, no click needed */}
+                        {(hospital as any).top_disease_treated && (
+                          <div className="flex flex-wrap items-center gap-3 bg-primary/5 border border-primary/10 rounded-lg px-3 py-2 text-label-sm">
+                            <span className="font-semibold text-secondary flex items-center gap-1">
+                              <span className="material-symbols-outlined text-[14px]">biotech</span>
+                              {(hospital as any).top_disease_treated}
+                            </span>
+                            <span className="text-on-surface-variant">•</span>
+                            {(hospital as any).total_patients_treated && (
+                              <span className="flex items-center gap-1 text-on-surface-variant">
+                                <span className="font-bold text-on-surface">{fmtCount((hospital as any).total_patients_treated)}</span> patients
+                              </span>
+                            )}
+                            {(hospital as any).avg_treatment_cost && (
+                              <>
+                                <span className="text-on-surface-variant">•</span>
+                                <span className="flex items-center gap-1 text-on-surface-variant">
+                                  Avg Cost: <span className="font-bold text-on-surface">{fmtCost((hospital as any).avg_treatment_cost)}</span>
+                                </span>
+                              </>
+                            )}
+                            {(hospital as any).overall_success_ratio && (
+                              <>
+                                <span className="text-on-surface-variant">•</span>
+                                <span className="flex items-center gap-1 text-badge-cashless font-bold">
+                                  <span className="material-symbols-outlined text-[12px]">verified</span>
+                                  {(hospital as any).overall_success_ratio} Success
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        )}
 
                         {/* Bottom Tags & Dual Action CTAs */}
                         <div className="flex flex-wrap items-center justify-between gap-space-sm pt-space-xs border-t border-border-subtle/40">

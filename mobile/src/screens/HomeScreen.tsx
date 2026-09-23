@@ -19,14 +19,26 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../theme/colors";
-import { MOCK_HOSPITALS, MobileHospital } from "../services/api";
+import { MOCK_HOSPITALS, MobileHospital, haversineKm, setUserLocation, resolveCityCoordinates, CITY_ALIASES } from "../services/api";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
+
+function fmtCount(n: number): string {
+  if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "k";
+  return String(n);
+}
+function fmtCost(n: number): string {
+  if (n >= 100000) return "\u20B9" + (n / 100000).toFixed(1).replace(/\.0$/, "") + "L";
+  if (n >= 1000) return "\u20B9" + Math.round(n / 1000) + "k";
+  return "\u20B9" + n;
+}
 
 interface MobileHospitalItem {
   id: string;
   name: string;
   address: string;
+  city: string;
+  state: string;
   distance: number;
   rating: number;
   reviewCount: number;
@@ -36,32 +48,60 @@ interface MobileHospitalItem {
   qualityBadge: string;
   imageUrl: string;
   emergencyPhone: string;
+  isPmjay: boolean;
+  isTrauma: boolean;
+  typeRaw: string;
+  basePackage: number;
+  specialties: string[];
+  procedures: any[];
+  topDisease?: string;
+  totalPatients?: number;
+  avgCost?: number;
+  successRatio?: string;
   metrics: { label: string; value: string; isIcu?: boolean; isQuality?: boolean; isDesk?: boolean }[];
   tags: { label: string; isCheck?: boolean }[];
 }
 
 export default function HomeScreen({ navigation }: any) {
   // Search & Filter State
-  const [cityInput, setCityInput] = useState("Bangalore, Indiranagar");
+  const [cityInput, setCityInput] = useState("Hoshiarpur, Punjab");
   const [specialtyInput, setSpecialtyInput] = useState("");
   const [selectedBudget, setSelectedBudget] = useState("all");
 
-  // Fast Filters
-  const [cashlessOnly, setCashlessOnly] = useState(true);
+  // Fast Filters — start false so verified hospitals show initially
+  const [cashlessOnly, setCashlessOnly] = useState(false);
   const [liveIcuOnly, setLiveIcuOnly] = useState(false);
   const [accreditedOnly, setAccreditedOnly] = useState(false);
   const [emergencyOnly, setEmergencyOnly] = useState(false);
 
   // Discovery Filter
-  const [distanceRadius, setDistanceRadius] = useState(15);
-  const [sortBy, setSortBy] = useState<"relevance" | "beds" | "rating" | "turnaround">("relevance");
+  const [distanceRadius, setDistanceRadius] = useState(25);
+  const [sortBy, setSortBy] = useState<"relevance" | "beds" | "rating" | "cost">("relevance");
+
+  // New filters
+  const [hospitalType, setHospitalType] = useState<"all" | "government" | "private" | "trust">("all");
+  const [minRating, setMinRating] = useState<number>(0);
+
+  // User location (lat/lng) — defaults to Hoshiarpur, auto-syncs with cityInput
+  const [userLat, setUserLat] = useState(31.5273);
+  const [userLng, setUserLng] = useState(75.9149);
+
+  // Automatically sync coordinates when cityInput changes
+  React.useEffect(() => {
+    const coords = resolveCityCoordinates(cityInput);
+    if (coords) {
+      setUserLat(coords.lat);
+      setUserLng(coords.lng);
+      setUserLocation(coords.lat, coords.lng);
+    }
+  }, [cityInput]);
 
   // Pagination State (4 hospitals per tab)
   const [currentPage, setCurrentPage] = useState(1);
   const HOSPITALS_PER_PAGE = 4;
 
   // Comparison State
-  const [comparedIds, setComparedIds] = useState<string[]>(["sakra", "aster-cmi"]);
+  const [comparedIds, setComparedIds] = useState<string[]>([]);
 
   // Modal State
   const [activeModal, setActiveModal] = useState<{ type: "beds" | "admission"; hospital: MobileHospitalItem } | null>(null);
@@ -82,180 +122,140 @@ export default function HomeScreen({ navigation }: any) {
     });
   };
 
-  // Hospital Data
+  // Hospital Data — fully wired real-data filters
   const hospitalList: MobileHospitalItem[] = useMemo(() => {
     let list: MobileHospitalItem[] = MOCK_HOSPITALS.map((h: MobileHospital) => {
-      const isSakra = h.name.toLowerCase().includes("sakra");
-      const isAster = h.name.toLowerCase().includes("aster");
-      const isManipal = h.name.toLowerCase().includes("manipal");
-      const isApollo = h.name.toLowerCase().includes("apollo");
-      const isFortis = h.name.toLowerCase().includes("fortis");
+      // Use real computed Haversine distance (already computed at MOCK_HOSPITALS mapping time)
+      // Re-compute here with current userLat/userLng for live accuracy
+      const distance = parseFloat(haversineKm(userLat, userLng, h.latitude, h.longitude).toFixed(1));
 
-      let liveIcu = h.beds_icu_available || 10;
-      let turnaround = "15-20 min";
-      let roomAvailable = "14 Deluxe Free";
-      let qualityBadge = "NABH Accredited";
-      let distance = h.distance_km || 4.2;
-      let rating = h.overall_rating || 4.8;
-      let reviewCount = h.total_reviews || 1840;
+      const liveIcu = h.beds_icu_available ?? 5;
+      const rating = h.overall_rating ?? 4.5;
+      const reviewCount = h.total_reviews ?? 100;
+      const isPmjay = h.is_pmjay_empanelled ?? false;
+      const isTrauma = h.is_trauma_center ?? false;
+      const typeRaw = (h.type ?? "private").toLowerCase();
+      const basePackage = h.base_package_inr ?? 75000;
+      const specialties: string[] = h.specialties ?? [];
+      const procedures: any[] = h.procedures ?? [];
+      const accreditation = h.accreditation ?? "";
 
-      let metrics: { label: string; value: string; isIcu?: boolean; isQuality?: boolean; isDesk?: boolean }[] = [];
-      let tags: { label: string; isCheck?: boolean }[] = [];
+      const qualityBadge = accreditation || "NABH Accredited";
+      const turnaround = isPmjay ? "Instant (Cashless)" : "20-30 min";
 
-      if (isSakra) {
-        liveIcu = 12;
-        turnaround = "Instant (Avg 14m)";
-        roomAvailable = "18 Deluxe Free";
-        qualityBadge = "NABH & JCI Gold";
-        distance = 4.2;
-        rating = 4.9;
-        reviewCount = 1840;
-        metrics = [
-          { label: "Room Eligibility", value: "18 Deluxe Free" },
-          { label: "Live ICU Status", value: "12 Open ICUs", isIcu: true },
-          { label: "Pre-Auth Track", value: "Instant (Avg 14m)" },
-          { label: "Quality Standard", value: "NABH & JCI Gold", isQuality: true },
-        ];
-        tags = [
-          { label: "Star / HDFC / Care Cashless Approved", isCheck: true },
-          { label: "Robotic Orthopedics" },
-          { label: "Emergency 24x7 Cath Lab" },
-        ];
-      } else if (isAster) {
-        liveIcu = 9;
-        turnaround = "20-min Fast Track";
-        roomAvailable = "12 Deluxe Free";
-        qualityBadge = "NABH • NABL";
-        distance = 8.1;
-        rating = 4.8;
-        reviewCount = 2110;
-        metrics = [
-          { label: "TPA Desk", value: "20-min Fast Track" },
-          { label: "Medi Route Desk", value: "Counter #4 (Dedicated)", isDesk: true },
-          { label: "ICU Readiness", value: "9 Open CCU/ICU", isIcu: true },
-          { label: "Accreditations", value: "NABH • NABL", isQuality: true },
-        ];
-        tags = [
-          { label: "Zero-Deposit Admission Protocol", isCheck: true },
-          { label: "Organ Transplant Center" },
-          { label: "Neuro Surgery Team" },
-        ];
-      } else if (isManipal) {
-        liveIcu = 10;
-        turnaround = "28 mins (Fast)";
-        roomAvailable = "22 Deluxe Free";
-        qualityBadge = "NABH • JCI";
-        distance = 5.2;
-        rating = 4.8;
-        reviewCount = 3450;
-        metrics = [
-          { label: "Room Eligibility", value: "22 Deluxe Free" },
-          { label: "Live ICU Status", value: "10 Open ICUs", isIcu: true },
-          { label: "Pre-Auth Track", value: "28 mins (Fast)" },
-          { label: "Quality Standard", value: "NABH • JCI", isQuality: true },
-        ];
-        tags = [
-          { label: "Star / HDFC / Care Cashless Approved", isCheck: true },
-          { label: "Cardiac Science Center" },
-          { label: "Emergency 24x7 Trauma Desk" },
-        ];
-      } else if (isApollo) {
-        liveIcu = 14;
-        turnaround = "45 mins (Priority)";
-        roomAvailable = "16 Deluxe Free";
-        qualityBadge = "NABH • JCI Global";
-        distance = 11.4;
-        rating = 4.7;
-        reviewCount = 4120;
-        metrics = [
-          { label: "Room Eligibility", value: "16 Deluxe Free" },
-          { label: "Live ICU Status", value: "14 Open ICUs", isIcu: true },
-          { label: "Pre-Auth Track", value: "45 mins (Priority)" },
-          { label: "Quality Standard", value: "NABH • JCI Global", isQuality: true },
-        ];
-        tags = [
-          { label: "Star / HDFC / Care Cashless Approved", isCheck: true },
-          { label: "Advanced Oncology Wing" },
-          { label: "Zero Upfront Security" },
-        ];
-      } else if (isFortis) {
-        liveIcu = 12;
-        turnaround = "38 mins (Priority)";
-        roomAvailable = "15 Deluxe Free";
-        qualityBadge = "NABH • NABL";
-        distance = 7.1;
-        rating = 4.6;
-        reviewCount = 2980;
-        metrics = [
-          { label: "Room Eligibility", value: "15 Deluxe Free" },
-          { label: "Live ICU Status", value: "12 Open ICUs", isIcu: true },
-          { label: "Pre-Auth Track", value: "38 mins (Priority)" },
-          { label: "Quality Standard", value: "NABH • NABL", isQuality: true },
-        ];
-        tags = [
-          { label: "Star / HDFC / Care Cashless Approved", isCheck: true },
-          { label: "Robotic Surgery Desk" },
-          { label: "Emergency 24x7 Cath Lab" },
-        ];
-      } else {
-        metrics = [
-          { label: "Room Eligibility", value: roomAvailable },
-          { label: "Live ICU Status", value: `${liveIcu} Open ICUs`, isIcu: true },
-          { label: "Pre-Auth Track", value: turnaround },
-          { label: "Quality Standard", value: qualityBadge, isQuality: true },
-        ];
-        tags = [
-          { label: "Star / HDFC / Care Cashless Approved", isCheck: true },
-          { label: "Robotic Surgery Desk" },
-          { label: "Emergency 24x7 Cath Lab" },
-        ];
-      }
+      const metrics = [
+        { label: "Live ICU", value: `${liveIcu} Open ICUs`, isIcu: true },
+        { label: "Accreditation", value: qualityBadge, isQuality: true },
+        { label: "Pre-Auth", value: turnaround },
+        { label: "Total Beds", value: `${h.beds_total ?? 100}` },
+      ];
+
+      const tags: { label: string; isCheck?: boolean }[] = [
+        ...(isPmjay ? [{ label: "PMJAY / Cashless", isCheck: true }] : []),
+        ...(isTrauma ? [{ label: `Trauma ${h.trauma_level ?? "Center"}` }] : []),
+        ...(specialties.slice(0, 2).map((s: string) => ({ label: s }))),
+      ];
 
       return {
         id: h.id,
         name: h.name,
         address: h.address,
+        city: h.city,
+        state: h.state,
         distance,
         rating,
         reviewCount,
         liveIcu,
-        roomAvailable,
+        roomAvailable: `${Math.max(2, liveIcu - 2)} Beds Available`,
         turnaround,
         qualityBadge,
         imageUrl: (h as any).image_url || "https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?w=400&q=80",
         emergencyPhone: h.emergency_phone || "18006334768",
+        isPmjay,
+        isTrauma,
+        typeRaw,
+        basePackage,
+        specialties,
+        procedures,
+        topDisease: h.top_disease_treated,
+        totalPatients: h.total_patients_treated,
+        avgCost: h.avg_treatment_cost,
+        successRatio: h.overall_success_ratio,
         metrics,
         tags,
       };
     });
 
+    // APPLY ALL FILTERS
     if (cashlessOnly) {
-      // All displayed are cashless
+      list = list.filter((h) => h.isPmjay);
     }
     if (liveIcuOnly) {
-      list = list.filter((h) => h.liveIcu > 8);
+      list = list.filter((h) => h.liveIcu >= 5);
     }
     if (accreditedOnly) {
-      list = list.filter((h) => h.qualityBadge.includes("NABH") || h.qualityBadge.includes("JCI"));
+      list = list.filter((h) => {
+        const a = h.qualityBadge.toLowerCase();
+        return a.includes("nabh") || a.includes("jci");
+      });
+    }
+    if (emergencyOnly) {
+      list = list.filter((h) => h.isTrauma);
+    }
+    if (hospitalType !== "all") {
+      list = list.filter((h) => h.typeRaw === hospitalType);
+    }
+    if (minRating > 0) {
+      list = list.filter((h) => h.rating >= minRating);
+    }
+    let rawCityTerm = cityInput.split(",")[0].toLowerCase().trim();
+    const cityTerm = CITY_ALIASES[rawCityTerm] || rawCityTerm;
+    if (cityTerm && cityTerm !== "all" && cityTerm !== "india" && cityTerm !== "all cities") {
+      const cityMatches = list.filter(
+        (h) =>
+          h.city.toLowerCase().includes(cityTerm) ||
+          h.state.toLowerCase().includes(cityTerm) ||
+          cityTerm.includes(h.city.toLowerCase())
+      );
+      if (cityMatches.length > 0) list = cityMatches;
     }
     if (specialtyInput.trim()) {
       const term = specialtyInput.toLowerCase();
-      list = list.filter((h) => h.name.toLowerCase().includes(term));
+      list = list.filter(
+        (h) =>
+          h.name.toLowerCase().includes(term) ||
+          (h.topDisease ?? "").toLowerCase().includes(term) ||
+          h.specialties.some((s: string) => s.toLowerCase().includes(term)) ||
+          h.procedures.some((p: any) =>
+            p.name.toLowerCase().includes(term) ||
+            p.disease.toLowerCase().includes(term) ||
+            p.category.toLowerCase().includes(term)
+          )
+      );
     }
-    list = list.filter((h) => h.distance <= distanceRadius);
 
+    // Distance filter (real Haversine)
+    if (distanceRadius < 50) {
+      list = list.filter((h) => h.distance <= distanceRadius);
+    }
+
+    // Sorting
     if (sortBy === "beds") {
       list.sort((a, b) => b.liveIcu - a.liveIcu);
     } else if (sortBy === "rating") {
       list.sort((a, b) => b.rating - a.rating);
-    } else if (sortBy === "turnaround") {
-      list.sort((a, b) => (a.turnaround.includes("Instant") ? -1 : 1));
+    } else if (sortBy === "cost") {
+      list.sort((a, b) => a.basePackage - b.basePackage);
     } else {
       list.sort((a, b) => a.distance - b.distance);
     }
 
     return list;
-  }, [cashlessOnly, liveIcuOnly, accreditedOnly, specialtyInput, distanceRadius, sortBy]);
+  }, [
+    cashlessOnly, liveIcuOnly, accreditedOnly, emergencyOnly,
+    distanceRadius, sortBy, specialtyInput, cityInput,
+    hospitalType, minRating, userLat, userLng,
+  ]);
 
   // Reset pagination to page 1 whenever filters change
   React.useEffect(() => {
@@ -584,8 +584,33 @@ export default function HomeScreen({ navigation }: any) {
                 ))}
               </View>
 
+              {/* Disease Stats Strip — shown directly on card, no click needed */}
+              {hospital.topDisease ? (
+                <View style={styles.diseaseStatsStrip}>
+                  <Text style={styles.diseaseName} numberOfLines={1}>🔬 {hospital.topDisease}</Text>
+                  <View style={styles.diseaseStatsRow}>
+                    {hospital.totalPatients ? (
+                      <Text style={styles.diseaseStat}>
+                        <Text style={styles.diseaseStatBold}>{fmtCount(hospital.totalPatients)}</Text> patients
+                      </Text>
+                    ) : null}
+                    {hospital.avgCost ? (
+                      <Text style={styles.diseaseStat}>
+                        Avg: <Text style={styles.diseaseStatBold}>{fmtCost(hospital.avgCost)}</Text>
+                      </Text>
+                    ) : null}
+                    {hospital.successRatio ? (
+                      <Text style={[styles.diseaseStat, { color: "#16a34a" }]}>
+                        ✓ <Text style={styles.diseaseStatBold}>{hospital.successRatio}</Text>
+                      </Text>
+                    ) : null}
+                  </View>
+                </View>
+              ) : null}
+
               {/* Actions Footer */}
               <View style={styles.cardActions}>
+
                 <TouchableOpacity
                   style={[
                     styles.compareToggleBtn,
@@ -1572,5 +1597,33 @@ const styles = StyleSheet.create({
   },
   pageNumTextActive: {
     color: "#FFFFFF",
+  },
+
+  diseaseStatsStrip: {
+    backgroundColor: "rgba(99,102,241,0.07)",
+    borderRadius: 8,
+    padding: 10,
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: "rgba(99,102,241,0.15)",
+  },
+  diseaseName: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#4f46e5",
+    marginBottom: 4,
+  },
+  diseaseStatsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  diseaseStat: {
+    fontSize: 11,
+    color: "#6B7280",
+  },
+  diseaseStatBold: {
+    fontWeight: "700",
+    color: "#111827",
   },
 });
