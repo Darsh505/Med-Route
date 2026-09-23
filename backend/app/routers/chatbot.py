@@ -15,6 +15,7 @@ router = APIRouter(prefix="/api/chat", tags=["Clinical Chatbot"])
 
 
 @router.post("", response_model=APIResponse[ChatResponse])
+@router.post("/triage", response_model=APIResponse[ChatResponse])
 async def clinical_chat(request: ChatRequest):
     """
     AI-powered medical conversational triage & hospital dispatch.
