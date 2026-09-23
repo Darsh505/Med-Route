@@ -1010,13 +1010,16 @@ const styles = StyleSheet.create({
   headerLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: 8,
     flex: 1,
+    flexShrink: 1,
+    marginRight: 6,
   },
   headerRight: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 6,
+    flexShrink: 0,
   },
   logoBadge: {
     width: 38,
@@ -1057,13 +1060,14 @@ const styles = StyleSheet.create({
   emergencyBtn: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    gap: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     backgroundColor: colors.surfaceIce,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: colors.borderSubtle,
+    flexShrink: 0,
   },
   emergencyIcon: {
     fontSize: 16,

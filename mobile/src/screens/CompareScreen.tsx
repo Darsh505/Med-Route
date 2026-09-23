@@ -21,6 +21,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { colors } from "../theme/colors";
 import MedRouteLogo from "../components/MedRouteLogo";
+import LanguageSwitcher from "../components/LanguageSwitcher";
 import { localizeHospital, localizeHospitalName, localizeAddress, localizeAccreditation, localizeTurnaround, localizeTariff } from "../i18n/hospitalLocalization";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -161,6 +162,58 @@ const ALL_COMPARE_HOSPITALS: CompareHospital[] = [
   },
 ];
 
+function localizeCompareHospital(h: CompareHospital, lang: string): CompareHospital {
+  if (lang === "en") return h;
+  const isHi = lang === "hi";
+
+  const cashlessText = isHi ? "100% कैशलेस (PMJAY)" : "100% ਕੈਸ਼ਲੈਸ (PMJAY)";
+  const turnaroundText = `${h.turnaroundMinutes} ${isHi ? "मिनट" : "ਮਿੰਟ"}`;
+  const depositText = isHi ? "₹0 छूट" : "₹0 ਮੁਆਫ਼";
+
+  const icuCount = h.icuBeds.split(" ")[0];
+  const icuBedsText = `${icuCount} ${isHi ? "बेड" : "ਬੈੱਡ"}`;
+
+  const openCount = h.openIcus.split(" ")[0];
+  const openIcusText = `${openCount} ${isHi ? "उपलब्ध आईसीयू" : "ਉਪਲਬਧ ਆਈਸੀਯੂ"}`;
+
+  let deluxeText = h.deluxeTariff;
+  if (deluxeText.includes("Subsidized")) {
+    deluxeText = isHi ? "सब्सिडी वाला वार्ड" : "ਸਬਸਿਡੀ ਵਾਲਾ ਵਾਰਡ";
+  } else {
+    deluxeText = deluxeText.replace("/ day", isHi ? "/ दिन" : "/ ਦਿਨ");
+  }
+
+  let patientsText = h.patientsTreated || "";
+  patientsText = patientsText.replace("/ yr", isHi ? "/ वर्ष" : "/ ਸਾਲ");
+
+  let successText = h.successRatio || "";
+  successText = successText.replace("Success", isHi ? "सफलता" : "ਸਫਲਤਾ");
+
+  let procedureText = h.procedureTariff || "";
+  if (procedureText.includes("100% Free")) {
+    procedureText = isHi ? "100% मुफ़्त (PMJAY)" : "100% ਮੁਫ਼ਤ (PMJAY)";
+  } else {
+    procedureText = procedureText.replace("(or ₹0 PMJAY)", isHi ? "(या ₹0 PMJAY)" : "(ਜਾਂ ₹0 PMJAY)");
+  }
+
+  return {
+    ...h,
+    name: localizeHospitalName(h.name, lang),
+    shortName: localizeHospitalName(h.shortName, lang),
+    location: localizeAddress(h.location, lang),
+    cashlessEligibility: cashlessText,
+    approvalTurnaround: turnaroundText,
+    upfrontDeposit: depositText,
+    icuBeds: icuBedsText,
+    openIcus: openIcusText,
+    deluxeTariff: deluxeText,
+    accreditations: h.accreditations.map((acc) => localizeAccreditation(acc, lang)),
+    patientsTreated: patientsText,
+    successRatio: successText,
+    procedureTariff: procedureText,
+  };
+}
+
 export default function CompareScreen({ navigation, route }: any) {
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language || "en";
@@ -168,13 +221,22 @@ export default function CompareScreen({ navigation, route }: any) {
   const [hosp2Id, setHosp2Id] = useState<string>("max-mohali");
   const [pickerModalSlot, setPickerModalSlot] = useState<1 | 2 | null>(null);
 
-  const hosp1 = ALL_COMPARE_HOSPITALS.find((h) => h.id === hosp1Id) || ALL_COMPARE_HOSPITALS[0];
-  const hosp2 = ALL_COMPARE_HOSPITALS.find((h) => h.id === hosp2Id) || ALL_COMPARE_HOSPITALS[1];
+  const rawHosp1 = ALL_COMPARE_HOSPITALS.find((h) => h.id === hosp1Id) || ALL_COMPARE_HOSPITALS[0];
+  const rawHosp2 = ALL_COMPARE_HOSPITALS.find((h) => h.id === hosp2Id) || ALL_COMPARE_HOSPITALS[1];
+
+  const hosp1 = localizeCompareHospital(rawHosp1, currentLang);
+  const hosp2 = localizeCompareHospital(rawHosp2, currentLang);
 
   const handleShare = async () => {
     try {
+      const shareMsg =
+        currentLang === "hi"
+          ? `मेडी रूट पर तुलना: ${hosp1.name} बनाम ${hosp2.name} - लाइव आईसीयू बेड, प्री-ऑथ टर्नअराउंड एवं कैशलेस शुल्क।`
+          : currentLang === "pa"
+          ? `ਮੇਡੀ ਰੂਟ 'ਤੇ ਤੁਲਨਾ: ${hosp1.name} ਬਨਾਮ ${hosp2.name} - ਲਾਈਵ ਆਈਸੀਯੂ ਬੈੱਡ, ਪ੍ਰੀ-ਔਥ ਟਰਨਅਰਾਊਂਡ ਅਤੇ ਕੈਸ਼ਲੈਸ ਖਰਚੇ।`
+          : `Comparing ${hosp1.name} vs ${hosp2.name} on Med Route: Live ICU Beds, Pre-Auth Turnaround & Cashless Tariffs.`;
       await Share.share({
-        message: `Comparing ${hosp1.name} vs ${hosp2.name} on Med Route: Live ICU Beds, Pre-Auth Turnaround & Cashless Tariffs.`,
+        message: shareMsg,
       });
     } catch {}
   };
@@ -202,7 +264,8 @@ export default function CompareScreen({ navigation, route }: any) {
           </View>
         </View>
 
-        <View style={{ flexDirection: "row", gap: 6 }}>
+        <View style={{ flexDirection: "row", gap: 6, alignItems: "center" }}>
+          <LanguageSwitcher compact />
           <TouchableOpacity style={styles.swapBtn} onPress={swapHospitals}>
             <Text style={styles.swapBtnText}>⇄ {t("compare.swap")}</Text>
           </TouchableOpacity>
@@ -252,16 +315,16 @@ export default function CompareScreen({ navigation, route }: any) {
 
         {/* METRIC 1: Live ICU Beds */}
         <View style={styles.metricCard}>
-          <Text style={styles.metricTitle}>🛏️ LIVE ICU BEDS AVAILABLE</Text>
+          <Text style={styles.metricTitle}>🛏️ {t("compare.liveIcuTitle")}</Text>
           <View style={styles.metricComparisonRow}>
             <View style={[styles.metricValBox, styles.metricHighlight]}>
               <Text style={styles.metricValPrimary}>{hosp1.openIcus}</Text>
-              <Text style={styles.metricSub}>{hosp1.icuBeds} Total</Text>
+              <Text style={styles.metricSub}>{hosp1.icuBeds} {t("compare.total")}</Text>
             </View>
             <View style={styles.metricDivider} />
             <View style={styles.metricValBox}>
               <Text style={styles.metricValPrimary}>{hosp2.openIcus}</Text>
-              <Text style={styles.metricSub}>{hosp2.icuBeds} Total</Text>
+              <Text style={styles.metricSub}>{hosp2.icuBeds} {t("compare.total")}</Text>
             </View>
           </View>
         </View>
@@ -402,7 +465,8 @@ export default function CompareScreen({ navigation, route }: any) {
             </View>
 
             <ScrollView style={{ maxHeight: 400 }}>
-              {ALL_COMPARE_HOSPITALS.map((h) => {
+              {ALL_COMPARE_HOSPITALS.map((rawH) => {
+                const h = localizeCompareHospital(rawH, currentLang);
                 const isSelected = (pickerModalSlot === 1 && h.id === hosp1Id) || (pickerModalSlot === 2 && h.id === hosp2Id);
                 return (
                   <TouchableOpacity
@@ -450,6 +514,9 @@ const styles = StyleSheet.create({
   headerLeft: {
     flexDirection: "row",
     alignItems: "center",
+    flex: 1,
+    flexShrink: 1,
+    marginRight: 6,
   },
   backBtn: {
     padding: 6,

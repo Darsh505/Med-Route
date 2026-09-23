@@ -199,7 +199,9 @@
     "accreditationTitle": "ACCREDITATIONS & TRAUMA LEVEL",
     "callHospital": "Call {{name}}",
     "viewDetails": "View Details",
-    "selectHospital": "Select Hospital for Column {{slot}}"
+    "selectHospital": "Select Hospital for Column {{slot}}",
+    "liveIcuTitle": "LIVE ICU BEDS AVAILABLE",
+    "total": "Total"
   },
   "sos": {
     "title": "Emergency & Cashless",

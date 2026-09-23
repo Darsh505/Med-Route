@@ -47,7 +47,7 @@ export default function LanguageSwitcher({ compact = false }: LanguageSwitcherPr
         activeOpacity={0.8}
       >
         <Text style={styles.globeIcon}>🌐</Text>
-        <Text style={styles.buttonText}>{currentItem.nativeName}</Text>
+        <Text style={[styles.buttonText, compact && styles.buttonTextCompact]}>{compact ? currentItem.code.toUpperCase() : currentItem.nativeName}</Text>
       </TouchableOpacity>
 
       <Modal
@@ -114,10 +114,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.borderSubtle || "#E2E8F0",
     gap: 4,
+    flexShrink: 0,
   },
   buttonCompact: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingHorizontal: 7,
+    paddingVertical: 4,
+    borderRadius: 12,
+    minHeight: 28,
+    alignSelf: "center",
+    justifyContent: "center",
+    flexShrink: 0,
   },
   globeIcon: {
     fontSize: 13,
@@ -126,6 +132,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "700",
     color: colors.primary || "#0052cc",
+  },
+  buttonTextCompact: {
+    fontSize: 11,
+    fontWeight: "800",
   },
   modalOverlay: {
     flex: 1,

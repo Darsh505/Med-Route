@@ -294,7 +294,7 @@ export default function ChatbotWidget() {
         >
           <span className="w-2.5 h-2.5 rounded-full bg-badge-cashless animate-pulse" />
           <span className="material-symbols-outlined text-[18px] sm:text-[20px]">smart_toy</span>
-          <span className="tracking-tight">Care AI Desk</span>
+          <span className="tracking-tight">{t("chatbot.launcherBtn")}</span>
         </button>
       )}
 

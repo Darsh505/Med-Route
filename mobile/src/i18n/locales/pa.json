@@ -199,7 +199,9 @@
     "accreditationTitle": "ਮਾਨਤਾਵਾਂ ਅਤੇ ਟਰੌਮਾ ਪੱਧਰ",
     "callHospital": "{{name}} ਨੂੰ ਕਾਲ ਕਰੋ",
     "viewDetails": "ਵੇਰਵੇ ਦੇਖੋ",
-    "selectHospital": "ਕਾਲਮ {{slot}} ਲਈ ਹਸਪਤਾਲ ਚੁਣੋ"
+    "selectHospital": "ਕਾਲਮ {{slot}} ਲਈ ਹਸਪਤਾਲ ਚੁਣੋ",
+    "liveIcuTitle": "ਉਪਲਬਧ ਲਾਈਵ ਆਈਸੀਯੂ ਬੈੱਡ",
+    "total": "ਕੁੱਲ"
   },
   "sos": {
     "title": "ਐਮਰਜੈਂਸੀ ਅਤੇ ਕੈਸ਼ਲੈਸ",

@@ -2,11 +2,20 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useLocation, INDIAN_CITIES } from "@/context/LocationContext";
 import { ALL_HOSPITALS } from "@/data/hospitalsData";
+import {
+  localizeHospital,
+  localizeCity,
+  localizeAccreditation,
+  localizeSpecialty,
+  localizeDisease,
+  localizeProcedure,
+  localizeTag
+} from "@/i18n/hospitalLocalization";
 
 // Alias to support useTranslation convention
 const useTranslation = useTranslations;
@@ -95,6 +104,7 @@ function fmtCost(n: number): string {
 
 export default function HomePage() {
   const t = useTranslation();
+  const locale = useLocale();
   const { selectedCity, coords, selectCity } = useLocation();
 
   // Search Hub State — defaults to selectedCity from context (Hoshiarpur)
@@ -143,6 +153,9 @@ export default function HomePage() {
   const [modalHospital, setModalHospital] = useState<any | null>(null);
   const [modalType, setModalType] = useState<"beds" | "admission" | null>(null);
   const [admissionSuccess, setAdmissionSuccess] = useState(false);
+  const locModalHospital = useMemo(() => {
+    return modalHospital ? localizeHospital(modalHospital, locale) : null;
+  }, [modalHospital, locale]);
 
   // Sync cityInput and coordinates when selectedCity or coords change in LocationContext
   useEffect(() => {
@@ -959,7 +972,7 @@ export default function HomePage() {
                           <span className={`material-symbols-outlined text-[16px] ${distanceRadius === item.km ? "text-on-secondary" : "text-outline-variant"}`}>
                             {distanceRadius === item.km ? "check_box" : "check_box_outline_blank"}
                           </span>
-                          <span>Within {item.label}</span>
+                          <span>{t("home.withinDistance", { km: item.km })}</span>
                           <span className={`text-xs ${distanceRadius === item.km ? "text-on-secondary/80" : "text-on-surface-variant"}`}>({item.count})</span>
                         </button>
                       ))}
@@ -1014,23 +1027,25 @@ export default function HomePage() {
                   {/* Hospital Type */}
                   <div className="flex flex-col gap-space-xs border-t border-border-subtle/50 pt-space-sm">
                     <span className="font-title-md text-title-md text-on-surface font-semibold mb-space-xs">{t("home.hospitalType")}</span>
-                    {(["all", "government", "private", "trust"] as const).map((t) => (
-                      <label key={t} className="flex items-center gap-space-xs p-space-xs rounded-lg hover:bg-surface-canvas cursor-pointer select-none">
+                    {(["all", "government", "private", "trust"] as const).map((type) => (
+                      <label key={type} className="flex items-center gap-space-xs p-space-xs rounded-lg hover:bg-surface-canvas cursor-pointer select-none">
                         <input
                           type="radio"
                           name="hospitalType"
-                          checked={hospitalType === t}
-                          onChange={() => setHospitalType(t)}
+                          checked={hospitalType === type}
+                          onChange={() => setHospitalType(type)}
                           className="accent-secondary w-4 h-4 cursor-pointer"
                         />
-                        <span className="font-body-md text-body-md text-on-surface capitalize">{t === "all" ? "All Types" : t}</span>
+                        <span className="font-body-md text-body-md text-on-surface capitalize">
+                          {type === "all" ? t("home.allTypes") : type === "government" ? t("home.government") : type === "private" ? t("home.private") : t("home.trust")}
+                        </span>
                       </label>
                     ))}
                   </div>
 
                   {/* Min Patient Rating */}
                   <div className="flex flex-col gap-space-xs border-t border-border-subtle/50 pt-space-sm">
-                    <span className="font-title-md text-title-md text-on-surface font-semibold mb-space-xs">Min Patient Rating</span>
+                    <span className="font-title-md text-title-md text-on-surface font-semibold mb-space-xs">{t("home.minPatientRating")}</span>
                     <div className="flex flex-wrap gap-2">
                       {[0, 4.0, 4.5, 4.8].map((r) => (
                         <button
@@ -1043,7 +1058,7 @@ export default function HomePage() {
                               : "bg-surface-canvas text-on-surface border-border-subtle hover:bg-surface-ice"
                           }`}
                         >
-                          {r === 0 ? "Any" : `${r}★+`}
+                          {r === 0 ? t("home.ratingAny") : `${r}★+`}
                         </button>
                       ))}
                     </div>
@@ -1059,7 +1074,7 @@ export default function HomePage() {
                           onChange={(e) => setTraumaOnly(e.target.checked)}
                           className="accent-secondary w-4 h-4 cursor-pointer"
                         />
-                        <span className="font-body-md text-body-md text-on-surface">Trauma Center Only</span>
+                        <span className="font-body-md text-body-md text-on-surface">{t("home.traumaCenterOnly")}</span>
                       </div>
                       <span className="font-label-sm text-label-sm text-badge-cashless font-bold">24x7</span>
                     </label>
@@ -1106,26 +1121,25 @@ export default function HomePage() {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-space-sm bg-surface-card p-space-sm px-space-md rounded-xl shadow-sm border border-border-subtle">
                   <div className="flex items-center gap-space-xs">
                     <span className="font-headline-md text-headline-md font-bold text-on-surface">
-                      Verified Hospitals
+                      {t("home.verifiedHospitals")}
                     </span>
                     <span className="font-body-md text-body-md text-on-surface-variant">
-                      (Showing {hospitals.length > 0 ? (safeCurrentPage - 1) * HOSPITALS_PER_PAGE + 1 : 0} -{" "}
-                      {Math.min(safeCurrentPage * HOSPITALS_PER_PAGE, hospitals.length)} of {hospitals.length})
+                      ({t("home.showingOf", { start: hospitals.length > 0 ? (safeCurrentPage - 1) * HOSPITALS_PER_PAGE + 1 : 0, end: Math.min(safeCurrentPage * HOSPITALS_PER_PAGE, hospitals.length), total: hospitals.length })})
                     </span>
                   </div>
 
                   <div className="flex items-center gap-space-xs self-end sm:self-auto">
-                    <span className="font-label-sm text-label-sm text-on-surface-variant">Sort:</span>
+                    <span className="font-label-sm text-label-sm text-on-surface-variant">{t("home.sortLabel")}</span>
                     <select
                       className="bg-surface-canvas rounded-lg px-space-sm py-1 font-label-md text-label-md text-on-surface outline-none cursor-pointer border border-border-subtle"
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value as any)}
                     >
-                      <option value="relevance">Relevance &amp; Distance</option>
-                      <option value="beds">Bed Availability (High to Low)</option>
-                      <option value="rating">Patient Rating (High to Low)</option>
-                      <option value="turnaround">Cashless / Pre-auth First</option>
-                      <option value="cost">Treatment Cost (Low to High)</option>
+                      <option value="relevance">{t("home.sortRelevanceDistance")}</option>
+                      <option value="beds">{t("home.sortBedsHighLow")}</option>
+                      <option value="rating">{t("home.sortRatingHighLow")}</option>
+                      <option value="turnaround">{t("home.sortTurnaroundFirst")}</option>
+                      <option value="cost">{t("home.sortCostLowHigh")}</option>
                     </select>
                   </div>
                 </div>
@@ -1135,17 +1149,18 @@ export default function HomePage() {
                   <div className="bg-surface-card rounded-xl p-space-xl text-center border border-border-subtle flex flex-col items-center gap-space-sm">
                     <span className="material-symbols-outlined text-[48px] text-on-surface-variant">search_off</span>
                     <h3 className="font-headline-md text-headline-md font-bold">{t("home.noHospitals")}</h3>
-                    <p className="font-body-md text-on-surface-variant">Try expanding your distance radius or clearing some filters.</p>
+                    <p className="font-body-md text-on-surface-variant">{t("home.tryExpandingFilters")}</p>
                     <button
                       type="button"
                       onClick={resetFilters}
                       className="px-space-md py-space-xs bg-primary-container text-on-primary rounded-lg font-label-md font-semibold"
                     >
-                      Reset Filters
+                      {t("home.resetFilters")}
                     </button>
                   </div>
                 ) : (
                   paginatedHospitals.map((hospital) => {
+                    const locHosp = localizeHospital(hospital, locale);
                     const isCompared = comparedHospitals.includes(hospital.id);
 
                     return (
@@ -1160,13 +1175,13 @@ export default function HomePage() {
                               <img
                                 className="w-full h-full object-cover"
                                 src={(hospital as any).image_url || "https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?w=400&q=80"}
-                                alt={hospital.name}
+                                alt={locHosp.name}
                               />
                             </div>
                             <div className="flex flex-col">
                               <div className="flex flex-wrap items-center gap-space-xs mb-1">
                                 <span className="px-space-xs py-0.5 rounded-lg bg-surface-container text-secondary font-label-sm text-label-sm font-bold">
-                                  {Math.round(hospital.distance * 3)} mins away • {hospital.distance} km
+                                  {Math.round(hospital.distance * 3)} {t("home.minsAway")} • {hospital.distance} {t("home.km")}
                                 </span>
                                 <span className="px-space-xs py-0.5 rounded-lg bg-badge-rating/20 text-on-surface font-label-sm text-label-sm font-bold flex items-center gap-0.5">
                                   <span className="material-symbols-outlined text-[14px] text-badge-rating" style={{ fontVariationSettings: "'FILL' 1" }}>
@@ -1177,11 +1192,11 @@ export default function HomePage() {
                                 </span>
                               </div>
                               <h2 className="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight">
-                                {hospital.name}
+                                {locHosp.name}
                               </h2>
                               <span className="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1">
                                 <span className="material-symbols-outlined text-[16px] text-secondary">location_on</span>
-                                {hospital.address}
+                                {locHosp.address}
                               </span>
                             </div>
                           </div>
@@ -1200,14 +1215,14 @@ export default function HomePage() {
                               <span className="material-symbols-outlined text-[16px]">
                                 {isCompared ? "check" : "add"}
                               </span>
-                              <span>{isCompared ? "Added to Compare" : "+ Add to Compare"}</span>
+                              <span>{isCompared ? t("home.addedToCompare") : t("home.addToCompare")}</span>
                             </button>
                           </div>
                         </div>
 
                         {/* 4-Metric Telemetry Grid */}
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-space-sm bg-surface-canvas p-space-sm rounded-lg border border-border-subtle/50">
-                          {hospital.metrics?.map((metric: any, mIdx: number) => (
+                          {locHosp.metrics?.map((metric: any, mIdx: number) => (
                             <div key={mIdx} className="flex flex-col">
                               <span className="font-label-sm text-label-sm text-on-surface-variant">{metric.label}</span>
                               <span
@@ -1232,23 +1247,23 @@ export default function HomePage() {
                         </div>
 
                         {/* Disease Stats Strip — shown directly on card, no click needed */}
-                        {(hospital as any).top_disease_treated && (
+                        {(locHosp.top_disease_treated || (hospital as any).top_disease_treated) && (
                           <div className="flex flex-wrap items-center gap-3 bg-primary/5 border border-primary/10 rounded-lg px-3 py-2 text-label-sm">
                             <span className="font-semibold text-secondary flex items-center gap-1">
                               <span className="material-symbols-outlined text-[14px]">biotech</span>
-                              {(hospital as any).top_disease_treated}
+                              {locHosp.top_disease_treated || (hospital as any).top_disease_treated}
                             </span>
                             <span className="text-on-surface-variant">•</span>
                             {(hospital as any).total_patients_treated && (
                               <span className="flex items-center gap-1 text-on-surface-variant">
-                                <span className="font-bold text-on-surface">{fmtCount((hospital as any).total_patients_treated)}</span> patients
+                                <span className="font-bold text-on-surface">{fmtCount((hospital as any).total_patients_treated)}</span> {t("home.patients")}
                               </span>
                             )}
                             {(hospital as any).avg_treatment_cost && (
                               <>
                                 <span className="text-on-surface-variant">•</span>
                                 <span className="flex items-center gap-1 text-on-surface-variant">
-                                  Avg Cost: <span className="font-bold text-on-surface">{fmtCost((hospital as any).avg_treatment_cost)}</span>
+                                  {t("home.avgCostLabel")}: <span className="font-bold text-on-surface">{fmtCost((hospital as any).avg_treatment_cost)}</span>
                                 </span>
                               </>
                             )}
@@ -1257,7 +1272,7 @@ export default function HomePage() {
                                 <span className="text-on-surface-variant">•</span>
                                 <span className="flex items-center gap-1 text-badge-cashless font-bold">
                                   <span className="material-symbols-outlined text-[12px]">verified</span>
-                                  {(hospital as any).overall_success_ratio} Success
+                                  {(hospital as any).overall_success_ratio} {t("home.success")}
                                 </span>
                               </>
                             )}
@@ -1267,7 +1282,7 @@ export default function HomePage() {
                         {/* Bottom Tags & Dual Action CTAs */}
                         <div className="flex flex-wrap items-center justify-between gap-space-sm pt-space-xs border-t border-border-subtle/40">
                           <div className="flex items-center gap-space-xs flex-wrap">
-                            {hospital.tags?.map((tag: any, tIdx: number) => (
+                            {locHosp.tags?.map((tag: any, tIdx: number) => (
                               <span
                                 key={tIdx}
                                 className={`inline-flex items-center gap-1 px-space-xs py-1 rounded-lg font-label-sm text-label-sm font-semibold ${
@@ -1293,7 +1308,7 @@ export default function HomePage() {
                                 setModalType("beds");
                               }}
                             >
-                              Check Bed Availability
+                              {t("home.checkBedAvailability")}
                             </button>
                             <button
                               className="flex-1 sm:flex-initial px-space-md py-2.5 sm:py-space-xs rounded-lg bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold transition-colors shadow-sm text-center justify-center text-xs sm:text-label-md"
@@ -1304,7 +1319,7 @@ export default function HomePage() {
                                 setAdmissionSuccess(false);
                               }}
                             >
-                              Book Cashless Admission
+                              {t("home.bookCashlessAdmission")}
                             </button>
                           </div>
                         </div>
@@ -1316,8 +1331,7 @@ export default function HomePage() {
                 {/* Pagination Controls */}
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-space-sm pt-space-md border-t border-border-subtle">
                   <span className="font-body-sm text-body-sm text-on-surface-variant">
-                    Showing {hospitals.length > 0 ? (safeCurrentPage - 1) * HOSPITALS_PER_PAGE + 1 : 0} -{" "}
-                    {Math.min(safeCurrentPage * HOSPITALS_PER_PAGE, hospitals.length)} of {hospitals.length} network hospitals
+                    {t("home.showingOf", { start: hospitals.length > 0 ? (safeCurrentPage - 1) * HOSPITALS_PER_PAGE + 1 : 0, end: Math.min(safeCurrentPage * HOSPITALS_PER_PAGE, hospitals.length), total: hospitals.length })}
                   </span>
                   <div className="flex items-center gap-space-xs">
                     <button
@@ -1404,14 +1418,14 @@ export default function HomePage() {
                   <span className="material-symbols-outlined text-[18px] sm:text-[20px]">compare_arrows</span>
                 </div>
                 <span className="font-label-md text-label-md font-semibold text-xs sm:text-sm">
-                  <span className="font-bold text-secondary">{comparedHospitals.length}</span> Hospitals selected for comparison
+                  {t("home.hospitalsSelectedForCompare", { count: comparedHospitals.length })}
                 </span>
               </div>
               <Link
                 className="inline-flex items-center gap-space-xs px-3 sm:px-space-md py-1.5 sm:py-2 rounded-xl bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-bold transition-all shadow-sm text-xs sm:text-sm shrink-0"
                 href={`/compare?ids=${comparedHospitals.join(",")}`}
               >
-                <span>Compare Now</span>
+                <span>{t("home.compareNow")}</span>
                 <span className="material-symbols-outlined text-[14px] sm:text-[16px]">arrow_forward</span>
               </Link>
             </div>
@@ -1426,7 +1440,7 @@ export default function HomePage() {
                     <span className="material-symbols-outlined text-secondary">
                       {modalType === "beds" ? "hotel" : "verified_user"}
                     </span>
-                    <span>{modalType === "beds" ? "Real-Time Bed Telemetry" : "Fast-Track Cashless Admission"}</span>
+                    <span>{modalType === "beds" ? t("home.realTimeBedTelemetry") : t("home.fastTrackCashlessAdmission")}</span>
                   </div>
                   <button
                     className="w-8 h-8 rounded-full bg-surface-canvas flex items-center justify-center text-on-surface-variant hover:text-on-surface"
@@ -1445,8 +1459,8 @@ export default function HomePage() {
                     <span className="material-symbols-outlined text-[24px]">local_hospital</span>
                   </div>
                   <div>
-                    <h4 className="font-headline-md text-headline-md font-bold text-on-surface text-[16px]">{modalHospital.name}</h4>
-                    <p className="font-body-sm text-body-sm text-on-surface-variant">{modalHospital.address}</p>
+                    <h4 className="font-headline-md text-headline-md font-bold text-on-surface text-[16px]">{locModalHospital?.name || modalHospital.name}</h4>
+                    <p className="font-body-sm text-body-sm text-on-surface-variant">{locModalHospital?.address || modalHospital.address}</p>
                   </div>
                 </div>
 
@@ -1454,28 +1468,28 @@ export default function HomePage() {
                   <div className="flex flex-col gap-space-sm">
                     <div className="grid grid-cols-2 gap-space-sm">
                       <div className="p-space-sm bg-surface-canvas rounded-xl border border-border-subtle">
-                        <span className="text-xs text-on-surface-variant font-semibold">Live CCU / ICU Beds</span>
+                        <span className="text-xs text-on-surface-variant font-semibold">{t("home.liveCcuIcuBeds")}</span>
                         <div className="font-headline-lg font-bold text-badge-cashless flex items-center gap-1.5 mt-1">
                           <span className="w-2.5 h-2.5 rounded-full bg-badge-cashless animate-pulse"></span>
-                          <span>{modalHospital.liveIcu} Open</span>
+                          <span>{modalHospital.liveIcu} {t("home.open")}</span>
                         </div>
                       </div>
                       <div className="p-space-sm bg-surface-canvas rounded-xl border border-border-subtle">
-                        <span className="text-xs text-on-surface-variant font-semibold">Single Deluxe Room</span>
+                        <span className="text-xs text-on-surface-variant font-semibold">{t("home.singleDeluxeRoom")}</span>
                         <div className="font-headline-lg font-bold text-on-surface mt-1">
-                          {modalHospital.roomAvailable.split(" ")[0]} Free
+                          {modalHospital.roomAvailable.split(" ")[0]} {t("home.free")}
                         </div>
                       </div>
                     </div>
                     <p className="text-xs text-on-surface-variant leading-relaxed">
-                      Telemetry updated live via hospital HIMS server. Bed reservations held for 90 minutes upon generating admission token.
+                      {t("home.telemetryLiveNotice")}
                     </p>
                     <button
                       className="w-full py-space-sm bg-primary-container text-on-primary rounded-xl font-label-md font-bold shadow-sm"
                       onClick={() => setModalType("admission")}
                       type="button"
                     >
-                      Proceed to Cashless Admission
+                      {t("home.proceedToCashlessAdmission")}
                     </button>
                   </div>
                 ) : (
@@ -1483,9 +1497,9 @@ export default function HomePage() {
                     {admissionSuccess ? (
                       <div className="p-space-md bg-surface-ice rounded-xl border border-border-subtle flex flex-col gap-space-xs text-center items-center">
                         <span className="material-symbols-outlined text-badge-cashless text-[40px]">check_circle</span>
-                        <h4 className="font-headline-md font-bold text-primary-container">Pre-Auth Reservation Locked!</h4>
+                        <h4 className="font-headline-md font-bold text-primary-container">{t("home.preAuthReservationLocked")}</h4>
                         <p className="text-body-sm text-on-surface-variant">
-                          Token #MR-8849-BLR generated. Upfront deposit ₹0 confirmed. Proceed to Reception Desk 4 at {modalHospital.name}.
+                          {t("home.tokenGeneratedDesc", { token: "MR-8849-BLR", hospitalName: locModalHospital?.name || modalHospital.name })}
                         </p>
                         <button
                           className="mt-space-sm w-full py-2 bg-primary-container text-on-primary rounded-lg font-label-md font-semibold"
@@ -1495,13 +1509,13 @@ export default function HomePage() {
                           }}
                           type="button"
                         >
-                          Done
+                          {t("home.done")}
                         </button>
                       </div>
                     ) : (
                       <>
                         <div className="flex flex-col gap-1">
-                          <label className="text-xs font-semibold text-on-surface">ABHA ID or Health Policy Number</label>
+                          <label className="text-xs font-semibold text-on-surface">{t("home.abhaOrPolicyLabel")}</label>
                           <input
                             className="w-full px-space-sm py-2 bg-surface-canvas border border-border-subtle rounded-lg text-sm font-semibold"
                             defaultValue="STAR-2024-8849-BLR"
@@ -1509,7 +1523,7 @@ export default function HomePage() {
                           />
                         </div>
                         <div className="flex flex-col gap-1">
-                          <label className="text-xs font-semibold text-on-surface">Patient Contact Phone</label>
+                          <label className="text-xs font-semibold text-on-surface">{t("home.patientContactPhone")}</label>
                           <input
                             className="w-full px-space-sm py-2 bg-surface-canvas border border-border-subtle rounded-lg text-sm font-semibold"
                             defaultValue="+91 98450 12345"
@@ -1517,15 +1531,15 @@ export default function HomePage() {
                           />
                         </div>
                         <div className="p-space-xs bg-surface-canvas rounded-lg text-xs text-on-surface-variant flex justify-between">
-                          <span>Pre-Auth Security Deposit:</span>
-                          <span className="font-bold text-secondary">Waived (₹0)</span>
+                          <span>{t("home.preAuthDeposit")}</span>
+                          <span className="font-bold text-secondary">{t("home.waivedDeposit")}</span>
                         </div>
                         <button
                           className="w-full py-space-sm bg-primary-container hover:bg-primary text-on-primary rounded-xl font-label-md font-bold shadow-sm transition-colors"
                           onClick={() => setAdmissionSuccess(true)}
                           type="button"
                         >
-                          Generate Cashless Token
+                          {t("home.generateCashlessToken")}
                         </button>
                       </>
                     )}

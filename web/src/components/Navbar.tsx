@@ -5,7 +5,8 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useLocation } from "@/context/LocationContext";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
+import { localizeCity } from "@/i18n/hospitalLocalization";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 export default function Navbar() {
@@ -15,6 +16,7 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const t = useTranslations();
+  const locale = useLocale();
 
   const isFind = pathname === "/" || pathname === "/search";
   const isCompare = pathname.startsWith("/compare");
@@ -50,7 +52,7 @@ export default function Navbar() {
             >
               <span className="material-symbols-outlined text-[18px]">location_on</span>
               <span className="font-label-md text-label-md text-on-surface font-semibold">
-                {selectedCity || "Chandigarh / Tricity"}
+                {localizeCity(selectedCity || "Chandigarh / Tricity", locale)}
               </span>
               <span className="material-symbols-outlined text-[16px] text-on-surface-variant">keyboard_arrow_down</span>
             </Link>
@@ -222,7 +224,7 @@ export default function Navbar() {
           >
             <span className="flex items-center gap-1.5">
               <span className="material-symbols-outlined text-[18px]">location_on</span>
-              <span>{selectedCity || "Chandigarh / Tricity"}</span>
+              <span>{localizeCity(selectedCity || "Chandigarh / Tricity", locale)}</span>
             </span>
             <span className="text-xs text-on-surface-variant font-bold">{t("navbar.change")}</span>
           </Link>

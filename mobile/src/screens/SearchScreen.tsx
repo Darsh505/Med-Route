@@ -435,11 +435,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: colors.accentLight,
-    paddingHorizontal: spacing.sm + 2,
+    paddingHorizontal: spacing.sm,
     paddingVertical: 4,
     borderRadius: borderRadius.sm,
     borderWidth: 1,
     borderColor: colors.accentBorder,
+    flexShrink: 1,
+    marginRight: 6,
   },
   locationButtonText: {
     fontSize: 12,
@@ -450,6 +452,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
+    flexShrink: 0,
   },
   demoBadge: {
     backgroundColor: "rgba(245, 158, 11, 0.12)",

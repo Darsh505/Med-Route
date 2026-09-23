@@ -199,7 +199,9 @@
     "accreditationTitle": "मान्यताएं एवं ट्रॉमा स्तर",
     "callHospital": "{{name}} को कॉल करें",
     "viewDetails": "विवरण देखें",
-    "selectHospital": "कॉलम {{slot}} के लिए अस्पताल चुनें"
+    "selectHospital": "कॉलम {{slot}} के लिए अस्पताल चुनें",
+    "liveIcuTitle": "उपलब्ध लाइव आईसीयू बेड",
+    "total": "कुल"
   },
   "sos": {
     "title": "आपातकालीन एवं कैशलेस",
