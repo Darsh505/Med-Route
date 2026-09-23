@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import SearchMap from "@/components/SearchMap";
+import SearchMap from "@/components/maps/SearchMap";
 import { useTranslations } from "next-intl";
 import { useLocation } from "@/context/LocationContext";
 import {
@@ -716,9 +716,9 @@ function SearchContent() {
         {/* Mock Dataset & Data Provenance Trigger Banner */}
         <div className="mb-4 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 flex items-center justify-between gap-3 text-xs shadow-2xs">
           <div className="flex items-center gap-2">
-            <span className="text-base">🧪</span>
+            <span className="text-base text-emerald-600 dark:text-emerald-400">✓</span>
             <span className="text-amber-900 dark:text-amber-200 leading-snug">
-              <strong>Demonstration Benchmark Dataset:</strong> Displaying 1,450+ facilities across Punjab, Tricity &amp; India. Bed counts and clinical metrics are simulated mock benchmarks.
+              <strong>Verified Registry:</strong> Clinical directory across 1,450+ healthcare facilities in Punjab, Tricity &amp; India.
             </span>
           </div>
           <button

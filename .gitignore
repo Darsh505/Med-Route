@@ -133,7 +133,11 @@ yarn-error.log*
 # ── AI / Agent Scratch & Prompts ───────────────
 *AGENTS.md
 AGENTS.md
+*CLAUDE.md
+CLAUDE.md
 .agents/
+.claude/
+.cursor/
 scratch/
 
 # ── OS Generated ──────────────────────────────

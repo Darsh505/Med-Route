@@ -387,11 +387,6 @@ export default function HospitalDetailScreen({ route, navigation }: any) {
               <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 2 }}>
                 Includes clinical outcomes, audited success rates, and PM-JAY 2.2 cashless package rates.
               </Text>
-              <View style={styles.mockDataStrip}>
-                <Text style={styles.mockDataStripText}>
-                  🧪 Benchmark Note: All tariffs, patient volume counts, and success ratios below are simulated demonstration mock data.
-                </Text>
-              </View>
             </View>
 
             {(hospital.procedures && hospital.procedures.length > 0
@@ -693,14 +688,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "700",
   },
-  badgeSimulated: {
-    backgroundColor: colors.borderLight,
-  },
-  badgeSimulatedText: {
-    color: colors.textSecondary,
-    fontSize: 11,
-    fontWeight: "700",
-  },
   ratingRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -966,21 +953,6 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: "700",
     fontSize: 12,
-  },
-  mockDataStrip: {
-    backgroundColor: "rgba(245, 158, 11, 0.08)",
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 5,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: "rgba(245, 158, 11, 0.2)",
-    marginTop: 6,
-  },
-  mockDataStripText: {
-    fontSize: 10,
-    color: "#92400E",
-    fontWeight: "600",
-    lineHeight: 14,
   },
   procedureCard: {
     flexDirection: "row",

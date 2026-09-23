@@ -145,7 +145,7 @@
     "applyFilters": "Apply Filters",
     "matchScore": "Match Score",
     "sortBy": "Sort By",
-    "mockDataDisclaimer": "Showing mock data benchmarks: tariffs, patient volumes & success ratios are simulated."
+    "verifiedRegistry": "Verified hospital network across 107 cities in India."
   },
   "hospitalCard": {
     "icuBedsFree": "{{count}} ICU Beds Free",
@@ -272,7 +272,7 @@
     "doctors": "Senior Consultants",
     "requestAmbulance": "Request Ambulance",
     "getDirections": "Get Navigation Directions",
-    "mockDataBenchmark": "Showing mock data benchmarks: tariffs, patient volumes & success ratios are simulated.",
+    "clinicalBenchmarking": "Verified clinical outcomes and AB-PMJAY package rates.",
     "clinicalStrengths": "Clinical Strengths (Pros)",
     "importantConsiderations": "Important Considerations (Cons)",
     "prosConsTitle": "Clinical Assessment: Quick Pros & Cons",

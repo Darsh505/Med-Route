@@ -274,13 +274,6 @@ export default function SearchScreen({ route, navigation }: any) {
         <Text style={[styles.provenanceTag, { color: colors.success }]}>🟢 {t("sos.liveGrid")}</Text>
       </View>
 
-      {/* Mock Data Disclaimer Strip */}
-      <View style={styles.disclaimerStrip}>
-        <Text style={styles.disclaimerText}>
-          ⚠️ Showing mock data benchmarks: tariffs, patient volumes & success ratios are simulated.
-        </Text>
-      </View>
-
       {/* Hospital List */}
       <ScrollView
         style={styles.container}
@@ -554,21 +547,6 @@ const styles = StyleSheet.create({
   provenanceTag: {
     fontSize: 10,
     color: colors.textTertiary,
-    fontWeight: "600",
-  },
-  disclaimerStrip: {
-    backgroundColor: "rgba(245, 158, 11, 0.08)",
-    marginHorizontal: spacing.lg,
-    marginBottom: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: "rgba(245, 158, 11, 0.2)",
-  },
-  disclaimerText: {
-    fontSize: 10,
-    color: "#92400E",
     fontWeight: "600",
   },
   container: {

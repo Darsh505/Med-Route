@@ -4,6 +4,22 @@ import createNextIntlPlugin from "next-intl/plugin";
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
+  // Built-in server redirects replacing dummy page components
+  async redirects() {
+    return [
+      {
+        source: "/admin",
+        destination: "/portal/admin",
+        permanent: true,
+      },
+      {
+        source: "/sos",
+        destination: "/emergency-cashless",
+        permanent: true,
+      },
+    ];
+  },
+
   // Proxy API calls to backend to avoid CORS in dev
   async rewrites() {
     return [

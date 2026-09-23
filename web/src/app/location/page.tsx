@@ -305,7 +305,7 @@ export default function LocationPage() {
                 <span>Call 108 Ambulance</span>
               </a>
               <Link
-                href="/sos"
+                href="/emergency-cashless"
                 className="flex-1 sm:flex-none px-5 py-2.5 rounded-xl bg-surface-container-lowest text-error font-bold text-xs text-center border border-error/40 hover:bg-error-container/30 transition-all flex items-center justify-center gap-1.5"
               >
                 <span className="material-symbols-outlined text-[16px]">emergency</span>

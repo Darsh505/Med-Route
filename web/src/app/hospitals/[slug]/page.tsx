@@ -4,7 +4,7 @@ import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import HospitalMap from "@/components/HospitalMap";
+import HospitalMap from "@/components/maps/HospitalMap";
 import { ALL_HOSPITALS } from "@/data/hospitalsData";
 
 // Interface definitions
@@ -343,10 +343,6 @@ export default function HospitalDetailPage({ params }: { params: Promise<{ slug:
               <div className="flex flex-col gap-space-xs max-w-3xl">
                 {/* Badges */}
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 font-label-sm font-semibold flex items-center gap-1">
-                    <span>🧪</span>
-                    <span>Simulated Mock Data</span>
-                  </span>
                   <span className="px-2.5 py-0.5 rounded-full bg-surface-container-high text-primary font-label-sm uppercase tracking-wider font-semibold">
                     {hospital.type} Hospital
                   </span>

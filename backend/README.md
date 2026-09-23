@@ -18,7 +18,7 @@ The Med Route backend provides sub-50ms query processing, intelligent natural la
 - **Spatial GiST Indexing**: Haversine and PostGIS geospatial radius indexing for sub-second emergency trauma center discovery.
 - **PMJAY HBP 2.2 Integration**: Maps national standard health benefit packages across government and private tertiary centers.
 - **Resilient Fallback Engine**: Seamless failover to embedded benchmark store if external database or network connections drop.
-- **Data Catalog & ER Architecture**: See root [**`DATABASE.md`**](../DATABASE.md) for full schema models, Mermaid ER diagram, and 1,451 hospital registry metrics.
+- **Data Catalog & ER Architecture**: See root [**`docs/DATABASE.md`**](../docs/DATABASE.md) for full schema models, Mermaid ER diagram, and 1,451 hospital registry metrics.
 
 ---
 

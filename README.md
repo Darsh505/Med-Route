@@ -9,7 +9,7 @@
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?style=flat&logo=python)](https://www.python.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat&logo=typescript)](https://www.typescriptlang.org/)
 [![Docker Compose](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat&logo=docker)](https://www.docker.com/)
-[![Database Catalog](https://img.shields.io/badge/Database-Schema_%26_Catalog-blue?style=flat&logo=postgresql)](DATABASE.md)
+[![Database Catalog](https://img.shields.io/badge/Database-Schema_%26_Catalog-blue?style=flat&logo=postgresql)](docs/DATABASE.md)
 
 ---
 
@@ -29,7 +29,7 @@ During critical medical decisions and emergency trauma events in India, patients
 
 | Architectural Phase | Technical Requirement | Med Route Implementation | Reference Path |
 |---|---|---|---|
-| **1. Aggregate** | Ingest hospital registries, specialties, and government packages | Normalized dataset covering 1,451 facilities across 107 cities mapped to National Health Authority (NHA) **PMJAY HBP 2.2** schedules. | [`DATABASE.md`](DATABASE.md)<br>[`backend/app/data_pipeline/`](backend/app/data_pipeline/) |
+| **1. Aggregate** | Ingest hospital registries, specialties, and government packages | Normalized dataset covering 1,451 facilities across 107 cities mapped to National Health Authority (NHA) **PMJAY HBP 2.2** schedules. | [`docs/DATABASE.md`](docs/DATABASE.md)<br>[`backend/app/data_pipeline/`](backend/app/data_pipeline/) |
 | **2. Index** | High-performance spatial and procedural indexing | PostGIS Spatial GiST indexing, sub-second Haversine proximity computation, and cached specialty taxonomy. | [`backend/app/services/ranking_service.py`](backend/app/services/ranking_service.py) |
 | **3. Search** | Semantic natural language search with slot mapping and explainability | Dual-tier client and server NLP query parser extracting: **Condition**, **City**, **Budget Ceiling**, and **PMJAY Status**. Explainable ranking breakdown. | [`web/src/app/search/page.tsx`](web/src/app/search/page.tsx)<br>[`mobile/src/screens/SearchScreen.tsx`](mobile/src/screens/SearchScreen.tsx) |
 | **4. Compare** | Side-by-side facility comparison with verifiable metrics | Dedicated comparison matrix evaluating institutions across **4 Verifiable Metrics**: Annual Volume, Clinical Success Ratio, PMJAY Tariffs, and Certifications. | [`web/src/app/compare/page.tsx`](web/src/app/compare/page.tsx)<br>[`mobile/src/screens/CompareScreen.tsx`](mobile/src/screens/CompareScreen.tsx) |
@@ -63,7 +63,7 @@ During critical medical decisions and emergency trauma events in India, patients
 ### 1. Aggregate
 - Ingests and normalizes clinical registries across **Tricity (Chandigarh, Mohali, Panchkula)** and 107 Indian cities.
 - Normalized against National Health Authority (NHA) **Ayushman Bharat PMJAY 2.2** benefit schedules.
-- Explicit data provenance labels on every record: `MANUAL_VERIFIED`, `PMJAY_HBP`, and `HFR_REGISTRY`. See [**`DATABASE.md`**](DATABASE.md) for full schema definitions.
+- Explicit data provenance labels on every record: `MANUAL_VERIFIED`, `PMJAY_HBP`, and `HFR_REGISTRY`. See [**`docs/DATABASE.md`**](docs/DATABASE.md) for full schema definitions.
 
 ### 2. Index
 - Sub-second spatial proximity queries via PostGIS and Haversine algorithms.
@@ -180,8 +180,9 @@ med-route/
 ├── web/                    # Citizen Web Portal (Next.js 16, React 19, Tailwind CSS)
 │   ├── src/app/            # App Router pages (search, compare, emergency-cashless)
 │   └── src/components/     # Interactive Leaflet maps, chatbot widget, navigation
-├── DATABASE.md             # Complete data catalog, ER diagram, and schema models
-├── DEPLOYMENT.md           # Cloud deployment guide (Render, Vercel, Expo EAS)
+├── docs/                   # Full system specifications & deployment documentation
+│   ├── DATABASE.md         # Complete data catalog, ER diagram, and schema models
+│   └── DEPLOYMENT.md       # Cloud deployment guide (Render, Vercel, Expo EAS)
 ├── Dockerfile              # Production multi-stage backend container
 ├── docker-compose.yml      # Full-stack local orchestration (PostGIS, Redis, Web, Admin, Backend)
 ├── LICENSE                 # Open source MIT License
