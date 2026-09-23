@@ -209,7 +209,7 @@ class NLPParser:
         # ── Budget detection ──────────────────────────────────────
         # Patterns: "under 2 lakhs", "below 50000", "within 3 lakh", "2L", "₹2 lakh"
         lakh_match = re.search(
-            r"(?:under|below|within|less than|max|upto)?\s*(?:₹|rs\.?|inr)?\s*(\d+(?:\.\d+)?)\s*(?:lakh|lac|l)\b",
+            r"(?:under|below|within|less than|max|upto)?\s*(?:₹|rs\.?|inr)?\s*(\d+(?:\.\d+)?)\s*(?:lakhs?|lacs?|l)\b",
             query_lower,
         )
         if lakh_match:

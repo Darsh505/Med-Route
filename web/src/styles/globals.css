@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Manrope:wght@600;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
 @import "leaflet/dist/leaflet.css";
 @tailwind base;
@@ -6,46 +6,44 @@
 @tailwind utilities;
 
 /* --------------------------------------------------
-   Med Route - Clinical Dispatch Design System Tokens
+   Med Route - Clinical Architecture Health System
    -------------------------------------------------- */
 :root {
   /* Brand Colors */
-  --color-primary: #00334f;
-  --color-secondary: #006a61;
-  --color-tertiary: #660019;
+  --color-primary: #000000;
+  --color-primary-container: #0c1253;
+  --color-on-primary-container: #787ec2;
+  --color-secondary: #006781;
+  --color-secondary-container: #8fdfff;
+  --color-on-secondary-container: #00647d;
+  --color-tertiary-container: #410001;
+  --color-on-tertiary-fixed-variant: #900e0b;
+  
+  --color-brand-blue-interactive: #1778f2;
+  --color-badge-cashless: #0d9488;
+  --color-badge-rating: #f59e0b;
+  --color-border-subtle: #e2e8f0;
+  
   --color-background: #faf8ff;
-  --color-surface: #faf8ff;
-  --color-surface-container-lowest: #ffffff;
-  --color-surface-container-low: #f2f3ff;
+  --color-surface-canvas: #f8fafc;
+  --color-surface-card: #ffffff;
+  --color-surface-ice: #f0f7ff;
   --color-surface-container: #eaedff;
+  --color-surface-container-low: #f2f3ff;
   --color-surface-container-high: #e2e7ff;
   --color-surface-container-highest: #dae2fd;
-  --color-surface-dim: #d2d9f4;
-  --color-surface-bright: #faf8ff;
-
+  
   --color-on-surface: #131b2e;
-  --color-on-surface-variant: #41474e;
-  --color-outline: #72787f;
-  --color-outline-variant: #c1c7cf;
-
-  --color-emergency: #ba1a1a;
-  --color-emergency-container: #ffdad6;
-  --color-on-emergency-container: #93000a;
-  --color-success: #006a61;
-  --color-secondary-container: #86f2e4;
-  --color-on-secondary-container: #006f66;
-
+  --color-on-surface-variant: #464650;
+  --color-outline: #777681;
+  --color-outline-variant: #c7c5d1;
+  --color-error: #ba1a1a;
+  
   /* Fonts */
-  --font-heading: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-
-  /* Transitions */
-  --transition-fast: 150ms ease;
-  --transition-normal: 200ms ease;
-  --transition-slow: 300ms ease;
+  --font-heading: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Hanken Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* Base Styles */
 *, *::before, *::after {
   box-sizing: border-box;
 }
@@ -58,12 +56,15 @@ html {
 body {
   font-family: var(--font-body);
   color: var(--color-on-surface);
-  background-color: var(--color-background);
+  background-color: var(--color-surface-canvas);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Material Symbols icon sizing and styling */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+}
+
 .material-symbols-outlined {
   font-variation-settings:
     'FILL' 0,
@@ -75,56 +76,38 @@ body {
   line-height: 1;
 }
 
-/* Badge helpers */
-.badge-verified {
-  background: #f0fdf4;
-  color: #15803d;
-  border: 1px solid #bbf7d0;
-}
-
-.badge-government {
-  background: #fef3c7;
-  color: #92400e;
-  border: 1px solid #fde68a;
-}
-
-.badge-emergency {
-  background: #ffdad6;
-  color: #93000a;
-  border: 1px solid #ffb3b6;
-}
-
-.badge-nabh {
-  background: #eaedff;
-  color: #00334f;
-  border: 1px solid #dae2fd;
-}
-
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #eaedff;
+  background: #f2f3ff;
 }
 ::-webkit-scrollbar-thumb {
-  background: #c1c7cf;
+  background: #c7c5d1;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #72787f;
+  background: #777681;
 }
 
-/* --------------------------------------------------
-   Leaflet Custom Map Styles & Clinical Dispatch Overrides
-   -------------------------------------------------- */
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Leaflet map styles */
 .leaflet-popup-content-wrapper {
   background: #ffffff !important;
   color: #131b2e !important;
-  border-radius: 1rem !important;
-  box-shadow: 0 10px 25px -5px rgba(0, 51, 79, 0.15), 0 8px 10px -6px rgba(0, 51, 79, 0.1) !important;
-  border: 1px solid rgba(218, 226, 253, 0.8) !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 10px 25px -5px rgba(12, 18, 83, 0.12) !important;
+  border: 1px solid #e2e8f0 !important;
   padding: 0 !important;
   overflow: hidden !important;
 }
@@ -134,68 +117,7 @@ body {
   line-height: 1.4 !important;
 }
 
-.leaflet-popup-tip {
-  background: #ffffff !important;
-  border: 1px solid rgba(218, 226, 253, 0.8) !important;
-}
-
 .leaflet-container {
   font-family: var(--font-body) !important;
-  background-color: #f2f3ff !important;
-}
-
-/* Pulsing radar for user and emergency beacons */
-@keyframes markerPulse {
-  0% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(0, 106, 97, 0.7);
-  }
-  70% {
-    transform: scale(1);
-    box-shadow: 0 0 0 12px rgba(0, 106, 97, 0);
-  }
-  100% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(0, 106, 97, 0);
-  }
-}
-
-@keyframes sosPulse {
-  0% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(186, 26, 26, 0.8);
-  }
-  70% {
-    transform: scale(1.08);
-    box-shadow: 0 0 0 16px rgba(186, 26, 26, 0);
-  }
-  100% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(186, 26, 26, 0);
-  }
-}
-
-.pulse-user-location {
-  animation: markerPulse 2s infinite;
-}
-
-.pulse-sos-beacon {
-  animation: sosPulse 1.4s infinite;
-}
-
-/* Skeleton Loading Shimmer */
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-.skeleton {
-  background: linear-gradient(90deg, #eaedff 25%, #f2f3ff 50%, #eaedff 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-  border-radius: 0.5rem;
+  background-color: #f8fafc !important;
 }

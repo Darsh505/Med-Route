@@ -23,21 +23,41 @@ async def get_dashboard_stats(
     admin: User = Depends(require_admin),
 ):
     """Admin dashboard overview stats."""
-    total_hospitals = (await db.execute(select(func.count(Hospital.id)))).scalar_one()
-    verified_hospitals = (
-        await db.execute(select(func.count(Hospital.id)).where(Hospital.verified == True))
-    ).scalar_one()
-    pending_reviews = (
-        await db.execute(select(func.count(Review.id)).where(Review.status == ReviewStatus.PENDING))
-    ).scalar_one()
-    total_users = (await db.execute(select(func.count(User.id)))).scalar_one()
-    total_sos = (await db.execute(select(func.count(SOSAlert.id)))).scalar_one()
+    from app.database import USE_MEMORY_DB
+    if USE_MEMORY_DB:
+        from app.services.memory_store import memory_store
+        total_hospitals = len(memory_store._hospitals)
+        verified_hospitals = sum(1 for h in memory_store._hospitals if h.get("verified", True))
+        return APIResponse(
+            data={
+                "total_hospitals": total_hospitals,
+                "verified_hospitals": verified_hospitals,
+                "unverified_hospitals": total_hospitals - verified_hospitals,
+                "pending_reviews": 0,
+                "total_users": len(memory_store._users),
+                "total_sos_alerts": len(memory_store._sos_alerts),
+            },
+            message="Dashboard stats (in-memory mode)",
+        )
+
+    try:
+        total_hospitals = (await db.execute(select(func.count(Hospital.id)))).scalar_one()
+        verified_hospitals = (
+            await db.execute(select(func.count(Hospital.id)).where(Hospital.verified == True))
+        ).scalar_one()
+        pending_reviews = (
+            await db.execute(select(func.count(Review.id)).where(Review.status == ReviewStatus.PENDING))
+        ).scalar_one()
+        total_users = (await db.execute(select(func.count(User.id)))).scalar_one()
+        total_sos = (await db.execute(select(func.count(SOSAlert.id)))).scalar_one()
+    except Exception:
+        total_hospitals, verified_hospitals, pending_reviews, total_users, total_sos = 0, 0, 0, 0, 0
 
     return APIResponse(
         data={
             "total_hospitals": total_hospitals,
             "verified_hospitals": verified_hospitals,
-            "unverified_hospitals": total_hospitals - verified_hospitals,
+            "unverified_hospitals": max(0, total_hospitals - verified_hospitals),
             "pending_reviews": pending_reviews,
             "total_users": total_users,
             "total_sos_alerts": total_sos,
@@ -52,13 +72,26 @@ async def get_review_queue(
     admin: User = Depends(require_admin),
 ):
     """Hospitals pending admin verification."""
-    result = await db.execute(
-        select(Hospital)
-        .where(Hospital.verified == False, Hospital.is_active == True)
-        .order_by(Hospital.created_at.desc())
-        .limit(50)
-    )
-    hospitals = result.scalars().all()
+    from app.database import USE_MEMORY_DB
+    if USE_MEMORY_DB:
+        from app.services.memory_store import memory_store
+        unverified = [h for h in memory_store._hospitals if not h.get("verified", True)][:50]
+        return APIResponse(
+            data=[{"id": str(h.get("id")), "name": h.get("name"), "city": h.get("city"), "type": h.get("type"), "data_source_label": h.get("data_source_label", "SIMULATED")} for h in unverified],
+            message=f"{len(unverified)} hospitals pending verification",
+        )
+
+    try:
+        result = await db.execute(
+            select(Hospital)
+            .where(Hospital.verified == False, Hospital.is_active == True)
+            .order_by(Hospital.created_at.desc())
+            .limit(50)
+        )
+        hospitals = result.scalars().all()
+    except Exception:
+        hospitals = []
+
     return APIResponse(
         data=[{"id": str(h.id), "name": h.name, "city": h.city, "type": h.type, "data_source_label": h.data_source_label} for h in hospitals],
         message=f"{len(hospitals)} hospitals pending verification",

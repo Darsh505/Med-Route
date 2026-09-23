@@ -25,7 +25,6 @@ async def find_nearest_hospital(
     Find nearest trauma center without creating an alert.
     Used for preview before user confirms SOS dispatch.
     """
-    result = await sos_service.find_nearest_and_create_alert.__wrapped__ if False else None
     # Just find nearest without saving
     from app.services.hospital_service import hospital_service
     try:

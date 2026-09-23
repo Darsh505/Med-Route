@@ -1,0 +1,15 @@
+# Auto-detect text files and perform LF normalization
+* text=auto
+
+# Mark dataset and mock database files as generated/vendored so they do NOT
+# inflate repository language statistics, code frequency, or clutter diffs
+*.json linguist-generated=true
+*allHospitals.json linguist-generated=true
+*allHospitals.json linguist-vendored=true
+backend/app/data_pipeline/allHospitals.json linguist-generated=true
+backend/app/data_pipeline/allHospitals.json linguist-vendored=true
+mobile/src/data/allHospitals.json linguist-generated=true
+mobile/src/data/allHospitals.json linguist-vendored=true
+web/src/data/allHospitals.json linguist-generated=true
+web/src/data/allHospitals.json linguist-vendored=true
+backend/app/data_pipeline/* linguist-generated=true

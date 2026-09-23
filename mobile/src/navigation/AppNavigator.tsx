@@ -1,5 +1,5 @@
 /**
- * AppNavigator.tsx — Navigation Architecture with AI Chat, Authentication & Safe System Bars
+ * AppNavigator.tsx — Navigation Architecture with Clinical Architecture Health styling
  */
 
 import React from "react";
@@ -33,17 +33,17 @@ function BottomTabs() {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.accent,
-        tabBarInactiveTintColor: colors.textTertiary,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textSecondary,
         tabBarStyle: {
           backgroundColor: colors.card,
-          borderTopColor: colors.borderLight,
+          borderTopColor: colors.borderSubtle,
           borderTopWidth: 1,
           height: tabHeight,
           paddingBottom: bottomPadding,
           paddingTop: 8,
           elevation: 8,
-          shadowColor: "#000",
+          shadowColor: colors.primary,
           shadowOffset: { width: 0, height: -2 },
           shadowOpacity: 0.05,
           shadowRadius: 4,
@@ -62,16 +62,8 @@ function BottomTabs() {
         name="Home"
         component={HomeScreen}
         options={{
-          tabBarLabel: "Home",
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>🏠</Text>,
-        }}
-      />
-      <Tab.Screen
-        name="Search"
-        component={SearchScreen}
-        options={{
-          tabBarLabel: "Search",
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>🔍</Text>,
+          tabBarLabel: "Find",
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>🏥</Text>,
         }}
       />
       <Tab.Screen
@@ -83,10 +75,18 @@ function BottomTabs() {
         }}
       />
       <Tab.Screen
+        name="SOS"
+        component={SOSScreen}
+        options={{
+          tabBarLabel: "Emergency",
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>🚨</Text>,
+        }}
+      />
+      <Tab.Screen
         name="Chat"
         component={ChatScreen}
         options={{
-          tabBarLabel: "AI Chat",
+          tabBarLabel: "Care AI",
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>💬</Text>,
         }}
       />
@@ -108,37 +108,35 @@ export default function AppNavigator() {
       <Stack.Navigator
         screenOptions={{
           headerShown: false,
+          contentStyle: { backgroundColor: colors.background },
           animation: "slide_from_right",
         }}
       >
         <Stack.Screen name="MainTabs" component={BottomTabs} />
+        <Stack.Screen name="HospitalDetail" component={HospitalDetailScreen} />
         <Stack.Screen
-          name="HospitalDetail"
-          component={HospitalDetailScreen}
-          options={{ animation: "slide_from_right" }}
-        />
-        <Stack.Screen
-          name="SOSModal"
-          component={SOSScreen}
+          name="SelectLocation"
+          component={SelectLocationScreen}
           options={{
-            presentation: "fullScreenModal",
-            animation: "fade_from_bottom",
+            presentation: "modal",
+            animation: "slide_from_bottom",
           }}
         />
         <Stack.Screen
           name="Login"
           component={LoginScreen}
-          options={{ animation: "slide_from_bottom" }}
+          options={{
+            presentation: "modal",
+            animation: "slide_from_bottom",
+          }}
         />
         <Stack.Screen
           name="Register"
           component={RegisterScreen}
-          options={{ animation: "slide_from_bottom" }}
-        />
-        <Stack.Screen
-          name="SelectLocation"
-          component={SelectLocationScreen}
-          options={{ animation: "slide_from_bottom" }}
+          options={{
+            presentation: "modal",
+            animation: "slide_from_bottom",
+          }}
         />
       </Stack.Navigator>
     </NavigationContainer>

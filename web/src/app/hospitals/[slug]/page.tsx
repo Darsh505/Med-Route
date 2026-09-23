@@ -5,19 +5,24 @@ import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import HospitalMap from "@/components/HospitalMap";
+import { ALL_HOSPITALS } from "@/data/hospitalsData";
 
 // Interface definitions
 interface ProcedureItem {
   name: string;
+  disease?: string;
   category: string;
   cost_min: number;
   cost_max: number;
   cost_avg: number;
+  cost_formatted?: string;
   pmjay_covered: boolean;
   pmjay_package_rate?: number;
   success_rate?: number;
+  success_ratio?: string;
   wait_time_days?: number;
   volume_per_year?: number;
+  patients_treated?: number;
 }
 
 interface FacilityItem {
@@ -80,6 +85,10 @@ interface HospitalData {
   ambulance_phone?: string;
   pros?: string[];
   cons?: string[];
+  top_disease_treated?: string;
+  total_patients_treated?: number;
+  avg_treatment_cost?: number;
+  overall_success_ratio?: string;
   procedures: ProcedureItem[];
   facilities: FacilityItem[];
   departments: DepartmentItem[];
@@ -133,18 +142,26 @@ export default function HospitalDetailPage({ params }: { params: Promise<{ slug:
                 "Morning OPD peak hours can experience waiting times",
                 "Elective surgeries require prior administrative scheduling"
               ],
+              top_disease_treated: data.top_disease_treated || undefined,
+              total_patients_treated: data.total_patients_treated || undefined,
+              avg_treatment_cost: data.avg_treatment_cost || undefined,
+              overall_success_ratio: data.overall_success_ratio || undefined,
               procedures:
                 data.procedures?.map((p: Record<string, unknown>) => ({
-                  name: (p.procedure as { name?: string })?.name || "Medical Procedure",
-                  category: (p.procedure as { category?: string })?.category || "General",
+                  name: (p.procedure as { name?: string })?.name || (p.name as string) || "Medical Procedure",
+                  disease: (p.disease as string) || undefined,
+                  category: (p.procedure as { category?: string })?.category || (p.category as string) || "General",
                   cost_min: Number(p.cost_min) || 0,
                   cost_max: Number(p.cost_max) || 0,
                   cost_avg: Number(p.cost_avg) || 0,
+                  cost_formatted: (p.cost_formatted as string) || undefined,
                   pmjay_covered: Boolean(p.pmjay_covered),
                   pmjay_package_rate: typeof p.pmjay_package_rate === "number" ? p.pmjay_package_rate : undefined,
                   success_rate: Number(p.success_rate) || 92,
+                  success_ratio: (p.success_ratio as string) || undefined,
                   wait_time_days: Number(p.wait_time_days) || 3,
                   volume_per_year: Number(p.volume_per_year) || 150,
+                  patients_treated: Number(p.patients_treated) || Number(p.volume_per_year) || 150,
                 })) || getMockProcedures(),
               facilities: data.facilities || getMockFacilities(),
               departments: data.departments || getMockDepartments(),
@@ -326,6 +343,10 @@ export default function HospitalDetailPage({ params }: { params: Promise<{ slug:
               <div className="flex flex-col gap-space-xs max-w-3xl">
                 {/* Badges */}
                 <div className="flex flex-wrap items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 font-label-sm font-semibold flex items-center gap-1">
+                    <span>🧪</span>
+                    <span>Simulated Mock Data</span>
+                  </span>
                   <span className="px-2.5 py-0.5 rounded-full bg-surface-container-high text-primary font-label-sm uppercase tracking-wider font-semibold">
                     {hospital.type} Hospital
                   </span>
@@ -455,6 +476,31 @@ export default function HospitalDetailPage({ params }: { params: Promise<{ slug:
               <div className="p-space-md rounded-xl bg-surface-container-low border border-surface-container-high/50 flex flex-col items-center text-center col-span-2 sm:col-span-1">
                 <span className="font-metric-xl text-primary font-extrabold">{hospital.beds_nicu}</span>
                 <span className="font-label-sm text-on-surface-variant font-medium mt-1">NICU Beds</span>
+              </div>
+            </div>
+
+            {/* Disease Treatment & Clinical Track Record Bar */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-space-sm pt-space-md border-t border-surface-container-high/60 mt-space-md">
+              <div className="p-space-md rounded-xl bg-surface-container-low border border-surface-container-high/50 flex items-center gap-3">
+                <span className="text-2xl">🩺</span>
+                <div>
+                  <div className="font-label-sm text-on-surface-variant font-medium">Top Disease Treated</div>
+                  <div className="font-headline-sm text-primary font-bold text-sm">{hospital.top_disease_treated || "Cardiology & Surgery"}</div>
+                </div>
+              </div>
+              <div className="p-space-md rounded-xl bg-surface-container-low border border-surface-container-high/50 flex items-center gap-3">
+                <span className="text-2xl">👥</span>
+                <div>
+                  <div className="font-label-sm text-on-surface-variant font-medium">Total Patients Treated</div>
+                  <div className="font-headline-sm text-primary font-bold text-sm">{hospital.total_patients_treated ? hospital.total_patients_treated.toLocaleString("en-IN") : "14,500+"} Patients</div>
+                </div>
+              </div>
+              <div className="p-space-md rounded-xl bg-surface-container-low border border-surface-container-high/50 flex items-center gap-3">
+                <span className="text-2xl">✨</span>
+                <div>
+                  <div className="font-label-sm text-on-surface-variant font-medium">Overall Clinical Success Ratio</div>
+                  <div className="font-headline-sm text-secondary font-bold text-sm">{hospital.overall_success_ratio || "97.8%"} Track Record</div>
+                </div>
               </div>
             </div>
 
@@ -603,7 +649,13 @@ export default function HospitalDetailPage({ params }: { params: Promise<{ slug:
                       {filteredProcedures.map((proc, idx) => (
                         <tr key={idx} className="hover:bg-surface-container-low/50 transition-colors">
                           <td className="py-4 px-space-md font-bold text-on-surface">
-                            {proc.name}
+                            <div className="font-bold text-on-surface">{proc.name}</div>
+                            {proc.disease && (
+                              <div className="text-xs text-secondary font-semibold mt-1 flex items-center gap-1.5">
+                                <span>🩺</span>
+                                <span>Disease: {proc.disease}</span>
+                              </div>
+                            )}
                           </td>
                           <td className="py-4 px-space-md">
                             <span className="px-2 py-0.5 rounded bg-surface-container-high text-primary font-label-sm font-medium">
@@ -611,8 +663,8 @@ export default function HospitalDetailPage({ params }: { params: Promise<{ slug:
                             </span>
                           </td>
                           <td className="py-4 px-space-md">
-                            <div className="font-headline-md text-primary font-bold">
-                              ₹{proc.cost_avg.toLocaleString("en-IN")}
+                            <div className="font-headline-md text-primary font-bold text-sm">
+                              {proc.cost_formatted || `₹${proc.cost_avg.toLocaleString("en-IN")}`}
                             </div>
                             <div className="font-label-sm text-outline">
                               ₹{proc.cost_min.toLocaleString("en-IN")} – ₹{proc.cost_max.toLocaleString("en-IN")}
@@ -620,17 +672,21 @@ export default function HospitalDetailPage({ params }: { params: Promise<{ slug:
                           </td>
                           <td className="py-4 px-space-md">
                             {proc.pmjay_covered ? (
-                              <span className="px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label-sm font-semibold">
-                                ₹{(proc.pmjay_package_rate || proc.cost_min).toLocaleString("en-IN")} Package
+                              <span className="px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label-sm font-semibold text-xs">
+                                ₹{(proc.pmjay_package_rate || proc.cost_min).toLocaleString("en-IN")} PMJAY
                               </span>
                             ) : (
                               <span className="font-label-sm text-outline">Direct Pay</span>
                             )}
                           </td>
                           <td className="py-4 px-space-md">
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-bold text-secondary">{proc.success_rate}%</span>
-                              <span className="font-label-sm text-outline">({proc.volume_per_year}/yr)</span>
+                            <div className="flex flex-col gap-0.5">
+                              <span className="font-bold text-secondary text-sm">
+                                ✓ {proc.success_ratio || `${proc.success_rate}%`} Success
+                              </span>
+                              <span className="font-label-sm text-on-surface-variant text-xs">
+                                👥 {(proc.patients_treated || proc.volume_per_year || 0).toLocaleString("en-IN")} patients treated
+                              </span>
                             </div>
                           </td>
                           <td className="py-4 px-space-md font-body-sm text-on-surface-variant">
@@ -1187,6 +1243,82 @@ const DETAILED_HOSPITALS_REGISTRY: Record<string, Partial<HospitalData>> = {
 };
 
 function getMockHospital(slug: string): HospitalData {
+  const panIndiaMatch = ALL_HOSPITALS.find(
+    (h) => h.slug === slug || h.id === slug || h.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") === slug
+  );
+  if (panIndiaMatch) {
+    return {
+      id: panIndiaMatch.id,
+      name: panIndiaMatch.name,
+      slug: panIndiaMatch.slug,
+      type: panIndiaMatch.type,
+      address: panIndiaMatch.address,
+      city: panIndiaMatch.city,
+      state: panIndiaMatch.state,
+      pincode: panIndiaMatch.pincode || "110001",
+      latitude: panIndiaMatch.latitude,
+      longitude: panIndiaMatch.longitude,
+      phone: panIndiaMatch.phone,
+      emergency_phone: panIndiaMatch.emergency_phone,
+      ambulance_phone: panIndiaMatch.ambulance_phone,
+      email: "desk@medroute.in",
+      website: "https://medroute.in",
+      beds_total: panIndiaMatch.beds_total,
+      beds_icu: panIndiaMatch.beds_icu,
+      beds_icu_available: panIndiaMatch.beds_icu_available,
+      beds_ventilator: panIndiaMatch.beds_ventilator,
+      beds_nicu: Math.floor(panIndiaMatch.beds_icu * 0.4),
+      is_pmjay_empanelled: panIndiaMatch.is_pmjay_empanelled,
+      is_emergency_24x7: true,
+      is_trauma_center: panIndiaMatch.is_trauma_center,
+      trauma_level: panIndiaMatch.trauma_level,
+      accreditation: panIndiaMatch.accreditation,
+      overall_rating: panIndiaMatch.overall_rating,
+      total_reviews: panIndiaMatch.total_reviews,
+      data_source_label: "VERIFIED_REGISTRY",
+      pros: panIndiaMatch.pros,
+      cons: panIndiaMatch.cons,
+      top_disease_treated: panIndiaMatch.top_disease_treated,
+      total_patients_treated: panIndiaMatch.total_patients_treated,
+      avg_treatment_cost: panIndiaMatch.avg_treatment_cost,
+      overall_success_ratio: panIndiaMatch.overall_success_ratio,
+      procedures: (panIndiaMatch.procedures && panIndiaMatch.procedures.length > 0)
+        ? panIndiaMatch.procedures.map((p) => ({
+            name: p.name,
+            disease: p.disease,
+            category: p.category,
+            cost_min: p.cost_min,
+            cost_max: p.cost_max,
+            cost_avg: p.cost_avg,
+            cost_formatted: p.cost_formatted,
+            pmjay_covered: p.pmjay_covered,
+            pmjay_package_rate: p.pmjay_package_rate,
+            success_rate: p.success_rate,
+            success_ratio: p.success_ratio,
+            wait_time_days: p.wait_time_days,
+            volume_per_year: p.volume_per_year,
+            patients_treated: p.patients_treated,
+          }))
+        : getMockProcedures(),
+      facilities: getMockFacilities(),
+      departments: getMockDepartments(),
+      reviews: (panIndiaMatch.reviews && panIndiaMatch.reviews.length > 0)
+        ? panIndiaMatch.reviews.map((r, idx) => ({
+            id: r.id || `rev-${idx}`,
+            author_name: r.author_name || "Verified Patient",
+            rating: r.rating_overall || 5,
+            cost_transparency_rating: 5,
+            treatment_category: r.treatment_category || "Emergency Care",
+            title: r.title || "Clinical Experience",
+            content: r.comment || "Patient provided positive feedback regarding treatment and facilities.",
+            helpful_count: r.helpful_count || 5,
+            created_at: r.created_at || "Recent Visit",
+            would_recommend: r.would_recommend,
+          }))
+        : getMockReviews(),
+    };
+  }
+
   const match =
     DETAILED_HOSPITALS_REGISTRY[slug] ||
     Object.entries(DETAILED_HOSPITALS_REGISTRY).find(([k]) => slug.includes(k))?.[1] ||
@@ -1220,6 +1352,10 @@ function getMockHospital(slug: string): HospitalData {
     overall_rating: match.overall_rating || 4.7,
     total_reviews: match.total_reviews || 280,
     data_source_label: "SIMULATED",
+    top_disease_treated: "Coronary Artery Disease (CAD)",
+    total_patients_treated: 16400,
+    avg_treatment_cost: 65000,
+    overall_success_ratio: "97.4%",
     procedures: getMockProcedures(),
     facilities: getMockFacilities(),
     departments: getMockDepartments(),
@@ -1231,75 +1367,99 @@ function getMockProcedures(): ProcedureItem[] {
   return [
     {
       name: "Coronary Angioplasty (PTCA)",
+      disease: "Coronary Artery Disease (CAD) / Heart Attack",
       category: "Cardiac",
       cost_min: 65000,
       cost_max: 180000,
       cost_avg: 110000,
+      cost_formatted: "₹1,10,000 avg (₹65k – ₹1.8L)",
       pmjay_covered: true,
       pmjay_package_rate: 65000,
-      success_rate: 96,
+      success_rate: 96.8,
+      success_ratio: "96.8%",
       wait_time_days: 2,
       volume_per_year: 1450,
+      patients_treated: 1850,
     },
     {
       name: "Total Knee Replacement (Unilateral)",
+      disease: "Severe Knee Osteoarthritis",
       category: "Orthopedic",
       cost_min: 90000,
       cost_max: 220000,
       cost_avg: 145000,
+      cost_formatted: "₹1,45,000 avg (₹90k – ₹2.2L)",
       pmjay_covered: true,
       pmjay_package_rate: 80000,
-      success_rate: 94,
+      success_rate: 97.4,
+      success_ratio: "97.4%",
       wait_time_days: 4,
       volume_per_year: 820,
+      patients_treated: 1420,
     },
     {
       name: "Cataract Surgery (Phaco + Foldable IOL)",
+      disease: "Senile Cataract & Vision Impairment",
       category: "Ophthalmology",
       cost_min: 8000,
       cost_max: 45000,
       cost_avg: 22000,
+      cost_formatted: "₹22,000 avg (₹8k – ₹45k)",
       pmjay_covered: true,
       pmjay_package_rate: 8500,
-      success_rate: 99,
+      success_rate: 99.1,
+      success_ratio: "99.1%",
       wait_time_days: 1,
       volume_per_year: 3200,
+      patients_treated: 4100,
     },
     {
       name: "Laparoscopic Cholecystectomy (Gallbladder)",
+      disease: "Cholelithiasis (Gallbladder Stones)",
       category: "General Surgery",
       cost_min: 25000,
       cost_max: 85000,
       cost_avg: 48000,
+      cost_formatted: "₹48,000 avg (₹25k – ₹85k)",
       pmjay_covered: true,
       pmjay_package_rate: 28000,
-      success_rate: 97,
+      success_rate: 98.6,
+      success_ratio: "98.6%",
       wait_time_days: 3,
       volume_per_year: 940,
+      patients_treated: 2100,
     },
     {
       name: "Hemodialysis (Per Session)",
+      disease: "Chronic Kidney Disease (ESRD)",
       category: "Renal",
       cost_min: 800,
       cost_max: 3000,
       cost_avg: 1800,
+      cost_formatted: "₹1,800 / session",
       pmjay_covered: true,
       pmjay_package_rate: 1500,
-      success_rate: 98,
+      success_rate: 99.2,
+      success_ratio: "99.2%",
       wait_time_days: 1,
       volume_per_year: 5800,
+      patients_treated: 4800,
     },
     {
       name: "Normal / Caesarean Delivery (LSCS)",
+      disease: "High-Risk Pregnancy / Obstructed Labor",
       category: "Obstetrics",
       cost_min: 15000,
       cost_max: 75000,
       cost_avg: 38000,
+      cost_formatted: "₹38,000 avg (₹15k – ₹75k)",
       pmjay_covered: true,
       pmjay_package_rate: 18000,
-      success_rate: 98,
+      success_rate: 98.8,
+      success_ratio: "98.8%",
       wait_time_days: 1,
       volume_per_year: 2100,
+      patients_treated: 3400,
     },
   ];
 }

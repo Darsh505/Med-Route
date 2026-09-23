@@ -19,6 +19,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../theme/colors";
 import { authService } from "../services/auth";
+import MedRouteLogo from "../components/MedRouteLogo";
 
 export default function LoginScreen({ navigation }: any) {
   const [email, setEmail] = useState("");
@@ -74,11 +75,10 @@ export default function LoginScreen({ navigation }: any) {
         <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
           {/* Header */}
           <View style={styles.header}>
-            <View style={styles.iconContainer}>
-              <Text style={styles.iconText}>🏥</Text>
-            </View>
-            <Text style={styles.title}>MedRoute</Text>
-            <Text style={styles.subtitle}>National Emergency Routing &amp; Hospital Registry</Text>
+            <MedRouteLogo size="xl" layout="vertical" showBadge={true} />
+            <Text style={[styles.subtitle, { marginTop: 8 }]}>
+              National Emergency Routing &amp; Hospital Registry
+            </Text>
           </View>
 
           {/* 1-Click Demo Buttons for Presentations */}

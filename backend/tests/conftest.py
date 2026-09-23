@@ -12,6 +12,17 @@ from app.main import app
 from app.database import get_db, Base
 from app.models.user import User, UserRole
 from app.services.auth_service import hash_password, create_access_token
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.ext.compiler import compiles
+from geoalchemy2 import Geography
+
+@compiles(JSONB, "sqlite")
+def compile_jsonb_sqlite(type_, compiler, **kw):
+    return "JSON"
+
+@compiles(Geography, "sqlite")
+def compile_geography_sqlite(type_, compiler, **kw):
+    return "TEXT"
 
 # Use in-memory SQLite for tests (no PostGIS — spatial tests use mocks)
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
@@ -29,7 +40,7 @@ def event_loop():
 async def test_engine():
     engine = create_async_engine(TEST_DATABASE_URL, echo=False)
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(lambda sync_conn: Base.metadata.create_all(sync_conn, tables=[User.__table__]))
     yield engine
     await engine.dispose()
 

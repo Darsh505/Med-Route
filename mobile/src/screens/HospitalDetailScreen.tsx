@@ -163,6 +163,9 @@ export default function HospitalDetailScreen({ route, navigation }: any) {
 
             {/* Badges */}
             <View style={styles.badgesRow}>
+              <View style={[styles.badge, styles.badgeMockData]}>
+                <Text style={styles.badgeMockDataText}>🧪 Mock Data</Text>
+              </View>
               <View style={[styles.badge, styles.badgeGovt]}>
                 <Text style={styles.badgeGovtText}>🏛️ {hospital.type}</Text>
               </View>
@@ -275,6 +278,27 @@ export default function HospitalDetailScreen({ route, navigation }: any) {
               </View>
             </View>
 
+            {/* Disease Treatment & Clinical Volume Card */}
+            <View style={[styles.prosConsCard, { marginBottom: spacing.md }]}>
+              <Text style={styles.prosConsTitle}>🩺 Disease Care &amp; Clinical Track Record</Text>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 8, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: colors.borderLight }}>
+                <Text style={{ fontSize: 12, color: colors.textSecondary }}>Top Treated Disease</Text>
+                <Text style={{ fontSize: 12, fontWeight: "700", color: colors.primaryDark }}>{hospital.top_disease_treated || "Cardiology & Surgery"}</Text>
+              </View>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 8, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: colors.borderLight }}>
+                <Text style={{ fontSize: 12, color: colors.textSecondary }}>Total Patients Treated</Text>
+                <Text style={{ fontSize: 12, fontWeight: "700", color: colors.textPrimary }}>
+                  {hospital.total_patients_treated ? `👥 ${hospital.total_patients_treated.toLocaleString()} Patients` : "👥 14,500+ Patients"}
+                </Text>
+              </View>
+              <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                <Text style={{ fontSize: 12, color: colors.textSecondary }}>Overall Success Ratio</Text>
+                <Text style={{ fontSize: 12, fontWeight: "700", color: colors.success }}>
+                  ✓ {hospital.overall_success_ratio || "97.8%"} Track Record
+                </Text>
+              </View>
+            </View>
+
             {/* Quick Pros and Cons (Clinical Strengths vs Watchouts) */}
             <View style={styles.prosConsCard}>
               <Text style={styles.prosConsTitle}>⚖️ Clinical Assessment: Quick Pros &amp; Cons</Text>
@@ -349,22 +373,101 @@ export default function HospitalDetailScreen({ route, navigation }: any) {
         {/* TAB 2: PROCEDURES */}
         {activeTab === "procedures" && (
           <View style={styles.tabContent}>
-            <Text style={styles.subheading}>Benchmark Procedure Pricing</Text>
-            {[
-              { name: "Coronary Angioplasty (Single Stent)", cost: "₹95,000", pmjay: "₹65,000 Rate", success: "96%" },
-              { name: "Total Knee Replacement", cost: "₹1,15,000", pmjay: "₹80,000 Rate", success: "94%" },
-              { name: "Cataract Surgery (Phaco + IOL)", cost: "₹12,000", pmjay: "₹8,500 Rate", success: "99%" },
-              { name: "Hemodialysis (Per Session)", cost: "₹1,200", pmjay: "₹1,500 Rate", success: "98%" },
-              { name: "Gallbladder Removal (Lap)", cost: "₹45,000", pmjay: "₹28,000 Rate", success: "97%" },
-            ].map((proc, idx) => (
+            <View style={{ marginBottom: 12 }}>
+              <Text style={styles.subheading}>Disease Treatments &amp; Benchmark Pricing</Text>
+              <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 2 }}>
+                Includes clinical outcomes, audited success rates, and PM-JAY 2.2 cashless package rates.
+              </Text>
+              <View style={styles.mockDataStrip}>
+                <Text style={styles.mockDataStripText}>
+                  🧪 Benchmark Note: All tariffs, patient volume counts, and success ratios below are simulated demonstration mock data.
+                </Text>
+              </View>
+            </View>
+
+            {(hospital.procedures && hospital.procedures.length > 0
+              ? hospital.procedures
+              : [
+                  {
+                    name: "Coronary Angioplasty (Single Stent)",
+                    disease: "Coronary Artery Disease (CAD)",
+                    cost_formatted: "₹95,000 avg (₹75k – ₹1.4L)",
+                    cost_avg: 95000,
+                    pmjay_covered: true,
+                    pmjay_package_rate: 65000,
+                    success_ratio: "96.8%",
+                    patients_treated: 1850,
+                  },
+                  {
+                    name: "Total Knee Replacement",
+                    disease: "Severe Knee Osteoarthritis",
+                    cost_formatted: "₹1,15,000 avg (₹90k – ₹1.65L)",
+                    cost_avg: 115000,
+                    pmjay_covered: true,
+                    pmjay_package_rate: 80000,
+                    success_ratio: "97.4%",
+                    patients_treated: 1420,
+                  },
+                  {
+                    name: "Cataract Surgery (Phaco + IOL)",
+                    disease: "Senile Cataract & Vision Impairment",
+                    cost_formatted: "₹18,000 avg (₹12k – ₹32k)",
+                    cost_avg: 18000,
+                    pmjay_covered: true,
+                    pmjay_package_rate: 8500,
+                    success_ratio: "99.1%",
+                    patients_treated: 3600,
+                  },
+                  {
+                    name: "Hemodialysis (Maintenance)",
+                    disease: "Chronic Kidney Disease (ESRD)",
+                    cost_formatted: "₹1,800 / session",
+                    cost_avg: 1800,
+                    pmjay_covered: true,
+                    pmjay_package_rate: 1500,
+                    success_ratio: "99.2%",
+                    patients_treated: 4800,
+                  },
+                  {
+                    name: "Laparoscopic Cholecystectomy",
+                    disease: "Cholelithiasis (Gallbladder Stones)",
+                    cost_formatted: "₹48,000 avg (₹35k – ₹72k)",
+                    cost_avg: 48000,
+                    pmjay_covered: true,
+                    pmjay_package_rate: 28000,
+                    success_ratio: "98.6%",
+                    patients_treated: 2100,
+                  },
+                ]
+            ).map((proc: any, idx: number) => (
               <View key={idx} style={styles.procedureCard}>
-                <View style={{ flex: 1 }}>
+                <View style={{ flex: 1, marginRight: 8 }}>
                   <Text style={styles.procedureName}>{proc.name}</Text>
-                  <Text style={styles.procedurePmjay}>PMJAY: {proc.pmjay}</Text>
+                  {proc.disease ? (
+                    <Text style={{ fontSize: 11, color: colors.accentDark, fontWeight: "600", marginTop: 2 }}>
+                      🩺 Disease: {proc.disease}
+                    </Text>
+                  ) : null}
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 4 }}>
+                    <Text style={styles.procedurePmjay}>
+                      {proc.pmjay_covered
+                        ? `PMJAY: ₹${(proc.pmjay_package_rate || 0).toLocaleString()}`
+                        : "PMJAY: Direct Pay"}
+                    </Text>
+                    {proc.patients_treated ? (
+                      <Text style={{ fontSize: 11, color: colors.textTertiary }}>
+                        👥 {proc.patients_treated.toLocaleString()} treated
+                      </Text>
+                    ) : null}
+                  </View>
                 </View>
-                <View style={{ alignItems: "flex-end" }}>
-                  <Text style={styles.procedureCost}>{proc.cost}</Text>
-                  <Text style={styles.procedureSuccess}>✓ {proc.success} Success</Text>
+                <View style={{ alignItems: "flex-end", justifyContent: "center" }}>
+                  <Text style={styles.procedureCost}>
+                    {proc.cost_formatted || `₹${(proc.cost_avg || 0).toLocaleString()}`}
+                  </Text>
+                  <Text style={styles.procedureSuccess}>
+                    ✓ {proc.success_ratio || `${proc.success_rate || 95}%`} Success
+                  </Text>
                 </View>
               </View>
             ))}
@@ -546,6 +649,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: borderRadius.pill,
+  },
+  badgeMockData: {
+    backgroundColor: "rgba(245, 158, 11, 0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(245, 158, 11, 0.3)",
+  },
+  badgeMockDataText: {
+    color: "#B45309",
+    fontSize: 11,
+    fontWeight: "800",
   },
   badgeGovt: {
     backgroundColor: colors.primaryLight,
@@ -844,6 +957,21 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: "700",
     fontSize: 12,
+  },
+  mockDataStrip: {
+    backgroundColor: "rgba(245, 158, 11, 0.08)",
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 5,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "rgba(245, 158, 11, 0.2)",
+    marginTop: 6,
+  },
+  mockDataStripText: {
+    fontSize: 10,
+    color: "#92400E",
+    fontWeight: "600",
+    lineHeight: 14,
   },
   procedureCard: {
     flexDirection: "row",

@@ -18,6 +18,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../theme/colors";
 import { authService } from "../services/auth";
+import MedRouteLogo from "../components/MedRouteLogo";
 
 export default function RegisterScreen({ navigation }: any) {
   const [name, setName] = useState("");
@@ -64,11 +65,10 @@ export default function RegisterScreen({ navigation }: any) {
         <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
           {/* Header */}
           <View style={styles.header}>
-            <View style={styles.iconContainer}>
-              <Text style={styles.iconText}>👤</Text>
-            </View>
-            <Text style={styles.title}>Join MedRoute</Text>
-            <Text style={styles.subtitle}>Create your emergency profile &amp; health directory access</Text>
+            <MedRouteLogo size="xl" layout="vertical" showBadge={true} />
+            <Text style={[styles.subtitle, { marginTop: 8 }]}>
+              Create your emergency profile &amp; health directory access
+            </Text>
           </View>
 
           {/* Error Message */}

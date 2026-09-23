@@ -17,7 +17,7 @@ PROCEDURE_ALIASES: dict[str, list[str]] = {
     # ── Renal / Kidney ────────────────────────────────────────────
     "dialysis": [
         "dialysis", "hemodialysis", "kidney dialysis", "gurdey ki safai",
-        "blood purification", "kidney cleaning",
+        "blood purification", "kidney cleaning", "kidney treatment", "kidney", "renal",
     ],
     "kidney_transplant": [
         "kidney transplant", "renal transplant", "gurdey ka transplant",
