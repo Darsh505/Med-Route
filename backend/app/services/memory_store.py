@@ -17,6 +17,8 @@ Features:
 import math
 import uuid
 import time
+import json
+from pathlib import Path
 from typing import Optional, List, Dict, Any, Tuple
 from datetime import datetime, timezone
 
@@ -47,6 +49,11 @@ class MemoryStore:
         self._users_by_id: Dict[str, Dict[str, Any]] = {} # id → user dict
         self._reviews: Dict[str, List[Dict[str, Any]]] = {}  # hospital_id → reviews
         self._sos_alerts: Dict[str, Dict[str, Any]] = {}  # alert_id → alert
+        self._bookings: List[Dict[str, Any]] = []
+        self._claims: List[Dict[str, Any]] = []
+        self._triage_cases: List[Dict[str, Any]] = []
+        self._persisted_overrides: Dict[str, Any] = {}
+        self._overrides_file = Path(__file__).resolve().parent.parent / "data_pipeline" / "admin_overrides.json"
         self._loaded = False
 
     def load(self):
@@ -187,11 +194,16 @@ class MemoryStore:
                 self._reviews[h_slug] = sample_reviews
                 h["reviews"] = sample_reviews
 
+            self._init_operations_data()
+            self._load_persisted_overrides()
+
             self._loaded = True
-            logger.info(f"[OK] Memory store loaded {len(self._hospitals)} hospitals")
+            logger.info(f"[OK] Memory store loaded {len(self._hospitals)} hospitals with {len(self._bookings)} bookings and {len(self._claims)} claims")
         except Exception as e:
             logger.error(f"Failed to load seed data: {e}")
             self._hospitals = self._get_fallback_hospitals()
+            self._init_operations_data()
+            self._load_persisted_overrides()
             self._loaded = True
 
     # ── Hospital Methods ──────────────────────────────────────────
@@ -465,6 +477,428 @@ class MemoryStore:
             self._reviews[key] = []
         self._reviews[key].insert(0, review)
         return review
+
+    # ── Admin Operations & Persistence ────────────────────────────
+
+    def _init_operations_data(self):
+        if self._triage_cases and self._bookings and self._claims:
+            return
+
+        self._triage_cases = [
+            {
+                "id": "TRG-4091",
+                "patient": "Rohan Deshmukh",
+                "complaint": "Acute STEMI · Severe chest pain radiating to left arm",
+                "hospital": "PGIMER Chandigarh",
+                "hospital_id": "hosp-3",
+                "severity": "Critical",
+                "eta": "8 min",
+                "ambulance": True,
+                "status": "In Transit",
+                "timestamp": "Just now",
+            },
+            {
+                "id": "TRG-4089",
+                "patient": "Kavita Rao",
+                "complaint": "Polytrauma · High-speed MVC, suspected pelvic fracture",
+                "hospital": "Max Super Speciality Hospital Mohali",
+                "hospital_id": "hosp-4",
+                "severity": "Critical",
+                "eta": "12 min",
+                "ambulance": True,
+                "status": "Dispatched",
+                "timestamp": "4m ago",
+            },
+            {
+                "id": "TRG-4088",
+                "patient": "Harpreet Kaur",
+                "complaint": "Acute appendicitis · Peritoneal signs, fever",
+                "hospital": "Civil Hospital Hoshiarpur",
+                "hospital_id": "hosp-1",
+                "severity": "Urgent",
+                "eta": "18 min",
+                "ambulance": False,
+                "status": "Admitted",
+                "timestamp": "11m ago",
+            },
+            {
+                "id": "TRG-4084",
+                "patient": "Suresh Gupta",
+                "complaint": "COPD exacerbation · SpO2 86%, stridor",
+                "hospital": "Fortis Hospital Mohali",
+                "hospital_id": "hosp-5",
+                "severity": "Urgent",
+                "eta": "22 min",
+                "ambulance": True,
+                "status": "Admitted",
+                "timestamp": "28m ago",
+            },
+            {
+                "id": "TRG-4081",
+                "patient": "Anita Sharma",
+                "complaint": "Third trimester antepartum hemorrhage",
+                "hospital": "Government Medical College & Hospital Chandigarh",
+                "hospital_id": "hosp-2",
+                "severity": "Critical",
+                "eta": "6 min",
+                "ambulance": True,
+                "status": "Resolved",
+                "timestamp": "42m ago",
+            },
+        ]
+
+        self._bookings = [
+            {
+                "id": "BK-8841",
+                "patient": "Amit Patel",
+                "procedure": "CABG (Heart Bypass)",
+                "hospital": "PGIMER Chandigarh",
+                "hospital_id": "hosp-3",
+                "date": "2026-09-24",
+                "time": "09:30 AM",
+                "type": "Inpatient",
+                "status": "Confirmed",
+                "amount": 165000,
+            },
+            {
+                "id": "BK-8840",
+                "patient": "Sunita Verma",
+                "procedure": "Total Knee Replacement",
+                "hospital": "Max Super Speciality Hospital Mohali",
+                "hospital_id": "hosp-4",
+                "date": "2026-09-24",
+                "time": "11:00 AM",
+                "type": "Inpatient",
+                "status": "Confirmed",
+                "amount": 210000,
+            },
+            {
+                "id": "BK-8839",
+                "patient": "Vikram Sethi",
+                "procedure": "Coronary Angiography",
+                "hospital": "Fortis Hospital Mohali",
+                "hospital_id": "hosp-5",
+                "date": "2026-09-24",
+                "time": "02:15 PM",
+                "type": "Daycare",
+                "status": "Confirmed",
+                "amount": 18500,
+            },
+            {
+                "id": "BK-8838",
+                "patient": "Pooja Choudhary",
+                "procedure": "Cataract Phaco Surgery",
+                "hospital": "Civil Hospital Hoshiarpur",
+                "hospital_id": "hosp-1",
+                "date": "2026-09-25",
+                "time": "10:00 AM",
+                "type": "Daycare",
+                "status": "In Consultation",
+                "amount": 12000,
+            },
+            {
+                "id": "BK-8837",
+                "patient": "Gurpreet Singh",
+                "procedure": "Kidney Stone Lithotripsy",
+                "hospital": "Ivy Hospital Mohali",
+                "hospital_id": "hosp-6",
+                "date": "2026-09-25",
+                "time": "03:30 PM",
+                "type": "Daycare",
+                "status": "Completed",
+                "amount": 42000,
+            },
+            {
+                "id": "BK-8835",
+                "patient": "Manish Tiwari",
+                "procedure": "Lap Cholecystectomy",
+                "hospital": "Government Medical College & Hospital Chandigarh",
+                "hospital_id": "hosp-2",
+                "date": "2026-09-26",
+                "time": "08:45 AM",
+                "type": "Inpatient",
+                "status": "Confirmed",
+                "amount": 35000,
+            },
+        ]
+
+        self._claims = [
+            {
+                "id": "CLM-9012",
+                "patient": "Amit Patel",
+                "hospital": "PGIMER Chandigarh",
+                "insurer": "Star Health",
+                "amount": 165000,
+                "status": "Disbursed",
+                "submitted": "2026-09-21",
+                "preauth_approved": True,
+            },
+            {
+                "id": "CLM-9011",
+                "patient": "Sunita Verma",
+                "hospital": "Max Super Speciality Hospital Mohali",
+                "insurer": "HDFC ERGO",
+                "amount": 210000,
+                "status": "Approved",
+                "submitted": "2026-09-22",
+                "preauth_approved": True,
+            },
+            {
+                "id": "CLM-9010",
+                "patient": "Rohan Deshmukh",
+                "hospital": "PGIMER Chandigarh",
+                "insurer": "NHA (AB-PMJAY)",
+                "amount": 125000,
+                "status": "Under Review",
+                "submitted": "2026-09-23",
+                "preauth_approved": True,
+            },
+            {
+                "id": "CLM-9009",
+                "patient": "Vikram Sethi",
+                "hospital": "Fortis Hospital Mohali",
+                "insurer": "Care Health",
+                "amount": 18500,
+                "status": "Approved",
+                "submitted": "2026-09-22",
+                "preauth_approved": True,
+            },
+            {
+                "id": "CLM-9008",
+                "patient": "Anita Sharma",
+                "hospital": "Government Medical College & Hospital Chandigarh",
+                "insurer": "NHA (AB-PMJAY)",
+                "amount": 45000,
+                "status": "Disbursed",
+                "submitted": "2026-09-20",
+                "preauth_approved": True,
+            },
+            {
+                "id": "CLM-9007",
+                "patient": "Kavita Rao",
+                "hospital": "Max Super Speciality Hospital Mohali",
+                "insurer": "ICICI Lombard",
+                "amount": 180000,
+                "status": "Under Review",
+                "submitted": "2026-09-23",
+                "preauth_approved": False,
+            },
+        ]
+
+    def _load_persisted_overrides(self):
+        try:
+            if self._overrides_file.exists():
+                with open(self._overrides_file, "r", encoding="utf-8") as f:
+                    self._persisted_overrides = json.load(f)
+                hosp_overrides = self._persisted_overrides.get("hospitals", {})
+                for h in self._hospitals:
+                    h_id = str(h.get("id"))
+                    h_slug = str(h.get("slug"))
+                    override = hosp_overrides.get(h_id) or hosp_overrides.get(h_slug)
+                    if override:
+                        h.update(override)
+                if "bookings" in self._persisted_overrides:
+                    self._bookings = self._persisted_overrides["bookings"]
+                if "claims" in self._persisted_overrides:
+                    self._claims = self._persisted_overrides["claims"]
+                if "triage_cases" in self._persisted_overrides:
+                    self._triage_cases = self._persisted_overrides["triage_cases"]
+                for created in self._persisted_overrides.get("created_hospitals", []):
+                    if not any(str(h.get("id")) == str(created.get("id")) for h in self._hospitals):
+                        self._hospitals.insert(0, created)
+        except Exception as e:
+            logger.warning(f"Failed to load persisted admin overrides: {e}")
+
+    def _save_overrides(self):
+        try:
+            self._overrides_file.parent.mkdir(parents=True, exist_ok=True)
+            self._persisted_overrides["bookings"] = self._bookings
+            self._persisted_overrides["claims"] = self._claims
+            self._persisted_overrides["triage_cases"] = self._triage_cases
+            with open(self._overrides_file, "w", encoding="utf-8") as f:
+                json.dump(self._persisted_overrides, f, indent=2)
+        except Exception as e:
+            logger.error(f"Failed to save admin overrides: {e}")
+
+    def update_hospital(self, hospital_id: str, updates: Dict[str, Any]) -> Optional[Dict]:
+        if not self._loaded:
+            self.load()
+        target = None
+        for h in self._hospitals:
+            if str(h.get("id")) == str(hospital_id) or h.get("slug") == str(hospital_id):
+                target = h
+                break
+        if not target:
+            return None
+        target.update(updates)
+        if "hospitals" not in self._persisted_overrides:
+            self._persisted_overrides["hospitals"] = {}
+        target_id = str(target.get("id"))
+        curr = self._persisted_overrides["hospitals"].get(target_id, {})
+        curr.update(updates)
+        self._persisted_overrides["hospitals"][target_id] = curr
+        self._save_overrides()
+        return dict(target)
+
+    def create_hospital(self, data: Dict[str, Any]) -> Dict:
+        if not self._loaded:
+            self.load()
+        h_id = data.get("id") or f"hosp-{len(self._hospitals) + 1}"
+        name = data.get("name", "Hospital")
+        slug = data.get("slug") or name.lower().replace(" ", "-").replace("(", "").replace(")", "").replace("'", "")
+        h = {
+            **data,
+            "id": h_id,
+            "slug": slug,
+            "name": name,
+            "is_active": True,
+            "verified": data.get("verified", True),
+            "beds_icu_available": data.get("beds_icu_available", 6),
+            "beds_icu": data.get("beds_icu", 24),
+            "beds_total": data.get("beds_total", 200),
+            "overall_rating": data.get("overall_rating", 4.6),
+            "total_reviews": data.get("total_reviews", 45),
+            "ranking_score": data.get("ranking_score", 90),
+            "data_source_label": data.get("data_source_label", "ADMIN_VERIFIED"),
+        }
+        self._hospitals.insert(0, h)
+        if "created_hospitals" not in self._persisted_overrides:
+            self._persisted_overrides["created_hospitals"] = []
+        self._persisted_overrides["created_hospitals"].append(h)
+        self._save_overrides()
+        return dict(h)
+
+    def delete_hospital(self, hospital_id: str) -> bool:
+        if not self._loaded:
+            self.load()
+        res = self.update_hospital(hospital_id, {"is_active": False})
+        return bool(res)
+
+    def get_admin_stats(self) -> Dict[str, Any]:
+        if not self._loaded:
+            self.load()
+        active = [h for h in self._hospitals if h.get("is_active", True)]
+        total_h = len(active)
+        verified_h = sum(1 for h in active if h.get("verified", True))
+        total_beds = sum(h.get("beds_total", 0) for h in active)
+        total_icu = sum(h.get("beds_icu", 0) for h in active)
+        avail_icu = sum(h.get("beds_icu_available", 0) for h in active)
+        pmjay_count = sum(1 for h in active if h.get("is_pmjay_empanelled", False))
+        
+        occupancy_pct = round(((total_beds - (avail_icu * 4)) / max(1, total_beds)) * 100, 1) if total_beds > 0 else 72.4
+        occupancy_pct = max(35.0, min(95.0, occupancy_pct))
+
+        total_claims_val = sum(c.get("amount", 0) for c in self._claims)
+        disbursed_claims_val = sum(c.get("amount", 0) for c in self._claims if c.get("status") == "Disbursed")
+        under_review_claims = sum(1 for c in self._claims if c.get("status") == "Under Review")
+        approval_rate = round(
+            (sum(1 for c in self._claims if c.get("status") in ["Approved", "Disbursed"]) / max(1, len(self._claims))) * 100
+        )
+
+        active_triage = len([t for t in self._triage_cases if t.get("status") not in ["Admitted", "Resolved"]])
+        critical_triage = len([t for t in self._triage_cases if t.get("severity") == "Critical" and t.get("status") != "Resolved"])
+        ambulances_active = len([t for t in self._triage_cases if t.get("ambulance") and t.get("status") not in ["Admitted", "Resolved"]])
+
+        return {
+            "total_hospitals": total_h,
+            "verified_hospitals": verified_h,
+            "unverified_hospitals": max(0, total_h - verified_h),
+            "total_beds": total_beds,
+            "total_icu_beds": total_icu,
+            "available_icu_beds": avail_icu,
+            "pmjay_empanelled_count": pmjay_count,
+            "occupancy_rate_pct": occupancy_pct,
+            "active_triage_cases": active_triage,
+            "critical_triage_cases": critical_triage,
+            "ambulances_active": ambulances_active,
+            "total_bookings": len(self._bookings),
+            "total_claims_count": len(self._claims),
+            "under_review_claims": under_review_claims,
+            "approval_rate_pct": approval_rate,
+            "total_claims_value_inr": total_claims_val,
+            "disbursed_claims_value_inr": disbursed_claims_val,
+            "total_users": len(self._users),
+            "total_sos_alerts": len(self._sos_alerts),
+        }
+
+    def get_triage_cases(self) -> List[Dict[str, Any]]:
+        if not self._loaded:
+            self.load()
+        return [dict(t) for t in self._triage_cases]
+
+    def update_triage_case(self, case_id: str, updates: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        if not self._loaded:
+            self.load()
+        for t in self._triage_cases:
+            if t.get("id") == case_id:
+                t.update(updates)
+                self._save_overrides()
+                return dict(t)
+        return None
+
+    def get_bookings(self) -> List[Dict[str, Any]]:
+        if not self._loaded:
+            self.load()
+        return [dict(b) for b in self._bookings]
+
+    def update_booking(self, booking_id: str, updates: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        if not self._loaded:
+            self.load()
+        for b in self._bookings:
+            if b.get("id") == booking_id:
+                b.update(updates)
+                self._save_overrides()
+                return dict(b)
+        return None
+
+    def get_claims(self) -> List[Dict[str, Any]]:
+        if not self._loaded:
+            self.load()
+        return [dict(c) for c in self._claims]
+
+    def update_claim(self, claim_id: str, updates: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        if not self._loaded:
+            self.load()
+        for c in self._claims:
+            if c.get("id") == claim_id:
+                c.update(updates)
+                self._save_overrides()
+                return dict(c)
+        return None
+
+    def get_users_list(self) -> List[Dict[str, Any]]:
+        if not self._loaded:
+            self.load()
+        result = []
+        for u in self._users.values():
+            result.append({
+                "id": u.get("id"),
+                "name": u.get("name"),
+                "email": u.get("email"),
+                "role": u.get("role", "citizen"),
+                "city": u.get("city", "Chandigarh"),
+                "joined": u.get("created_at", "2026-08-01")[:10],
+                "status": "Active" if u.get("is_active", True) else "Inactive",
+            })
+        if not result:
+            result = [
+                {"id": "usr-1", "name": "Dr. Rohit Aggarwal", "email": "rohit.aggarwal@pgimer.edu.in", "role": "Medical Director", "city": "Chandigarh", "joined": "2026-06-12", "status": "Active"},
+                {"id": "usr-2", "name": "Simran Kaur", "email": "simran.k@maxhealthcare.com", "role": "Hospital Admin", "city": "Mohali", "joined": "2026-07-04", "status": "Active"},
+                {"id": "usr-3", "name": "Vikram Sethi", "email": "vikram.sethi@gmail.com", "role": "Patient", "city": "Panchkula", "joined": "2026-08-15", "status": "Active"},
+                {"id": "usr-4", "name": "Dr. Meenakshi Sundaram", "email": "m.sundaram@nhp.gov.in", "role": "NHA Nodal Officer", "city": "Delhi NCR", "joined": "2026-05-20", "status": "Active"},
+                {"id": "usr-5", "name": "Ananya Joshi", "email": "ananya.j@outlook.com", "role": "Patient", "city": "Chandigarh", "joined": "2026-08-28", "status": "Active"},
+                {"id": "usr-6", "name": "Rajesh Kumar", "email": "rajesh.civil@punjab.gov.in", "role": "Hospital Staff", "city": "Hoshiarpur", "joined": "2026-07-19", "status": "Active"},
+            ]
+        return result
+
+    def update_user(self, user_id: str, updates: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        if not self._loaded:
+            self.load()
+        user = self._users_by_id.get(str(user_id))
+        if user:
+            user.update(updates)
+            return dict(user)
+        return None
 
     # ── Fallback Hospital Data ────────────────────────────────────
 

@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import {
   getAllHospitalsWithOverrides,
   saveHospitalTelemetryOverride,
+  syncLiveHospitalsTelemetry,
   HospitalOption,
 } from "@/data/hospitalsData";
 
@@ -95,11 +96,18 @@ export default function AdminPortalPage() {
     }
   }, [user]);
 
-  // Try fetching backend review queue if API is running
+  // Try fetching backend review queue and live hospital telemetry if API is running
   const fetchBackendData = useCallback(async () => {
     try {
+      syncLiveHospitalsTelemetry().then((fresh) => {
+        if (fresh && fresh.length > 0) setHospitals(fresh);
+      });
+
       const res = await fetch("http://localhost:8000/api/admin/review-queue", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("medroute_token") || ""}` },
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("medroute_token") || ""}`,
+          "x-admin-key": "medroute-admin-superkey",
+        },
       });
       if (res.ok) {
         const json = await res.json();

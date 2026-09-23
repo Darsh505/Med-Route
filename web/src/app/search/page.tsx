@@ -1,13 +1,18 @@
 "use client";
 
-import { useState, useMemo, Suspense } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SearchMap from "@/components/SearchMap";
 import { useLocation } from "@/context/LocationContext";
-import { ALL_HOSPITALS, getAllHospitalsWithOverrides, HospitalOption } from "@/data/hospitalsData";
+import {
+  ALL_HOSPITALS,
+  getAllHospitalsWithOverrides,
+  syncLiveHospitalsTelemetry,
+  HospitalOption,
+} from "@/data/hospitalsData";
 
 const SPECIALTY_OPTIONS = [
   { label: "All Specialties", value: "All" },
@@ -279,6 +284,15 @@ function SearchContent() {
     return [];
   });
 
+  const [telemetryTick, setTelemetryTick] = useState(0);
+
+  useEffect(() => {
+    syncLiveHospitalsTelemetry().then(() => setTelemetryTick((t) => t + 1));
+    const handleUpdate = () => setTelemetryTick((t) => t + 1);
+    window.addEventListener("medroute_telemetry_updated", handleUpdate);
+    return () => window.removeEventListener("medroute_telemetry_updated", handleUpdate);
+  }, []);
+
   // Unique list of all cities from dataset
   const allCitiesList = useMemo(() => {
     const set = new Set<string>();
@@ -479,6 +493,7 @@ function SearchContent() {
     parsedSlots,
     query,
     queryCenter,
+    telemetryTick,
   ]);
 
   // Active map center

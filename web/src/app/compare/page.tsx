@@ -5,7 +5,11 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { getAllHospitalsWithOverrides, HospitalOption } from "@/data/hospitalsData";
+import {
+  getAllHospitalsWithOverrides,
+  syncLiveHospitalsTelemetry,
+  HospitalOption,
+} from "@/data/hospitalsData";
 
 interface CompareHospitalItem {
   id: string;
@@ -156,6 +160,26 @@ function CompareContent() {
   const [searchTerm, setSearchTerm] = useState("");
   const [shareCopied, setShareCopied] = useState(false);
   const [bookedHospital, setBookedHospital] = useState<string | null>(null);
+
+  // Live telemetry synchronization from backend and admin console
+  useEffect(() => {
+    syncLiveHospitalsTelemetry();
+    const handleUpdate = () => {
+      setSelectedHospitals((prev) =>
+        prev.map((item, idx) => {
+          const fresh = getAllHospitalsWithOverrides().find(
+            (h) => h.id === item.id || h.slug === item.slug
+          );
+          if (fresh) {
+            return transformOptionToCompare(fresh, idx);
+          }
+          return item;
+        })
+      );
+    };
+    window.addEventListener("medroute_telemetry_updated", handleUpdate);
+    return () => window.removeEventListener("medroute_telemetry_updated", handleUpdate);
+  }, []);
 
   // Sync from URL params or localStorage on mount
   useEffect(() => {
