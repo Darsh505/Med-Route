@@ -1,8 +1,8 @@
-# 🏥 Med Route — Healthcare Discovery, Transparent Pricing & Emergency Trauma Routing
+# Med Route — Healthcare Discovery, Transparent Pricing & Emergency Trauma Routing
 
-> **Official Submission for TECHNOVA 2026 Hackathon**  
+> **Official Submission for TECHNOVA 2026**  
 > *Rayat Bahra Professional University*  
-> **Theme / Track:** Government Healthcare Discovery, Transparent Pricing & Emergency Hospital Recommendation
+> **Track:** Government Healthcare Discovery, Transparent Pricing & Emergency Hospital Recommendation
 
 [![Next.js 16](https://img.shields.io/badge/Next.js-16.3.5-black?style=flat&logo=next.js)](https://nextjs.org/)
 [![React Native Expo](https://img.shields.io/badge/Expo-SDK_57-000020?style=flat&logo=expo)](https://expo.dev/)
@@ -11,39 +11,36 @@
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?style=flat&logo=python)](https://www.python.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat&logo=typescript)](https://www.typescriptlang.org/)
 [![Docker Compose](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat&logo=docker)](https://www.docker.com/)
-[![Database Catalog](https://img.shields.io/badge/Database-Catalog_%26_ER_Diagram-blue?style=flat&logo=postgresql)](DATABASE.md)
+[![Database Catalog](https://img.shields.io/badge/Database-Schema_%26_Catalog-blue?style=flat&logo=postgresql)](DATABASE.md)
 
 ---
 
-> 📖 **Judge Quick-Link**: To view the full Database Schema, ER Diagram, and 1,451 hospital registry metrics, open **[`DATABASE.md`](DATABASE.md)**.
+## Executive Summary
 
+During critical medical decisions and emergency trauma events in India, patients and caregivers face acute information asymmetry:
+1. Identifying which nearby facilities possess active clinical capacity and specialized surgical departments for a given condition.
+2. Determining whether required treatments are eligible for coverage under government benefit schemes such as **Ayushman Bharat (AB-PMJAY)**.
+3. Estimating actual out-of-pocket procedure costs alongside verified institutional clinical success rates.
+4. Verifying real-time ICU and emergency bed availability prior to patient transfer.
 
-## 📌 Executive Summary
-
-During medical decisions or emergencies in India, patients and caregivers face acute **information asymmetry**:
-1. Which nearby hospital actually treats their specific condition or has specialized equipment?
-2. Are treatments covered under government schemes like **Ayushman Bharat (AB-PMJAY)**?
-3. What will the procedure actually cost, and what is the hospital's clinical success record?
-4. Are ICU and emergency beds genuinely available *right now*?
-
-**Med Route** solves this challenge through an open-access citizen platform and institutional telemetry bridge. It combines **AI-driven clinical slot mapping**, **geospatial tactical radar**, a side-by-side comparison matrix based on **4 verifiable clinical metrics**, and a sub-second **emergency SOS trauma corridor**.
+**Med Route** addresses this infrastructure gap through an open citizen discovery platform and institutional telemetry bridge. The system integrates **natural language clinical slot extraction**, **geospatial tactical radar**, a side-by-side facility comparison matrix based on **verifiable clinical outcome metrics**, and a sub-second **emergency SOS trauma corridor**.
 
 ---
 
-## 🏆 TECHNOVA 2026 Evaluation Matrix Alignment
+## System Capabilities and Architecture Alignment
 
-| Evaluation Criteria | Hackathon Requirement | Med Route Implementation | Verification Path |
+| Architectural Phase | Technical Requirement | Med Route Implementation | Reference Path |
 |---|---|---|---|
-| **1. Aggregate** | Ingest hospital registries, specialties, and government packages | Normalized dataset covering 60+ regional Tricity facilities and 1,000+ Pan-India benchmark records mapped to National Health Authority (NHA) **PMJAY HBP 2.2**. | [`backend/app/data_pipeline/`](file:///a:/projects/med-route/backend/app/data_pipeline/) |
-| **2. Index** | High-performance spatial & procedural indexing | PostGIS Spatial GiST indexing, sub-second Haversine proximity computation, and cached specialty taxonomy. | [`backend/app/services/ranking_service.py`](file:///a:/projects/med-route/backend/app/services/ranking_service.py) |
-| **3. Search** | Semantic NL search with slot mapping & explainability | Instant client & server NLP query parser extracting: **Condition**, **City**, **Budget Ceiling**, and **PMJAY Flag**. Transparent mathematical score breakdown widget. | [`web/src/app/search/page.tsx`](file:///a:/projects/med-route/web/src/app/search/page.tsx)<br>[`mobile/src/screens/SearchScreen.tsx`](file:///a:/projects/med-route/mobile/src/screens/SearchScreen.tsx) |
-| **4. Compare** | Side-by-side facility comparison with verifiable metrics | Dedicated comparison matrix evaluating hospitals across **4 Mandatory Verifiable Metrics**: Annual Volume, Success Ratio, PMJAY Tariffs, and Certifications. | [`web/src/app/compare/page.tsx`](file:///a:/projects/med-route/web/src/app/compare/page.tsx)<br>[`mobile/src/screens/CompareScreen.tsx`](file:///a:/projects/med-route/mobile/src/screens/CompareScreen.tsx) |
-| **5. Trauma Dispatch** | Emergency ambulance / SOS routing | GPS one-touch SOS dispatch, Level 1/2 trauma center identification, ETA estimation, direct 108 link. | [`web/src/app/emergency-cashless/page.tsx`](file:///a:/projects/med-route/web/src/app/emergency-cashless/page.tsx)<br>[`mobile/src/screens/SOSScreen.tsx`](file:///a:/projects/med-route/mobile/src/screens/SOSScreen.tsx) |
-| **6. Architecture & Polish** | Production-ready full-stack solution | Next.js 16 Web App, Expo SDK 57 Cross-platform Mobile App, FastAPI Async Backend, Docker orchestration, and 100% offline resilience. | Full Monorepo Architecture |
+| **1. Aggregate** | Ingest hospital registries, specialties, and government packages | Normalized dataset covering 1,451 facilities across 107 cities mapped to National Health Authority (NHA) **PMJAY HBP 2.2** schedules. | [`DATABASE.md`](DATABASE.md)<br>[`backend/app/data_pipeline/`](backend/app/data_pipeline/) |
+| **2. Index** | High-performance spatial and procedural indexing | PostGIS Spatial GiST indexing, sub-second Haversine proximity computation, and cached specialty taxonomy. | [`backend/app/services/ranking_service.py`](backend/app/services/ranking_service.py) |
+| **3. Search** | Semantic natural language search with slot mapping and explainability | Dual-tier client and server NLP query parser extracting: **Condition**, **City**, **Budget Ceiling**, and **PMJAY Status**. Explainable ranking breakdown. | [`web/src/app/search/page.tsx`](web/src/app/search/page.tsx)<br>[`mobile/src/screens/SearchScreen.tsx`](mobile/src/screens/SearchScreen.tsx) |
+| **4. Compare** | Side-by-side facility comparison with verifiable metrics | Dedicated comparison matrix evaluating institutions across **4 Verifiable Metrics**: Annual Volume, Clinical Success Ratio, PMJAY Tariffs, and Certifications. | [`web/src/app/compare/page.tsx`](web/src/app/compare/page.tsx)<br>[`mobile/src/screens/CompareScreen.tsx`](mobile/src/screens/CompareScreen.tsx) |
+| **5. Trauma Dispatch** | Emergency ambulance and SOS routing | GPS one-touch SOS dispatch, Level 1/2 trauma center identification, ETA calculation, and direct 108 emergency service integration. | [`web/src/app/emergency-cashless/page.tsx`](web/src/app/emergency-cashless/page.tsx)<br>[`mobile/src/screens/SOSScreen.tsx`](mobile/src/screens/SOSScreen.tsx) |
+| **6. Resilience** | Production-grade full-stack solution | Next.js 16 Web App, Expo SDK 57 Cross-platform Mobile App, FastAPI Async Backend, Docker orchestration, and 100% offline failover. | Full Monorepo Architecture |
 
 ---
 
-## 🎯 The 4 Solution Pillars
+## Core Architectural Pillars
 
 ```
                      ┌─────────────────────────────────────────────────────────┐
@@ -55,7 +52,7 @@ During medical decisions or emergencies in India, patients and caregivers face a
   ┌──────────────┐         ┌──────────────┐                ┌──────────────┐         ┌──────────────┐
   │ 1. AGGREGATE │         │   2. INDEX   │                │  3. SEARCH   │         │  4. COMPARE  │
   ├──────────────┤         ├──────────────┤                ├──────────────┤         ├──────────────┤
-  │ • NHA PMJAY  │         │ • PostGIS    │                │ • AI Slot    │         │ • 4 Verifi-  │
+  │ • NHA PMJAY  │         │ • PostGIS    │                │ • NLP Slot   │         │ • 4 Verifi-  │
   │ • HFR Registry│        │   Spatial    │                │   Extraction │         │   able       │
   │ • Bed Tele-  │         │ • Tariff     │                │ • Proximity  │         │   Metrics    │
   │   metry      │         │   Catalog    │                │ • Explainable│         │ • Dynamic    │
@@ -65,75 +62,72 @@ During medical decisions or emergencies in India, patients and caregivers face a
   └──────────────┘         └──────────────┘                └──────────────┘         └──────────────┘
 ```
 
-### 1. AGGREGATE
-- Aggregates verified hospital registries across **Tricity (Chandigarh, Mohali, Panchkula)** and 75+ Indian cities.
+### 1. Aggregate
+- Ingests and normalizes clinical registries across **Tricity (Chandigarh, Mohali, Panchkula)** and 107 Indian cities.
 - Normalized against National Health Authority (NHA) **Ayushman Bharat PMJAY 2.2** benefit schedules.
-- Explicit Data Provenance labels on every record: `MANUAL_VERIFIED`, `PMJAY_HBP`, `HFR_REGISTRY`.
+- Explicit data provenance labels on every record: `MANUAL_VERIFIED`, `PMJAY_HBP`, and `HFR_REGISTRY`. See [**`DATABASE.md`**](DATABASE.md) for full schema definitions.
 
-### 2. INDEX
+### 2. Index
 - Sub-second spatial proximity queries via PostGIS and Haversine algorithms.
 - Multi-dimensional indexing on clinical specialties, procedural package codes, bed capacities, and accreditation tiers (NABH, JCI, NABL).
 
-### 3. SEARCH (AI Slot Mapping & Explainable Ranking)
-When a citizen enters a query like:  
+### 3. Search: Clinical NLP Slot Mapping & Explainable Ranking
+When a user submits an unstructured query such as:  
 > *"Find kidney treatment hospitals near Chandigarh under ₹2 lakh"*
 
-The integrated clinical NLP engine parses unstructured language into discrete query slots:
-- 🩺 **Clinical Specialty / Condition**: `Nephrology & Kidney Care`
-- 📍 **City / Geographic Constraint**: `Chandigarh / Tricity`
-- 💰 **Budget Ceiling**: `Max ₹2,00,000`
-- 🛡️ **Scheme Requirement**: `AB-PMJAY Cashless Preferred`
+The integrated clinical NLP engine parses the input into structured parameters:
+- **Clinical Specialty / Condition**: `Nephrology & Kidney Care`
+- **City / Geographic Constraint**: `Chandigarh / Tricity`
+- **Budget Ceiling**: `Max ₹2,00,000`
+- **Scheme Requirement**: `AB-PMJAY Cashless Preferred`
 
-Every recommended hospital displays an **"Explain Ranking Score"** breakdown:
+Every recommended hospital provides an **"Explain Ranking Score"** breakdown:
 $$\text{Composite Score} = (0.30 \times \text{Proximity}) + (0.25 \times \text{Cost Match}) + (0.25 \times \text{Patient Rating}) + (0.20 \times \text{Accreditation Tier})$$
 
-### 4. COMPARE (The 4 Mandatory Verifiable Metrics)
-Citizens and judges can select institutions (e.g., **PGIMER Chandigarh**, **Max Mohali**, **Fortis Escorts**) and contrast them side-by-side across the four verifiable metrics:
-1. 📈 **Annual Procedure Volume**: High-volume clinical indicators (e.g., 2,800+ cardiac surgeries/yr).
-2. 🏆 **Clinical Success Ratio**: Statistically verified procedural outcome percentage (e.g., 98.4% success).
-3. 💳 **Government vs Private Tariffs**: Transparent comparison between private cash estimates and PMJAY subsidized package ceilings.
-4. 🏅 **Verified Certifications**: NABH Digital, NABL certified labs, JCI Gold seals, and Emergency Trauma Levels.
+### 4. Compare: Verifiable Clinical Metrics
+Users can select institutions (e.g., **PGIMER Chandigarh**, **Max Super Speciality Hospital**, **Fortis Escorts**) and evaluate them side-by-side across four standardized criteria:
+1. **Annual Procedure Volume**: Validated high-volume clinical indicators (e.g., 2,800+ cardiac procedures/yr).
+2. **Clinical Success Ratio**: Statistically verified procedural outcome percentage (e.g., 98.4% success).
+3. **Government vs Private Tariffs**: Transparent comparison between private cash estimates and PMJAY subsidized package ceilings.
+4. **Verified Certifications**: NABH Digital, NABL certified clinical labs, JCI accreditation, and Emergency Trauma Levels.
 
 ---
 
-## 🎬 3-Minute Live Demo Script (For Presenters & Judges)
+## Demonstration Walkthrough
 
-Follow this step-by-step walkthrough during the hackathon evaluation:
+### Step 1: Clinical Query Slot Mapping
+1. Navigate to the **Web Application** (`/search`) or **Mobile Application** (Search tab).
+2. Enter or select a clinical query:  
+   `Kidney < ₹2L Chandigarh` or `Heart < ₹3L Mohali`
+3. Verification points:
+   - The query slot mapping banner displays extracted parameters: specialty, budget ceiling, and geographic constraints.
+   - Results filter dynamically without requiring manual form configuration.
+   - Commute travel times (`~14m ETA`) display alongside each hospital card based on user coordinates.
 
-### Step 1: AI Query Slot Mapping Demonstration (0:00 - 0:45)
-1. Open the **Web App** (`/search`) or **Mobile App** (Search tab).
-2. Type or tap the preset query chip:  
-   👉 `Kidney < ₹2L Chandigarh` or `Heart < ₹3L Mohali`
-3. **Point out to judges**:
-   - The **"🤖 AI Query Slot Mapping"** banner immediately updates with extracted tokens: *Nephrology*, *Max ₹2,00,000*, *Chandigarh*.
-   - Results are automatically filtered without requiring complex SQL or manual drop-downs.
-   - Commute travel times (`~14m ETA`) appear next to each hospital card.
+### Step 2: Explainable Ranking and Data Provenance
+1. Expand the **"Explain Ranking Score"** element on any recommended facility.
+2. Verification points:
+   - View the mathematical weight distribution (Proximity 30%, Budget 25%, Rating 25%, Accreditation 20%).
+   - Inspect the **Data Provenance** badge (e.g., `PMJAY_HBP / MANUAL_VERIFIED`) to review audit timestamps and source registry references.
 
-### Step 2: Explainable Ranking & Data Provenance (0:45 - 1:30)
-1. Click the **"Explain Ranking Score"** badge on the top-ranked hospital.
-2. **Point out to judges**:
-   - The exact weighted breakdown (Proximity 30%, Budget 25%, Rating 25%, Quality 20%).
-   - Click the **"Data Source"** badge (e.g., `PMJAY_HBP / MANUAL_VERIFIED`) to show the institutional audit timestamp and NHA registry linkage.
-
-### Step 3: Regional Tricity Comparison Matrix (1:30 - 2:15)
-1. Navigate to `/compare` or tap **Compare** on the mobile bottom bar.
-2. Select or view the regional anchors: **PGIMER Chandigarh**, **Max Super Speciality Hospital**, and **Fortis Escorts**.
+### Step 3: Regional Comparative Analysis
+1. Navigate to `/compare` or select the **Compare** tab on mobile.
+2. Review the pre-loaded regional institutions: **PGIMER Chandigarh**, **Max Super Speciality Hospital Mohali**, and **Fortis Escorts**.
 3. Toggle the **Procedure Package Selector** (e.g., *Coronary Angioplasty MC004* or *Knee Replacement OR002*).
-4. **Point out to judges**:
-   - The dedicated **"Mandatory Verifiable Metrics"** table.
-   - Contrast the ₹2.8L private cost vs the PMJAY subsidized ₹1.1L cashless rate.
-   - Contrast the clinical success ratio (98.4%) and annual patient volume (2,800/yr).
+4. Verification points:
+   - Inspect the **Verifiable Metrics** section displaying annual caseloads, success ratios, and government benefit tariffs.
+   - Contrast private procedure estimates against the capped PMJAY cashless package rates.
 
-### Step 4: Emergency SOS & Tactical Radar (2:15 - 3:00)
-1. Click **"SOS Dispatch"** or tap the floating red beacon.
-2. **Point out to judges**:
-   - Sub-second trauma routing identifies the nearest Level 1 trauma center.
-   - Displays real-time ICU availability (color-coded pins: Green/Amber/Red).
-   - One-tap dispatch link to national **108 emergency service** and hospital emergency desk.
+### Step 4: Emergency SOS Trauma Corridor
+1. Select **Emergency SOS** or trigger the emergency beacon.
+2. Verification points:
+   - Sub-second trauma routing identifies the nearest Level 1/2 trauma center.
+   - Real-time ICU telemetry indicates available critical care bed capacity.
+   - One-touch dispatch routing connects to national **108 emergency services** and the hospital emergency department.
 
 ---
 
-## 🏗️ System Architecture
+## System Architecture
 
 ```
                                   Client Layer
@@ -161,14 +155,14 @@ Follow this step-by-step walkthrough during the hackathon evaluation:
 
 ---
 
-## 🚀 Quickstart & Setup Guide
+## Quickstart and Setup Guide
 
-### Method A: One-Command Launch (Docker Compose)
+### Method A: Docker Compose Deployment
 
-The entire production stack (PostGIS database, Redis cache, FastAPI backend, and Next.js web application) can be launched with a single command:
+The complete service architecture (PostGIS database, Redis cache, FastAPI backend, and Next.js web application) can be initialized via Docker Compose:
 
 ```bash
-# Clone and launch
+# Clone repository
 git clone https://github.com/keshav-x/Med-Route.git
 cd Med-Route
 
@@ -176,11 +170,11 @@ cd Med-Route
 docker compose up --build
 ```
 - **Web Interface**: `http://localhost:3000`
-- **FastAPI Backend & Swagger**: `http://localhost:8000/docs`
+- **FastAPI Documentation**: `http://localhost:8000/docs`
 
 ---
 
-### Method B: Local Development Setup
+### Method B: Local Development Environment
 
 #### 1. Backend Service (FastAPI)
 ```bash
@@ -188,15 +182,16 @@ cd backend
 
 # Create virtual environment
 python -m venv .venv
-.\.venv\Scripts\Activate.ps1   # Windows
+.\.venv\Scripts\Activate.ps1   # Windows PowerShell
 # source .venv/bin/activate     # macOS / Linux
 
 # Install dependencies
 pip install -r requirements.txt
 
-# Start backend (auto-activates zero-setup fallback if PostgreSQL is not active)
+# Start backend service (activates in-memory fallback if PostgreSQL is not running)
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
+API Documentation: `http://localhost:8000/docs`
 
 #### 2. Web Frontend (Next.js 16)
 ```bash
@@ -208,7 +203,7 @@ npm install
 # Start development server
 npm run dev
 ```
-Open [http://localhost:3000](http://localhost:3000)
+Application interface: `http://localhost:3000`
 
 #### 3. Mobile Application (React Native / Expo)
 ```bash
@@ -220,20 +215,20 @@ npm install
 # Start Expo development server
 npx expo start
 ```
-- Scan QR code with **Expo Go** on Android/iOS, or press `w` to open web preview.
+Scan the QR code with **Expo Go** on Android/iOS, or press `w` to open the web preview.
 
 ---
 
-## 🧪 Verification & Test Suite
+## Verification and Test Suite
 
-Verify full monorepo type safety and unit test coverage:
+Validate monorepo type safety and unit test coverage:
 
 ```bash
 # 1. Backend Pytest Suite (20 unit tests)
 cd backend
 .\.venv\Scripts\pytest -q
 
-# 2. Web Frontend Static Compilation
+# 2. Web Frontend Compilation & Typecheck
 cd web
 npx tsc --noEmit
 npm run build
@@ -246,31 +241,31 @@ All tests, builds, and type validations pass with **0 errors**.
 
 ---
 
-## 🛡️ Hackathon Defense & Judges FAQ
+## Technical Architecture & FAQ
 
 <details>
-<summary><b>Q1: How does Med Route verify live ICU bed availability and tariff accuracy?</b></summary>
-Every hospital record carries a data provenance tag (<code>MANUAL_VERIFIED</code>, <code>PMJAY_HBP</code>, <code>HFR_REGISTRY</code>). Hospital administrative staff update bed telemetry and tariff revisions through the authenticated <b>Provider Portal (<code>/portal/admin</code>)</b>, while PMJAY package rates are synchronized with published National Health Authority schedules.
+<summary><b>How are real-time ICU bed availability and tariff accuracy maintained?</b></summary>
+Every hospital entity includes provenance metadata (<code>MANUAL_VERIFIED</code>, <code>PMJAY_HBP</code>, <code>HFR_REGISTRY</code>). Institutional administrators update operational bed counts and tariff revisions via the authenticated Provider Portal (<code>/portal/admin</code>), while PMJAY package reimbursement rates are synchronized directly with published National Health Authority benefit schedules.
 </details>
 
 <details>
-<summary><b>Q2: What happens if the network or local database crashes during an emergency?</b></summary>
-Med Route has an <b>Offline Zero-Network Architecture</b>. Both Web and Mobile clients have an embedded 60+ facility benchmark store with pre-computed Haversine spatial matrices and client-side NLP regex fallback. The application continues to rank hospitals and calculate trauma routes with zero downtime.
+<summary><b>How does the system ensure resilience if network connectivity drops during an emergency?</b></summary>
+Med Route employs an offline-first architecture. Both Web and Mobile clients embed local benchmark stores with client-side NLP regex parsers and pre-computed Haversine spatial calculations, enabling core facility discovery and trauma routing to operate without active network connectivity.
 </details>
 
 <details>
-<summary><b>Q3: How does the ranking algorithm avoid bias toward expensive private hospitals?</b></summary>
-The ranking algorithm explicitly penalizes out-of-budget quotes through a normalized budget satisfaction curve (accounting for 25% of composite weight), while rewarding PMJAY empanelment and government subsidies. A high-quality public hospital like PGIMER Chandigarh often ranks #1 because of high patient volume, proven success ratios, and nominal cost.
+<summary><b>How does the ranking algorithm prevent bias toward expensive private institutions?</b></summary>
+The ranking formulation incorporates a budget satisfaction curve accounting for 25% of composite weight, penalizing procedures exceeding specified budget ceilings while weighting PMJAY empanelment and government subsidies favorably. High-volume public institutions like PGIMER Chandigarh regularly achieve top ranking due to extensive clinical volume, high verified outcomes, and nominal treatment costs.
 </details>
 
 <details>
-<summary><b>Q4: How does the clinical chatbot handle medical liability and red flags?</b></summary>
-The chatbot runs an emergency-first triage ontology. If a user describes acute symptoms (e.g., crushing chest pain, slurred speech, facial drooping, severe hemorrhage), the LLM immediately halts conversational Q&A and triggers the emergency SOS redirection protocol.
+<summary><b>How does the clinical assistant mitigate medical liability during acute events?</b></summary>
+The triage engine enforces a deterministic emergency-first ruleset. If user input contains red-flag indicators (e.g., severe chest pressure, sudden numbness, acute dyspnea, uncontrolled hemorrhage), standard conversational triage is immediately suspended in favor of emergency SOS routing and direct 108 dispatch.
 </details>
 
 ---
 
-## 👥 Med Route Team — Rayat Bahra Professional University
-- **Track**: Healthcare Accessibility, Transparency & Emergency Logistics  
-- **Event**: TECHNOVA 2026 Hackathon  
+## Team & Attribution
+- **Institution**: Rayat Bahra Professional University
+- **Event**: TECHNOVA 2026
 - **License**: MIT
