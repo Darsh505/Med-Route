@@ -534,8 +534,8 @@ Instructions:
 class ClinicalChatbot:
     """Clinical NLP Chatbot Engine with Gemini AI and Rule-Based Triage Fallback."""
 
-    def __init__(self, api_key: str = ""):
-        self.api_key = api_key or settings.GEMINI_API_KEY
+    def __init__(self, api_key: Optional[str] = None):
+        self.api_key = settings.GEMINI_API_KEY if api_key is None else api_key
         self.gemini_model = None
 
         if self.api_key:

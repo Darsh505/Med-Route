@@ -127,28 +127,65 @@ Users can select institutions (e.g., **PGIMER Chandigarh**, **Max Super Speciali
 
 ## System Architecture
 
+```text
+                                   Client & Operations Layer
+                  ┌───────────────────────────────┬───────────────────────────────┐
+                  │       Web Application         │     Admin Operations Console  │
+                  │  Next.js 16 / React 19 / Leaflet │   Next.js 16 / shadcn / Recharts  │
+                  │        (Port 3000)            │          (Port 3001)          │
+                  └───────────────┬───────────────┴───────────────┬───────────────┘
+                                  │                               │
+                                  │       Mobile Application      │
+                                  │     React Native / Expo SDK 57│
+                                  │         (iOS & Android)       │
+                                  └───────────────┬───────────────┘
+                                                  │
+                                                  │ REST / WebSockets / JSON Triage
+                                                  ▼
+                  ┌───────────────────────────────────────────────────────────────┐
+                  │                        FastAPI Backend                        │
+                  │             Python 3.12+ / Async SQLAlchemy 2.0               │
+                  │                          (Port 8000)                          │
+                  └───────────────┬───────────────────────────────┬───────────────┘
+                                  │                               │
+         ┌────────────────────────┼───────────────────────────────┼────────────────────────┐
+         ▼                        ▼                               ▼                        ▼
+ ┌───────────────┐        ┌───────────────┐               ┌───────────────┐        ┌───────────────┐
+ │  PostgreSQL   │        │     Redis     │               │ Google Gemini │        │ In-Memory DB  │
+ │  + PostGIS    │        │ Cache & Rate  │               │ Structured    │        │ Resilience    │
+ │  Spatial GiST │        │ Limiting      │               │ JSON Triage   │        │ Fallback Store│
+ └───────────────┘        └───────────────┘               └───────────────┘        └───────────────┘
 ```
-                                  Client Layer
-                 ┌──────────────────────────────────────────────┐
-                 │  Web Application      │  Mobile Application  │
-                 │  Next.js 16 / React 19│  React Native / Expo │
-                 │  Tailwind CSS         │  TypeScript (SDK 57) │
-                 └───────────────┬───────┴──────────────┬───────┘
-                                 │                      │
-                                 │ REST / WebSockets    │
-                                 ▼                      ▼
-                 ┌──────────────────────────────────────────────┐
-                 │               FastAPI Backend                │
-                 │         Python 3.12+ / Async SQLAlchemy      │
-                 └───────────────┬──────────────────────┬───────┘
-                                 │                      │
-        ┌────────────────────────┼──────────────────────┼────────────────────────┐
-        ▼                        ▼                      ▼                        ▼
-┌───────────────┐        ┌───────────────┐      ┌───────────────┐        ┌───────────────┐
-│  PostgreSQL   │        │     Redis     │      │ Google Gemini │        │ In-Memory DB  │
-│  + PostGIS    │        │ Cache & Rate  │      │ Structured    │        │ Resilience    │
-│  Spatial GiST │        │ Limiting      │      │ JSON Triage   │        │ Fallback      │
-└───────────────┘        └───────────────┘      └───────────────┘        └───────────────┘
+
+---
+
+## Monorepo Directory Layout
+
+```text
+med-route/
+├── admin/                  # Institutional Admin Console (Next.js 16, shadcn/ui, Recharts)
+│   ├── app/(dashboard)/    # Triage feeds, bed telemetry, claims, hospital audits
+│   ├── components/         # Reusable data tables, metrics, and occupancy charts
+│   └── package.json        # pnpm-managed workspace
+├── backend/                # FastAPI Clinical Engine & PostGIS Service (Python 3.12)
+│   ├── app/ai/             # Gemini 2.0 triage & rule-based clinical ontology engine
+│   ├── app/data_pipeline/  # 1,451 hospital registry & NHA PMJAY HBP 2.2 schedules
+│   ├── app/routers/        # Async API endpoints (search, compare, hospitals, sos, admin)
+│   ├── app/services/       # Explainable ranking, spatial Haversine, memory fallback
+│   └── tests/              # 20 automated Pytest unit tests (100% passing)
+├── mobile/                 # Cross-Platform Citizen App (React Native / Expo SDK 57)
+│   ├── src/screens/        # Search with slot mapping, 4-metric compare, SOS dispatch
+│   ├── src/services/       # Resilient REST client with zero-network offline cache
+│   └── app.json            # Expo configuration & deep linking
+├── web/                    # Citizen Web Portal (Next.js 16, React 19, Tailwind CSS)
+│   ├── src/app/            # App Router pages (search, compare, emergency-cashless)
+│   └── src/components/     # Interactive Leaflet maps, chatbot widget, navigation
+├── DATABASE.md             # Complete data catalog, ER diagram, and schema models
+├── DEPLOYMENT.md           # Cloud deployment guide (Render, Vercel, Expo EAS)
+├── Dockerfile              # Production multi-stage backend container
+├── docker-compose.yml      # Full-stack local orchestration (PostGIS, Redis, Web, Admin, Backend)
+├── LICENSE                 # Open source MIT License
+└── render.yaml             # Render infrastructure-as-code specification
 ```
 
 ---
