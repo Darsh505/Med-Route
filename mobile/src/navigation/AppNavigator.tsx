@@ -1,13 +1,14 @@
-/**
- * AppNavigator.tsx — Navigation Architecture with Clinical Architecture Health styling
+﻿/**
+ * AppNavigator.tsx — Navigation Architecture with Multi-Language Support
  */
 
 import React from "react";
-import { View, Text, StyleSheet, Platform } from "react-native";
+import { Text, Platform } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 
 import { colors } from "../theme/colors";
 import HomeScreen from "../screens/HomeScreen";
@@ -28,6 +29,7 @@ function BottomTabs() {
   const insets = useSafeAreaInsets();
   const bottomPadding = Math.max(insets.bottom, Platform.OS === "android" ? 10 : 16);
   const tabHeight = 60 + bottomPadding;
+  const { t } = useTranslation();
 
   return (
     <Tab.Navigator
@@ -62,7 +64,7 @@ function BottomTabs() {
         name="Home"
         component={HomeScreen}
         options={{
-          tabBarLabel: "Find",
+          tabBarLabel: t("tabs.find"),
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>🏥</Text>,
         }}
       />
@@ -70,7 +72,7 @@ function BottomTabs() {
         name="Compare"
         component={CompareScreen}
         options={{
-          tabBarLabel: "Compare",
+          tabBarLabel: t("tabs.compare"),
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>⚖️</Text>,
         }}
       />
@@ -78,7 +80,7 @@ function BottomTabs() {
         name="SOS"
         component={SOSScreen}
         options={{
-          tabBarLabel: "Emergency",
+          tabBarLabel: t("tabs.emergency"),
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>🚨</Text>,
         }}
       />
@@ -86,15 +88,15 @@ function BottomTabs() {
         name="Chat"
         component={ChatScreen}
         options={{
-          tabBarLabel: "Care AI",
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>💬</Text>,
+          tabBarLabel: t("tabs.chat"),
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>🤖</Text>,
         }}
       />
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
         options={{
-          tabBarLabel: "Profile",
+          tabBarLabel: t("tabs.profile"),
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>👤</Text>,
         }}
       />

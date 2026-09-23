@@ -598,6 +598,7 @@ class ClinicalChatbot:
             data.get("recommended_hospital_names", []),
             specialty=data.get("specialty"),
             is_emergency=(data.get("triage_level") == "emergency"),
+            user_query=request.message,
         )
 
         # Build interactive action buttons
@@ -645,7 +646,7 @@ class ClinicalChatbot:
 
         if is_cardiac_emergency or is_stroke_emergency or is_trauma_emergency:
             condition = "Acute Cardiac Emergency" if is_cardiac_emergency else ("Acute Stroke Emergency" if is_stroke_emergency else "Trauma Emergency")
-            hospitals = self._resolve_hospitals(["PGIMER Chandigarh", "Max Super Speciality Mohali", "GMCH Sector 32 Chandigarh"], is_emergency=True)
+            hospitals = self._resolve_hospitals(["PGIMER Chandigarh", "Max Super Speciality Mohali", "GMCH Sector 32 Chandigarh"], is_emergency=True, user_query=request.message)
 
             reply = (
                 f"🚨 **CRITICAL TRIAGE ALERT — POSSIBLE {condition.upper()}**\n\n"
@@ -832,15 +833,65 @@ class ClinicalChatbot:
 
     def _resolve_hospitals(
         self,
-        names: List[str],
+        names: List[str] = None,
         specialty: Optional[str] = None,
         is_emergency: bool = False,
+        user_query: str = "",
     ) -> List[ChatHospitalRecommendation]:
-        """Matches hospital names or specialty against reference hospital directory."""
+        """Matches hospital names or dynamically queries memory_store for user requested city."""
+        names = names or []
         results = []
         matched_slugs = set()
 
-        # Match by name
+        # 1. Check if user specified an Indian city/region in query
+        target_city = None
+        if user_query:
+            uq = user_query.lower()
+            city_keywords = [
+                "delhi", "new delhi", "ncr", "mumbai", "bombay", "bangalore", "bengaluru",
+                "chandigarh", "mohali", "panchkula", "pune", "hyderabad", "chennai", "kolkata",
+                "jaipur", "lucknow", "amritsar", "ludhiana", "jalandhar", "hoshiarpur", "patiala",
+                "ahmedabad", "surat", "bhopal", "indore", "kochi", "patna"
+            ]
+            for ck in city_keywords:
+                if ck in uq:
+                    if ck in ["delhi", "new delhi", "ncr"]:
+                        target_city = "Delhi"
+                    elif ck in ["bangalore", "bengaluru"]:
+                        target_city = "Bengaluru"
+                    elif ck in ["mumbai", "bombay"]:
+                        target_city = "Mumbai"
+                    else:
+                        target_city = ck.capitalize()
+                    break
+
+        # If a city was requested, search memory store for real hospitals in that city!
+        if target_city:
+            try:
+                from app.services.memory_store import memory_store
+                if not memory_store._loaded:
+                    memory_store.load()
+                city_matches = [
+                    h for h in memory_store._hospitals
+                    if target_city.lower() in h.get("city", "").lower() or target_city.lower() in h.get("state", "").lower()
+                ]
+                if city_matches:
+                    if is_emergency:
+                        city_matches.sort(
+                            key=lambda h: (1 if h.get("is_trauma_center") else 0, h.get("beds_icu_available", 0)),
+                            reverse=True,
+                        )
+                    else:
+                        city_matches.sort(key=lambda h: h.get("overall_rating", 4.0), reverse=True)
+
+                    for h in city_matches[:3]:
+                        matched_slugs.add(h.get("slug"))
+                        results.append(self._to_recommendation(h, is_emergency))
+                    return results
+            except Exception as e:
+                logger.warning("City memory store lookup failed", error=str(e))
+
+        # 2. Match by name in reference directory
         for target in names:
             target_lower = target.lower()
             for h in REFERENCE_HOSPITALS:

@@ -1,6 +1,5 @@
 /**
- * SOSScreen.tsx — Mobile Emergency & Cashless Admission (Clinical Architecture Health)
- * Strictly matches stitch/stitch_healthcare_finder_and_comparison_platform (1)/code.html
+ * SOSScreen.tsx — Mobile Emergency Response & 108 Dispatch
  */
 
 import React, { useState } from "react";
@@ -11,31 +10,96 @@ import {
   ScrollView,
   TouchableOpacity,
   StatusBar,
-  TextInput,
   Linking,
-  Modal,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import { colors } from "../theme/colors";
+import MedRouteLogo from "../components/MedRouteLogo";
+import { MOCK_HOSPITALS } from "../services/api";
+import LanguageSwitcher from "../components/LanguageSwitcher";
+import { localizeHospital, localizeAccreditation } from "../i18n/hospitalLocalization";
+
+const FIRST_AID_PROTOCOLS = [
+  {
+    id: "cardiac",
+    icon: "💔",
+    title: "Heart Attack / Severe Chest Pain",
+    badge: "CRITICAL 0-10 MIN",
+    steps: [
+      "Keep the patient seated upright at rest. Do not let them walk.",
+      "If conscious and not allergic, have them chew a 300mg soluble Aspirin tablet.",
+      "Loosen tight clothing around neck and chest to assist breathing.",
+      "Call 108 ambulance immediately — do not drive yourself.",
+    ],
+  },
+  {
+    id: "stroke",
+    icon: "🧠",
+    title: "Stroke Emergency (F.A.S.T.)",
+    badge: "CRITICAL 0-4.5 HRS",
+    steps: [
+      "Face: Ask to smile. Does one side of the face droop?",
+      "Arms: Ask to raise both arms. Does one arm drift downward?",
+      "Speech: Ask to repeat a simple sentence. Is speech slurred or strange?",
+      "Time: Call 108 immediately. Note the exact time symptoms started.",
+    ],
+  },
+  {
+    id: "trauma",
+    icon: "🩸",
+    title: "Severe Bleeding & Trauma",
+    badge: "IMMEDIATE PRESSURE",
+    steps: [
+      "Apply firm, continuous direct pressure to wound using a clean cloth or gauze.",
+      "Elevate the injured limb above heart level if no fracture is suspected.",
+      "Do NOT remove any embedded or impaled objects — pack around them.",
+      "Keep patient warm with a blanket while waiting for the 108 team.",
+    ],
+  },
+  {
+    id: "breathing",
+    icon: "🫁",
+    title: "Acute Breathlessness / Asthma",
+    badge: "AIRWAY PRIORITY",
+    steps: [
+      "Sit patient upright leaning slightly forward. Do not lay them flat.",
+      "Assist them with 2 puffs of their prescribed rescue inhaler (with spacer if available).",
+      "Ensure fresh air ventilation and keep onlookers at a distance.",
+      "If lips turn blue or patient cannot speak full words, dispatch 108 immediately.",
+    ],
+  },
+];
 
 export default function SOSScreen({ navigation }: any) {
-  // Pre-Auth Checker State
-  const [policyId, setPolicyId] = useState("STAR-2024-8849-BLR");
-  const [selectedHospital, setSelectedHospital] = useState("Sakra World Hospital");
-  const [tokenGenerated, setTokenGenerated] = useState(false);
+  const { t, i18n } = useTranslation();
+  const currentLang = i18n.language || "en";
+  const [selectedProtocol, setSelectedProtocol] = useState<string>("cardiac");
 
-  // Emergency Telemetry Modal
-  const [sosModalOpen, setSosModalOpen] = useState(false);
-  const [targetHospital, setTargetHospital] = useState("Sakra World Hospital");
+  // Get top 3 nearest trauma/emergency facilities
+  const emergencyHospitals = MOCK_HOSPITALS.filter(
+    (h) => h.is_trauma_center || (h.beds_icu_available ?? 0) > 4
+  ).slice(0, 3);
 
-  const triggerSOS = (hosp: string) => {
-    setTargetHospital(hosp);
-    setSosModalOpen(true);
+  const handleCall108 = () => {
+    Linking.openURL("tel:108").catch(() => {
+      Alert.alert("Emergency Dial", "Unable to open dialer. Please dial 108 directly.");
+    });
+  };
+
+  const handleWhatsAppDesk = () => {
+    const text = encodeURIComponent(
+      "EMERGENCY: I need urgent hospital bed admission and emergency coordination."
+    );
+    Linking.openURL(`https://wa.me/919592543404?text=${text}`).catch(() => {
+      Alert.alert("WhatsApp Unavailable", "Please dial 9592543404 directly.");
+    });
   };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
+      <StatusBar barStyle="light-content" backgroundColor="#B91C1C" />
 
       {/* Header */}
       <View style={styles.header}>
@@ -43,255 +107,204 @@ export default function SOSScreen({ navigation }: any) {
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
             <Text style={styles.backBtnText}>←</Text>
           </TouchableOpacity>
-          <View>
-            <Text style={styles.headerTitle}>Emergency &amp; Cashless</Text>
-            <Text style={styles.headerSub}>Live Telemetry &amp; 20-Min Admission</Text>
+          <MedRouteLogo size="sm" showBadge={false} />
+          <View style={{ marginLeft: 8 }}>
+            <Text style={styles.headerTitle}>{t("sos.title")}</Text>
+            <Text style={styles.headerSub}>{t("sos.subtitle")}</Text>
           </View>
         </View>
 
-        <View style={styles.statusPill}>
-          <View style={styles.livePulse} />
-          <Text style={styles.statusPillText}>Live Grid</Text>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+          <LanguageSwitcher compact />
+          <View style={styles.liveGridBadge}>
+            <View style={styles.livePulse} />
+            <Text style={styles.liveGridText}>24/7 {t("common.emergency")}</Text>
+          </View>
         </View>
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        
-        {/* 1. IMMEDIATE MEDICAL RESPONSE MASTER CARD */}
-        <View style={styles.masterCard}>
-          <View style={styles.masterBadgeRow}>
-            <Text style={styles.masterSuper}>IMMEDIATE MEDICAL RESPONSE</Text>
+        {/* Master Call To Action — 108 Ambulance */}
+        <View style={styles.dispatchCard}>
+          <View style={styles.dispatchTopRow}>
+            <Text style={styles.dispatchSuper}>{currentLang === "hi" ? "मुफ़्त राष्ट्रीय एम्बुलेंस" : currentLang === "pa" ? "ਮੁਫ਼ਤ ਰਾਸ਼ਟਰੀ ਐਂਬੂਲੈਂਸ" : "FREE NATIONAL AMBULANCE"}</Text>
+            <View style={styles.freeBadge}>
+              <Text style={styles.freeBadgeText}>{currentLang === "hi" ? "सरकारी सेवा" : currentLang === "pa" ? "ਸਰਕਾਰੀ ਸੇਵਾ" : "GOVERNMENT SERVICE"}</Text>
+            </View>
           </View>
 
-          <Text style={styles.masterTitle}>Need an Emergency Ambulance &amp; Bed?</Text>
-          <Text style={styles.masterDesc}>
-            ALS/BLS cardiac ambulances routed immediately with real-time GPS telemetry and reserved emergency bed admission.
+          <Text style={styles.dispatchTitle}>{currentLang === "hi" ? "108 एम्बुलेंस हेल्पलाइन पर कॉल करें" : currentLang === "pa" ? "108 ਐਂਬੂਲੈਂਸ ਹੈਲਪਲਾਈਨ 'ਤੇ ਕਾਲ ਕਰੋ" : "Call 108 Ambulance Hotline"}</Text>
+          <Text style={styles.dispatchSub}>
+            Toll-free emergency response across India. Dispatches nearest ALS/BLS cardiac ambulance with trained paramedics.
           </Text>
 
-          <View style={styles.statsStrip}>
-            <View style={styles.statCol}>
-              <Text style={styles.statLabel}>Live ICU Beds</Text>
-              <Text style={styles.statVal}>118 Open</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statCol}>
-              <Text style={styles.statLabel}>Avg. Dispatch</Text>
-              <Text style={[styles.statVal, { color: colors.secondaryContainer }]}>12 Mins</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statCol}>
-              <Text style={styles.statLabel}>Deposit</Text>
-              <Text style={styles.statVal}>₹0 Upfront</Text>
-            </View>
-          </View>
-
-          <View style={styles.masterActions}>
-            <TouchableOpacity
-              style={styles.masterCallBtn}
-              onPress={() => Linking.openURL("tel:18006334768")}
-            >
-              <Text style={styles.masterCallText}>📞 Call 1800-MEDI-ROUTE</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.masterSosBtn}
-              onPress={() => triggerSOS("Apollo Hospitals, Bannerghatta")}
-            >
-              <Text style={styles.masterSosText}>🚨 Request Ambulance</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* 2. PRE-AUTH SELF-SERVICE TERMINAL */}
-        <View style={styles.terminalCard}>
-          <View style={styles.terminalHeader}>
+          <TouchableOpacity
+            style={styles.call108Button}
+            onPress={handleCall108}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.call108Icon}>🚨</Text>
             <View>
-              <Text style={styles.terminalSuper}>SELF-SERVICE TERMINAL</Text>
-              <Text style={styles.terminalTitle}>Pre-Auth Simulator</Text>
+              <Text style={styles.call108Label}>{currentLang === "hi" ? "108 पर कॉल करने के लिए टैप करें" : currentLang === "pa" ? "108 'ਤੇ ਕਾਲ ਕਰਨ ਲਈ ਟੈਪ ਕਰੋ" : "TAP TO CALL 108"}</Text>
+              <Text style={styles.call108Number}>{currentLang === "hi" ? "राष्ट्रीय एम्बुलेंस प्रेषण" : currentLang === "pa" ? "ਰਾਸ਼ਟਰੀ ਐਂਬੂਲੈਂਸ ਰਵਾਨਗੀ" : "National Ambulance Dispatch"}</Text>
             </View>
-            <View style={styles.tpaLockBadge}>
-              <Text style={styles.tpaLockText}>🔒 TPA Encrypted</Text>
-            </View>
-          </View>
-
-          {/* Step 1 */}
-          <View style={styles.stepBox}>
-            <Text style={styles.stepNum}>STEP 01</Text>
-            <Text style={styles.stepLabel}>Policy or ABHA ID</Text>
-            <TextInput
-              style={styles.stepInput}
-              value={policyId}
-              onChangeText={setPolicyId}
-              placeholder="e.g. 14-digit ABHA / Policy ID"
-              placeholderTextColor={colors.textTertiary}
-            />
-            <Text style={styles.stepVerify}>✓ Verified with IRDAI Registry</Text>
-          </View>
-
-          {/* Step 2 */}
-          <View style={styles.stepBox}>
-            <Text style={styles.stepNum}>STEP 02</Text>
-            <Text style={styles.stepLabel}>Network Hospital</Text>
-            <View style={styles.stepInputMock}>
-              <Text style={styles.stepInputMockText}>{selectedHospital}</Text>
-            </View>
-            <Text style={styles.stepVerify}>✓ Medi Route Care Desk Active</Text>
-          </View>
-
-          {/* Step 3 */}
-          <View style={styles.stepBox}>
-            <Text style={styles.stepNum}>STEP 03</Text>
-            <Text style={styles.stepLabel}>Instant Pre-Auth Limit</Text>
-            <Text style={styles.stepSumText}>₹10,00,000</Text>
-
-            <View style={styles.stepMetaRow}>
-              <Text style={styles.stepMetaKey}>Room Category:</Text>
-              <Text style={styles.stepMetaVal}>Single Private Deluxe</Text>
-            </View>
-            <View style={styles.stepMetaRow}>
-              <Text style={styles.stepMetaKey}>Upfront Deposit:</Text>
-              <Text style={[styles.stepMetaVal, { color: colors.secondary }]}>Waived (₹0)</Text>
-            </View>
-
-            <TouchableOpacity
-              style={styles.tokenGenBtn}
-              onPress={() => setTokenGenerated(true)}
-            >
-              <Text style={styles.tokenGenBtnText}>Generate Admission Token</Text>
-            </TouchableOpacity>
-
-            {tokenGenerated && (
-              <View style={styles.tokenSuccessBox}>
-                <Text style={styles.tokenSuccessTitle}>Token #MR-8829-BLR Generated!</Text>
-                <Text style={styles.tokenSuccessSub}>
-                  Present at Reception Desk 4 for instant cashless admission without deposit.
-                </Text>
-              </View>
-            )}
-          </View>
+          </TouchableOpacity>
         </View>
 
-        {/* 3. 20-MINUTE WORKFLOW TIMELINE */}
-        <View style={styles.timelineCard}>
-          <Text style={styles.timelineSuper}>SURGICAL-GRADE PRECISION</Text>
-          <Text style={styles.timelineTitle}>How We Secure Cashless in 20 Mins</Text>
-
-          <View style={styles.timelineList}>
-            {[
-              { num: "1", time: "0 - 3 min", title: "Digital Intake & ABHA Link", desc: "OCR parses policy credentials without paperwork." },
-              { num: "2", time: "3 - 8 min", title: "TPA Gateway Sync", desc: "Automated pre-underwriting validates active coverage." },
-              { num: "3", time: "8 - 15 min", title: "Zero-Deposit Guarantee", desc: "Medi Route issues direct cashless guarantee to billing." },
-              { num: "4", time: "15 - 20 min", title: "Express Room Allotment", desc: "Proceed straight to inpatient room with Care Buddy." },
-            ].map((step) => (
-              <View key={step.num} style={styles.timelineItem}>
-                <View style={styles.timelineCircle}>
-                  <Text style={styles.timelineCircleText}>{step.num}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                    <Text style={styles.timelineStepTitle}>{step.title}</Text>
-                    <Text style={styles.timelineStepTime}>{step.time}</Text>
-                  </View>
-                  <Text style={styles.timelineStepDesc}>{step.desc}</Text>
-                </View>
-              </View>
-            ))}
+        {/* WhatsApp Emergency Coordination Desk */}
+        <View style={styles.whatsappCard}>
+          <View style={styles.whatsappTopRow}>
+            <Text style={styles.whatsappSuper}>{currentLang === "hi" ? "शून्य-जमा बेड सहायता" : currentLang === "pa" ? "ਜ਼ੀਰੋ-ਡਿਪਾਜ਼ਿਟ ਬੈੱਡ ਸਹਾਇਤਾ" : "ZERO-DEPOSIT BED DESK"}</Text>
+            <Text style={styles.whatsappPhone}>9592543404</Text>
           </View>
+
+          <Text style={styles.whatsappTitle}>{t("home.whatsappDesk")}</Text>
+          <Text style={styles.whatsappSub}>
+            Connect instantly with Medi Route coordinators for zero upfront deposit bed reservation and nearest ICU priority intake.
+          </Text>
+
+          <TouchableOpacity
+            style={styles.whatsappButton}
+            onPress={handleWhatsAppDesk}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.whatsappBtnIcon}>💬</Text>
+            <View>
+              <Text style={styles.whatsappBtnLabel}>Chat on WhatsApp (9592543404)</Text>
+              <Text style={styles.whatsappBtnSub}>Instant Bed &amp; Admission Help</Text>
+            </View>
+          </TouchableOpacity>
         </View>
 
-        {/* 4. EMERGENCY TRAUMA CENTERS ROSTER */}
-        <View style={styles.rosterCard}>
-          <Text style={styles.rosterSuper}>LIVE HOSPITAL ROSTER</Text>
-          <Text style={styles.rosterTitle}>Bangalore Trauma Hubs &amp; Bed Grid</Text>
+        {/* Legal Rights Card — Zero Deposit Mandate */}
+        <View style={styles.legalCard}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 }}>
+            <Text style={{ fontSize: 16 }}>⚖️</Text>
+            <Text style={styles.legalTitle}>Supreme Court Zero-Deposit Mandate</Text>
+          </View>
+          <Text style={styles.legalText}>
+            Under Supreme Court of India directives and PMJAY emergency guidelines, accredited hospitals cannot deny emergency stabilization or demand upfront cash deposits before admission.
+          </Text>
+        </View>
 
-          {[
-            { name: "Manipal Hospital", loc: "Old Airport Road, Kodihalli", dist: "2.4 km", icu: "9 Open", phone: "08025024444" },
-            { name: "Apollo Hospitals", loc: "Bannerghatta Main Rd", dist: "5.1 km", icu: "14 Open", phone: "08026304050" },
-            { name: "Sakra World Hospital", loc: "Outer Ring Rd, Marathahalli", dist: "1.2 km", icu: "6 Open", phone: "08049694969" },
-          ].map((center) => (
-            <View key={center.name} style={styles.centerItem}>
-              <View style={styles.centerTop}>
-                <View>
-                  <Text style={styles.centerName}>{center.name}</Text>
-                  <Text style={styles.centerLoc}>{center.loc}</Text>
-                </View>
-                <View style={styles.centerDistBadge}>
-                  <Text style={styles.centerDistText}>{center.dist}</Text>
-                </View>
+        {/* Nearest Trauma & ICU Centers */}
+        <View style={styles.sectionHeaderRow}>
+          <Text style={styles.sectionTitle}>{currentLang === "hi" ? "निकटतम आपातकालीन अस्पताल" : currentLang === "pa" ? "ਨਜ਼ਦੀਕੀ ਐਮਰਜੈਂਸੀ ਹਸਪਤਾਲ" : "Nearest Emergency Facilities"}</Text>
+          <TouchableOpacity onPress={() => navigation.navigate("MainTabs")}>
+            <Text style={styles.sectionLink}>{t("common.viewAll")} ➔</Text>
+          </TouchableOpacity>
+        </View>
+
+        {emergencyHospitals.map((hosp) => (
+          <View key={hosp.id} style={styles.hospitalCard}>
+            <View style={styles.hospCardTop}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.hospName} numberOfLines={1}>{hosp.name}</Text>
+                <Text style={styles.hospAddress}>📍 {hosp.address}</Text>
               </View>
-
-              <View style={styles.centerIcuBox}>
-                <Text style={styles.centerIcuLabel}>Live ICU Status</Text>
-                <Text style={styles.centerIcuVal}>● {center.icu} ICU Beds</Text>
-              </View>
-
-              <View style={styles.centerActions}>
-                <TouchableOpacity
-                  style={styles.centerCallBtn}
-                  onPress={() => Linking.openURL(`tel:${center.phone}`)}
-                >
-                  <Text style={styles.centerCallText}>📞 Call Desk</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.centerSosBtn}
-                  onPress={() => triggerSOS(center.name)}
-                >
-                  <Text style={styles.centerSosText}>Route SOS</Text>
-                </TouchableOpacity>
+              <View style={styles.distBadge}>
+                <Text style={styles.distBadgeText}>{hosp.distance_km} km</Text>
               </View>
             </View>
-          ))}
-        </View>
 
-        <View style={{ height: 60 }} />
-      </ScrollView>
-
-      {/* SOS TELEMETRY MODAL */}
-      {sosModalOpen && (
-        <Modal visible={sosModalOpen} transparent animationType="fade">
-          <View style={styles.modalOverlay}>
-            <View style={styles.sosModalBox}>
-              <View style={styles.sosModalTop}>
-                <Text style={styles.sosModalHeading}>🚨 Ambulance Dispatched!</Text>
-                <TouchableOpacity onPress={() => setSosModalOpen(false)}>
-                  <Text style={{ fontSize: 18, color: colors.textSecondary }}>✕</Text>
-                </TouchableOpacity>
+            <View style={styles.hospMetricsRow}>
+              <View style={styles.hospMetricPill}>
+                <View style={styles.icuDot} />
+                <Text style={styles.icuText}>{hosp.beds_icu_available ?? 6} ICU Beds Free</Text>
               </View>
 
-              <View style={styles.sosTelemetryData}>
-                <View style={styles.sosDataRow}>
-                  <Text style={styles.sosDataKey}>Assigned Vehicle:</Text>
-                  <Text style={styles.sosDataVal}>KA-01-MJ-9921 (Cardiac ALS)</Text>
+              {hosp.is_pmjay_empanelled && (
+                <View style={styles.pmjayPill}>
+                  <Text style={styles.pmjayText}>✓ PMJAY Cashless</Text>
                 </View>
-                <View style={styles.sosDataRow}>
-                  <Text style={styles.sosDataKey}>Driver &amp; Paramedic:</Text>
-                  <Text style={styles.sosDataVal}>Suraj P. (+91 98450-XXXXX)</Text>
+              )}
+
+              {hosp.is_trauma_center && (
+                <View style={styles.traumaPill}>
+                  <Text style={styles.traumaText}>⚡ Level {hosp.trauma_level || "1"} Trauma</Text>
                 </View>
-                <View style={styles.sosDataRow}>
-                  <Text style={styles.sosDataKey}>Reserved Facility:</Text>
-                  <Text style={styles.sosDataVal}>{targetHospital}</Text>
-                </View>
-                <View style={styles.sosDataRow}>
-                  <Text style={styles.sosDataKey}>Live ETA:</Text>
-                  <Text style={[styles.sosDataVal, { color: colors.secondary }]}>8 Mins (GPS Tracked)</Text>
-                </View>
-                <View style={styles.sosDataRow}>
-                  <Text style={styles.sosDataKey}>Deposit Status:</Text>
-                  <Text style={[styles.sosDataVal, { color: colors.badgeCashless }]}>Waived (₹0)</Text>
-                </View>
-              </View>
+              )}
+            </View>
+
+            <View style={styles.hospCardActions}>
+              <TouchableOpacity
+                style={styles.hospCallBtn}
+                onPress={() => Linking.openURL(`tel:${hosp.emergency_phone || hosp.phone || "108"}`)}
+              >
+                <Text style={styles.hospCallBtnText}>📞 Call ER Desk</Text>
+              </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.sosHotlineBtn}
-                onPress={() => Linking.openURL("tel:18006334768")}
+                style={styles.hospReserveBtn}
+                onPress={handleWhatsAppDesk}
               >
-                <Text style={styles.sosHotlineText}>📞 Call Dispatch Desk</Text>
+                <Text style={styles.hospReserveBtnText}>Reserve Emergency Bed</Text>
               </TouchableOpacity>
             </View>
           </View>
-        </Modal>
-      )}
+        ))}
+
+        {/* First-Aid Emergency Guidance */}
+        <View style={[styles.sectionHeaderRow, { marginTop: 12 }]}>
+          <Text style={styles.sectionTitle}>Critical First-Aid Instructions</Text>
+          <Text style={styles.sectionSub}>While Waiting for Ambulance</Text>
+        </View>
+
+        {/* Protocol Selector Tabs */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.protocolTabs}>
+          {FIRST_AID_PROTOCOLS.map((p) => (
+            <TouchableOpacity
+              key={p.id}
+              style={[
+                styles.protocolTab,
+                selectedProtocol === p.id && styles.protocolTabActive,
+              ]}
+              onPress={() => setSelectedProtocol(p.id)}
+            >
+              <Text style={styles.protocolTabIcon}>{p.icon}</Text>
+              <Text
+                style={[
+                  styles.protocolTabText,
+                  selectedProtocol === p.id && styles.protocolTabTextActive,
+                ]}
+              >
+                {p.title.split(" ")[0]}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        {/* Active Protocol Card */}
+        {(() => {
+          const proto = FIRST_AID_PROTOCOLS.find((p) => p.id === selectedProtocol) || FIRST_AID_PROTOCOLS[0];
+          return (
+            <View style={styles.protocolCard}>
+              <View style={styles.protocolCardTop}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <Text style={{ fontSize: 24 }}>{proto.icon}</Text>
+                  <Text style={styles.protocolCardTitle}>{proto.title}</Text>
+                </View>
+                <View style={styles.protoBadge}>
+                  <Text style={styles.protoBadgeText}>{proto.badge}</Text>
+                </View>
+              </View>
+
+              <View style={styles.stepsContainer}>
+                {proto.steps.map((step, idx) => (
+                  <View key={idx} style={styles.stepRow}>
+                    <View style={styles.stepNumBubble}>
+                      <Text style={styles.stepNumBubbleText}>{idx + 1}</Text>
+                    </View>
+                    <Text style={styles.stepDescription}>{step}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          );
+        })()}
+
+        <View style={{ height: 30 }} />
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -299,33 +312,28 @@ export default function SOSScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.primary,
+    backgroundColor: "#B91C1C",
   },
   header: {
+    backgroundColor: "#B91C1C",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: colors.primary,
   },
   headerLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
   },
   backBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: "rgba(255,255,255,0.15)",
-    alignItems: "center",
-    justifyContent: "center",
+    padding: 6,
+    marginRight: 6,
   },
   backBtnText: {
-    fontSize: 16,
-    fontWeight: "bold",
     color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "700",
   },
   headerTitle: {
     fontSize: 16,
@@ -334,24 +342,24 @@ const styles = StyleSheet.create({
   },
   headerSub: {
     fontSize: 11,
-    color: colors.primaryLight,
+    color: "rgba(255, 255, 255, 0.8)",
   },
-  statusPill: {
+  liveGridBadge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 10,
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 20,
-    backgroundColor: "rgba(13, 148, 136, 0.25)",
+    borderRadius: 12,
+    gap: 5,
   },
   livePulse: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: colors.badgeCashless,
+    backgroundColor: "#4ADE80",
   },
-  statusPillText: {
+  liveGridText: {
     fontSize: 10,
     fontWeight: "800",
     color: "#FFFFFF",
@@ -362,365 +370,262 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 16,
+    gap: 14,
   },
-  masterCard: {
-    backgroundColor: colors.primary,
+  dispatchCard: {
+    backgroundColor: "#FEF2F2",
     borderRadius: 16,
     padding: 16,
-    marginBottom: 16,
+    borderWidth: 1.5,
+    borderColor: "#FCA5A5",
   },
-  masterBadgeRow: {
+  dispatchTopRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 6,
   },
-  masterSuper: {
+  dispatchSuper: {
     fontSize: 10,
     fontWeight: "800",
-    color: colors.secondaryContainer,
-    letterSpacing: 0.5,
+    color: "#DC2626",
+    letterSpacing: 0.8,
   },
-  masterTitle: {
-    fontSize: 20,
-    fontWeight: "800",
-    color: "#FFFFFF",
-    lineHeight: 26,
-    marginBottom: 6,
-  },
-  masterDesc: {
-    fontSize: 12,
-    color: colors.primaryLight,
-    lineHeight: 18,
-    marginBottom: 14,
-  },
-  statsStrip: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: "rgba(255,255,255,0.15)",
-    marginBottom: 14,
-  },
-  statCol: {
-    alignItems: "center",
-  },
-  statLabel: {
-    fontSize: 10,
-    color: colors.primaryLight,
-  },
-  statVal: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: "#FFFFFF",
-    marginTop: 2,
-  },
-  statDivider: {
-    width: 1,
-    height: 24,
-    backgroundColor: "rgba(255,255,255,0.15)",
-  },
-  masterActions: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  masterCallBtn: {
-    flex: 1,
-    backgroundColor: colors.error,
-    borderRadius: 10,
-    paddingVertical: 12,
-    alignItems: "center",
-  },
-  masterCallText: {
-    fontSize: 12,
-    fontWeight: "800",
-    color: "#FFFFFF",
-  },
-  masterSosBtn: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 10,
-    paddingVertical: 12,
-    alignItems: "center",
-  },
-  masterSosText: {
-    fontSize: 12,
-    fontWeight: "800",
-    color: colors.primary,
-  },
-  terminalCard: {
-    backgroundColor: colors.card,
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-    marginBottom: 16,
-  },
-  terminalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  terminalSuper: {
-    fontSize: 9,
-    fontWeight: "800",
-    color: colors.secondary,
-    letterSpacing: 0.5,
-  },
-  terminalTitle: {
-    fontSize: 15,
-    fontWeight: "800",
-    color: colors.primary,
-  },
-  tpaLockBadge: {
-    backgroundColor: colors.surfaceIce,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-  },
-  tpaLockText: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: colors.secondary,
-  },
-  stepBox: {
-    backgroundColor: colors.canvas,
-    borderRadius: 10,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-    marginBottom: 10,
-  },
-  stepNum: {
-    fontSize: 9,
-    fontWeight: "800",
-    color: colors.secondary,
-  },
-  stepLabel: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: colors.onSurface,
-    marginTop: 2,
-    marginBottom: 6,
-  },
-  stepInput: {
-    backgroundColor: colors.card,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    fontSize: 13,
-    fontWeight: "700",
-    color: colors.onSurface,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-  },
-  stepInputMock: {
-    backgroundColor: colors.card,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-  },
-  stepInputMockText: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: colors.onSurface,
-  },
-  stepVerify: {
-    fontSize: 10,
-    fontWeight: "600",
-    color: colors.badgeCashless,
-    marginTop: 6,
-  },
-  stepSumText: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: colors.primary,
-    marginBottom: 8,
-  },
-  stepMetaRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 4,
-  },
-  stepMetaKey: {
-    fontSize: 11,
-    color: colors.textSecondary,
-  },
-  stepMetaVal: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: colors.onSurface,
-  },
-  tokenGenBtn: {
-    backgroundColor: colors.primary,
-    borderRadius: 10,
-    paddingVertical: 12,
-    alignItems: "center",
-    marginTop: 10,
-  },
-  tokenGenBtnText: {
-    fontSize: 13,
-    fontWeight: "800",
-    color: "#FFFFFF",
-  },
-  tokenSuccessBox: {
-    backgroundColor: colors.surfaceIce,
-    borderRadius: 8,
-    padding: 10,
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-  },
-  tokenSuccessTitle: {
-    fontSize: 12,
-    fontWeight: "800",
-    color: colors.primary,
-  },
-  tokenSuccessSub: {
-    fontSize: 10,
-    color: colors.textSecondary,
-    marginTop: 2,
-    lineHeight: 14,
-  },
-  timelineCard: {
-    backgroundColor: colors.card,
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-    marginBottom: 16,
-  },
-  timelineSuper: {
-    fontSize: 9,
-    fontWeight: "800",
-    color: colors.secondary,
-    letterSpacing: 0.5,
-  },
-  timelineTitle: {
-    fontSize: 15,
-    fontWeight: "800",
-    color: colors.primary,
-    marginBottom: 12,
-  },
-  timelineList: {
-    gap: 12,
-  },
-  timelineItem: {
-    flexDirection: "row",
-    gap: 10,
-    alignItems: "flex-start",
-  },
-  timelineCircle: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: colors.surfaceIce,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  timelineCircleText: {
-    fontSize: 11,
-    fontWeight: "800",
-    color: colors.secondary,
-  },
-  timelineStepTitle: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: colors.onSurface,
-  },
-  timelineStepTime: {
-    fontSize: 10,
-    fontWeight: "600",
-    color: colors.textSecondary,
-  },
-  timelineStepDesc: {
-    fontSize: 10,
-    color: colors.textSecondary,
-    marginTop: 2,
-    lineHeight: 14,
-  },
-  rosterCard: {
-    backgroundColor: colors.card,
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-    marginBottom: 16,
-  },
-  rosterSuper: {
-    fontSize: 9,
-    fontWeight: "800",
-    color: colors.error,
-    letterSpacing: 0.5,
-  },
-  rosterTitle: {
-    fontSize: 15,
-    fontWeight: "800",
-    color: colors.primary,
-    marginBottom: 12,
-  },
-  centerItem: {
-    backgroundColor: colors.canvas,
-    borderRadius: 10,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-    marginBottom: 10,
-  },
-  centerTop: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-  },
-  centerName: {
-    fontSize: 13,
-    fontWeight: "800",
-    color: colors.onSurface,
-  },
-  centerLoc: {
-    fontSize: 10,
-    color: colors.textSecondary,
-    marginTop: 1,
-  },
-  centerDistBadge: {
-    backgroundColor: colors.surfaceIce,
+  freeBadge: {
+    backgroundColor: "#DC2626",
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 4,
+    borderRadius: 6,
   },
-  centerDistText: {
+  freeBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 9,
+    fontWeight: "800",
+  },
+  dispatchTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#991B1B",
+    marginBottom: 4,
+  },
+  dispatchSub: {
+    fontSize: 12,
+    color: "#7F1D1D",
+    lineHeight: 17,
+    marginBottom: 14,
+  },
+  call108Button: {
+    backgroundColor: "#DC2626",
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    shadowColor: "#DC2626",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  call108Icon: {
+    fontSize: 26,
+  },
+  call108Label: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "900",
+    letterSpacing: 0.5,
+  },
+  call108Number: {
+    color: "rgba(255, 255, 255, 0.85)",
+    fontSize: 11,
+    fontWeight: "600",
+  },
+  whatsappCard: {
+    backgroundColor: "#ECFDF5",
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1.5,
+    borderColor: "#A7F3D0",
+  },
+  whatsappTopRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+  whatsappSuper: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#059669",
+    letterSpacing: 0.8,
+  },
+  whatsappPhone: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#047857",
+  },
+  whatsappTitle: {
+    fontSize: 17,
+    fontWeight: "800",
+    color: "#065F46",
+    marginBottom: 4,
+  },
+  whatsappSub: {
+    fontSize: 12,
+    color: "#064E3B",
+    lineHeight: 17,
+    marginBottom: 14,
+  },
+  whatsappButton: {
+    backgroundColor: "#059669",
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  whatsappBtnIcon: {
+    fontSize: 22,
+  },
+  whatsappBtnLabel: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  whatsappBtnSub: {
+    color: "rgba(255, 255, 255, 0.85)",
+    fontSize: 11,
+    fontWeight: "500",
+  },
+  legalCard: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+  },
+  legalTitle: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: colors.onSurface,
+  },
+  legalText: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    lineHeight: 16,
+  },
+  sectionHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 6,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: colors.onSurface,
+  },
+  sectionSub: {
+    fontSize: 11,
+    color: colors.textSecondary,
+  },
+  sectionLink: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: colors.secondary,
+  },
+  hospitalCard: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+  },
+  hospCardTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
+  hospName: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: colors.onSurface,
+  },
+  hospAddress: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  distBadge: {
+    backgroundColor: colors.surfaceIce,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+  },
+  distBadgeText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: colors.secondary,
+  },
+  hospMetricsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+    marginTop: 8,
+  },
+  hospMetricPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F0FDF4",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    gap: 4,
+  },
+  icuDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#16A34A",
+  },
+  icuText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#16A34A",
+  },
+  pmjayPill: {
+    backgroundColor: colors.surfaceIce,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  pmjayText: {
     fontSize: 10,
     fontWeight: "700",
     color: colors.secondary,
   },
-  centerIcuBox: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    backgroundColor: colors.card,
+  traumaPill: {
+    backgroundColor: "#FEF3C7",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: 6,
-    padding: 8,
-    marginVertical: 8,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
   },
-  centerIcuLabel: {
+  traumaText: {
     fontSize: 10,
-    color: colors.textSecondary,
+    fontWeight: "700",
+    color: "#D97706",
   },
-  centerIcuVal: {
-    fontSize: 11,
-    fontWeight: "800",
-    color: colors.badgeCashless,
-  },
-  centerActions: {
+  hospCardActions: {
     flexDirection: "row",
     gap: 8,
+    marginTop: 10,
   },
-  centerCallBtn: {
+  hospCallBtn: {
     flex: 1,
     backgroundColor: colors.surfaceIce,
     borderRadius: 8,
@@ -729,80 +634,111 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.borderSubtle,
   },
-  centerCallText: {
+  hospCallBtnText: {
     fontSize: 11,
     fontWeight: "700",
     color: colors.secondary,
   },
-  centerSosBtn: {
-    flex: 1,
+  hospReserveBtn: {
+    flex: 1.2,
     backgroundColor: colors.primary,
     borderRadius: 8,
     paddingVertical: 8,
     alignItems: "center",
   },
-  centerSosText: {
+  hospReserveBtnText: {
     fontSize: 11,
     fontWeight: "800",
     color: "#FFFFFF",
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(19, 27, 46, 0.7)",
-    justifyContent: "center",
-    padding: 20,
+  protocolTabs: {
+    marginVertical: 4,
   },
-  sosModalBox: {
+  protocolTab: {
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.card,
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+    gap: 6,
+  },
+  protocolTabActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  protocolTabIcon: {
+    fontSize: 14,
+  },
+  protocolTabText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: colors.onSurface,
+  },
+  protocolTabTextActive: {
+    color: "#FFFFFF",
+  },
+  protocolCard: {
+    backgroundColor: colors.card,
+    borderRadius: 14,
+    padding: 14,
     borderWidth: 1,
     borderColor: colors.borderSubtle,
   },
-  sosModalTop: {
+  protocolCardTop: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingBottom: 8,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderSubtle,
+    paddingBottom: 10,
+    marginBottom: 10,
   },
-  sosModalHeading: {
-    fontSize: 15,
-    fontWeight: "800",
-    color: colors.error,
-  },
-  sosTelemetryData: {
-    backgroundColor: colors.canvas,
-    borderRadius: 10,
-    padding: 12,
-    marginVertical: 12,
-    gap: 6,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-  },
-  sosDataRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  sosDataKey: {
-    fontSize: 11,
-    color: colors.textSecondary,
-  },
-  sosDataVal: {
-    fontSize: 11,
+  protocolCardTitle: {
+    fontSize: 13,
     fontWeight: "800",
     color: colors.onSurface,
   },
-  sosHotlineBtn: {
-    backgroundColor: colors.error,
-    borderRadius: 10,
-    paddingVertical: 12,
-    alignItems: "center",
+  protoBadge: {
+    backgroundColor: "#FEE2E2",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
   },
-  sosHotlineText: {
-    fontSize: 13,
+  protoBadgeText: {
+    fontSize: 9,
     fontWeight: "800",
-    color: "#FFFFFF",
+    color: "#DC2626",
+  },
+  stepsContainer: {
+    gap: 8,
+  },
+  stepRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+  },
+  stepNumBubble: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: colors.surfaceIce,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 1,
+  },
+  stepNumBubbleText: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: colors.secondary,
+  },
+  stepDescription: {
+    flex: 1,
+    fontSize: 12,
+    color: colors.onSurface,
+    lineHeight: 18,
   },
 });

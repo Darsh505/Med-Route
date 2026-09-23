@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { useState, useMemo, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -138,6 +140,7 @@ function transformOptionToCompare(h: HospitalOption, index: number): CompareHosp
 }
 
 function CompareContent() {
+  const t = useTranslations();
   const searchParams = useSearchParams();
 
   // Find Tricity defaults from ALL_HOSPITALS
@@ -300,7 +303,7 @@ function CompareContent() {
               Search Facilities
             </Link>
             <span className="material-symbols-outlined text-[14px]">chevron_right</span>
-            <span className="text-sky-600 dark:text-sky-400 font-bold">Side-by-Side Comparison Matrix</span>
+            <span className="text-sky-600 dark:text-sky-400 font-bold">{t("compare.matrixTitle")}</span>
           </nav>
 
           <span className="text-[11px] font-bold uppercase tracking-wider bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300 px-2.5 py-0.5 rounded-full border border-sky-300/60 dark:border-sky-800">
@@ -315,7 +318,7 @@ function CompareContent() {
               Hospital Clinical &amp; Tariff Comparison
             </h1>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-              Side-by-side benchmarking across verified patient volumes, surgical success ratios, AB-PMJAY HBP 2.2 cashless rates, and live ICU telemetry.
+              {t("compare.matrixSubtitle")}
             </p>
           </div>
 

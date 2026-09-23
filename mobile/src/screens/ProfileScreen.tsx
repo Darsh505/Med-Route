@@ -18,8 +18,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../theme/colors";
 import { spacing, borderRadius, shadows } from "../theme/spacing";
 import { authService, MobileUser } from "../services/auth";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "../components/LanguageSwitcher";
 
 export default function ProfileScreen({ navigation }: any) {
+  const { t } = useTranslation();
   const [user, setUser] = useState<MobileUser | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -84,16 +87,29 @@ export default function ProfileScreen({ navigation }: any) {
           <View style={styles.authButtonsRow}>
             {user ? (
               <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-                <Text style={styles.logoutBtnText}>Sign Out</Text>
+                <Text style={styles.logoutBtnText}>{t("profile.logout")}</Text>
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
                 style={styles.signInBtn}
                 onPress={() => navigation.navigate("Login")}
               >
-                <Text style={styles.signInBtnText}>Sign In / Register →</Text>
+                <Text style={styles.signInBtnText}>{t("profile.signInBtn")}</Text>
               </TouchableOpacity>
             )}
+          </View>
+        </View>
+
+        
+        {/* Language Selection Card */}
+        <Text style={styles.sectionTitle}>{t("profile.languageSettings")}</Text>
+        <View style={styles.cardSection}>
+          <View style={[styles.listItem, { justifyContent: "space-between" }]}>
+            <View style={{ flex: 1, paddingRight: 10 }}>
+              <Text style={styles.listTitle}>{t("profile.selectLanguage")}</Text>
+              <Text style={styles.listSubtitle}>English (EN) • हिंदी (HI) • ਪੰਜਾਬੀ (PA)</Text>
+            </View>
+            <LanguageSwitcher />
           </View>
         </View>
 

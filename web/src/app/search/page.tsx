@@ -6,6 +6,7 @@ import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SearchMap from "@/components/SearchMap";
+import { useTranslations } from "next-intl";
 import { useLocation } from "@/context/LocationContext";
 import {
   ALL_HOSPITALS,
@@ -250,6 +251,7 @@ interface ScoredHospital extends HospitalOption {
 }
 
 function SearchContent() {
+  const t = useTranslations();
   const searchParams = useSearchParams();
   const { selectedCity, coords } = useLocation();
 
@@ -522,7 +524,7 @@ function SearchContent() {
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Ask in natural language (e.g., 'Find kidney treatment hospitals near Chandigarh under ₹2 lakh')..."
+                placeholder={t("search.searchPlaceholder")}
                 className="w-full pl-10 pr-8 py-2.5 bg-slate-100 dark:bg-slate-800/80 rounded-xl text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all font-medium"
               />
               {query && (
@@ -543,7 +545,7 @@ function SearchContent() {
                 onChange={(e) => setSelectedCityFilter(e.target.value)}
                 className="w-full py-2.5 pl-3 pr-8 bg-slate-100 dark:bg-slate-800/80 rounded-xl text-sm font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500 appearance-none cursor-pointer"
               >
-                <option value="All">All of India (1,450+ Hospitals)</option>
+                <option value="All">{t("search.allIndia")}</option>
                 {allCitiesList.map((c) => (
                   <option key={c} value={c}>
                     📍 {c}
@@ -632,7 +634,7 @@ function SearchContent() {
               <div className="flex items-center gap-2 flex-wrap text-xs">
                 <span className="px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 font-bold font-mono text-[10px] tracking-wider uppercase border border-sky-500/40 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse" />
-                  AI Query Slot Mapping (Confidence {(parsedSlots.confidence * 100).toFixed(0)}%)
+                  {t("search.aiTriageMatch")} (Confidence {(parsedSlots.confidence * 100).toFixed(0)}%)
                 </span>
 
                 {parsedSlots.condition && (
@@ -670,7 +672,7 @@ function SearchContent() {
                   onClick={() => setQuery("")}
                   className="text-[11px] text-sky-400 hover:text-sky-300 underline font-semibold cursor-pointer"
                 >
-                  Clear AI Slots
+                  {t("common.clear")}
                 </button>
               </div>
             </div>
@@ -679,9 +681,9 @@ function SearchContent() {
           {/* Quick Filter Pills Row */}
           <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 text-xs font-semibold">
             {[
-              { id: "all", label: "All Facilities" },
+              { id: "all", label: t("search.filterByPillAll") },
               { id: "icu", label: "🟢 Available ICU Beds" },
-              { id: "pmjay", label: "🛡️ 100% Cashless PM-JAY" },
+              { id: "pmjay", label: "🛡️ " + t("search.filterByPillPmjay") },
               { id: "govt", label: "🏛️ Government Apex" },
               { id: "pvt", label: "🏥 Private Super-Specialty" },
               { id: "budget1", label: "Under ₹1 Lakh" },

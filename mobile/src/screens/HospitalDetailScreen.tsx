@@ -25,12 +25,17 @@ import {
   Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import { colors } from "../theme/colors";
 import { spacing, borderRadius, shadows } from "../theme/spacing";
 import { api, MobileHospital, MOCK_HOSPITALS } from "../services/api";
 import { storage } from "../services/storage";
+import LanguageSwitcher from "../components/LanguageSwitcher";
+import { localizeHospital, localizeAccreditation } from "../i18n/hospitalLocalization";
 
 export default function HospitalDetailScreen({ route, navigation }: any) {
+  const { t, i18n } = useTranslation();
+  const currentLang = i18n.language || "en";
   const { slug } = route.params || { slug: "pgimer-chandigarh" };
   const [hospital, setHospital] = useState<MobileHospital>(MOCK_HOSPITALS[0]);
   const [activeTab, setActiveTab] = useState<"overview" | "procedures" | "facilities" | "reviews">("overview");
@@ -124,6 +129,7 @@ export default function HospitalDetailScreen({ route, navigation }: any) {
     setReviewContent("");
   };
 
+  const locHosp = localizeHospital(hospital, currentLang);
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
@@ -134,14 +140,17 @@ export default function HospitalDetailScreen({ route, navigation }: any) {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Text style={styles.backButtonText}>← Back</Text>
+          <Text style={styles.backButtonText}>← {t("hospitalDetail.back")}</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>
-          Hospital Details
+          {t("hospitalDetail.headerTitle")}
         </Text>
-        <TouchableOpacity onPress={handleToggleCompare}>
-          <Text style={{ fontSize: 16 }}>{isInCompare ? "✓" : "⚖️"}</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+          <LanguageSwitcher compact />
+          <TouchableOpacity onPress={handleToggleCompare}>
+            <Text style={{ fontSize: 16 }}>{isInCompare ? "✓" : "⚖️"}</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView
@@ -156,9 +165,9 @@ export default function HospitalDetailScreen({ route, navigation }: any) {
           </View>
 
           <View style={styles.heroInfo}>
-            <Text style={styles.hospitalName}>{hospital.name}</Text>
+            <Text style={styles.hospitalName}>{locHosp.name}</Text>
             <Text style={styles.hospitalAddress}>
-              📍 {hospital.address}, {hospital.city}, {hospital.state}
+              📍 {locHosp.address}, {locHosp.city}, {locHosp.state}
             </Text>
 
             {/* Badges */}
@@ -167,10 +176,10 @@ export default function HospitalDetailScreen({ route, navigation }: any) {
                 <Text style={styles.badgeMockDataText}>🧪 Mock Data</Text>
               </View>
               <View style={[styles.badge, styles.badgeGovt]}>
-                <Text style={styles.badgeGovtText}>🏛️ {hospital.type}</Text>
+                <Text style={styles.badgeGovtText}>🏛️ {locHosp.type}</Text>
               </View>
               <View style={[styles.badge, styles.badgeAccr]}>
-                <Text style={styles.badgeAccrText}>{hospital.accreditation}</Text>
+                <Text style={styles.badgeAccrText}>{locHosp.accreditation}</Text>
               </View>
               <View style={[styles.badge, styles.badgePmjay]}>
                 <Text style={styles.badgePmjayText}>PMJAY ✓</Text>
@@ -181,7 +190,7 @@ export default function HospitalDetailScreen({ route, navigation }: any) {
             <View style={styles.ratingRow}>
               <Text style={{ fontSize: 16 }}>⭐</Text>
               <Text style={styles.ratingValue}>{hospital.overall_rating}</Text>
-              <Text style={styles.ratingReviews}>({hospital.total_reviews} reviews)</Text>
+              <Text style={styles.ratingReviews}>({locHosp.total_reviews} {t("common.reviews")})</Text>
               <Text style={styles.dot}>•</Text>
               <Text style={styles.emergencyTag}>
                 {hospital.is_trauma_center ? "🚨 Level 1 Trauma 24x7" : "Emergency"}
@@ -206,7 +215,7 @@ export default function HospitalDetailScreen({ route, navigation }: any) {
                   activeOpacity={0.85}
                   onPress={handleCall}
                 >
-                  <Text style={styles.callButtonText}>📞 Hospital Desk</Text>
+                  <Text style={styles.callButtonText}>📞 {t("hospitalDetail.callHospital")}</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -220,7 +229,7 @@ export default function HospitalDetailScreen({ route, navigation }: any) {
                       isInCompare && styles.compareOutlineTextActive,
                     ]}
                   >
-                    {isInCompare ? "✓ Added" : "⚖️ Compare"}
+                    {isInCompare ? ("✓ " + t("common.compare")) : ("⚖️ " + t("common.compare"))}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -231,10 +240,10 @@ export default function HospitalDetailScreen({ route, navigation }: any) {
         {/* Tab Navigation: "Overview | Procedures | Facilities | Reviews" */}
         <View style={styles.tabsContainer}>
           {[
-            { id: "overview", label: "Overview" },
-            { id: "procedures", label: "Procedures" },
-            { id: "facilities", label: "Facilities" },
-            { id: "reviews", label: `Reviews (${reviewsList.length})` },
+            { id: "overview", label: t("hospitalDetail.tabOverview") },
+            { id: "procedures", label: t("hospitalDetail.tabProcedures") },
+            { id: "facilities", label: t("hospitalDetail.tabFacilities") },
+            { id: "reviews", label: `${t("hospitalDetail.tabReviews")} (${reviewsList.length})` },
           ].map((tab) => (
             <TouchableOpacity
               key={tab.id}
@@ -254,27 +263,27 @@ export default function HospitalDetailScreen({ route, navigation }: any) {
             {/* 2x2 Quick Stats Grid (Prompt 9 requirement) */}
             <View style={styles.statsGrid}>
               <View style={styles.statCard}>
-                <Text style={styles.statNumber}>{hospital.beds_total}</Text>
-                <Text style={styles.statLabel}>Total Beds</Text>
+                <Text style={styles.statNumber}>{locHosp.beds_total}</Text>
+                <Text style={styles.statLabel}>{t("hospitalDetail.totalBeds")}</Text>
               </View>
 
               <View style={styles.statCard}>
                 <Text style={[styles.statNumber, { color: colors.success }]}>
-                  {hospital.beds_icu_available}
+                  {locHosp.beds_icu_available}
                 </Text>
-                <Text style={styles.statLabel}>ICU Available ({hospital.beds_icu} Total)</Text>
+                <Text style={styles.statLabel}>{t("hospitalDetail.icuAvailable")}</Text>
               </View>
 
               <View style={styles.statCard}>
-                <Text style={styles.statNumber}>{hospital.distance_km} km</Text>
-                <Text style={styles.statLabel}>Distance from You</Text>
+                <Text style={styles.statNumber}>{locHosp.distance_km} {t("common.km")}</Text>
+                <Text style={styles.statLabel}>{t("hospitalDetail.distanceFromYou")}</Text>
               </View>
 
               <View style={styles.statCard}>
                 <Text style={[styles.statNumber, { color: colors.primary }]}>
-                  {hospital.cost_indicative}
+                  {locHosp.cost_indicative}
                 </Text>
-                <Text style={styles.statLabel}>Cost Range (Est.)</Text>
+                <Text style={styles.statLabel}>{t("hospitalDetail.costRangeEst")}</Text>
               </View>
             </View>
 
@@ -282,17 +291,17 @@ export default function HospitalDetailScreen({ route, navigation }: any) {
             <View style={[styles.prosConsCard, { marginBottom: spacing.md }]}>
               <Text style={styles.prosConsTitle}>🩺 Disease Care &amp; Clinical Track Record</Text>
               <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 8, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: colors.borderLight }}>
-                <Text style={{ fontSize: 12, color: colors.textSecondary }}>Top Treated Disease</Text>
-                <Text style={{ fontSize: 12, fontWeight: "700", color: colors.primaryDark }}>{hospital.top_disease_treated || "Cardiology & Surgery"}</Text>
+                <Text style={{ fontSize: 12, color: colors.textSecondary }}>{t("hospitalDetail.topTreatedDisease")}</Text>
+                <Text style={{ fontSize: 12, fontWeight: "700", color: colors.primaryDark }}>{locHosp.top_disease_treated || "Cardiology & Surgery"}</Text>
               </View>
               <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 8, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: colors.borderLight }}>
-                <Text style={{ fontSize: 12, color: colors.textSecondary }}>Total Patients Treated</Text>
+                <Text style={{ fontSize: 12, color: colors.textSecondary }}>{t("hospitalDetail.totalPatientsTreated")}</Text>
                 <Text style={{ fontSize: 12, fontWeight: "700", color: colors.textPrimary }}>
                   {hospital.total_patients_treated ? `👥 ${hospital.total_patients_treated.toLocaleString()} Patients` : "👥 14,500+ Patients"}
                 </Text>
               </View>
               <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                <Text style={{ fontSize: 12, color: colors.textSecondary }}>Overall Success Ratio</Text>
+                <Text style={{ fontSize: 12, color: colors.textSecondary }}>{t("hospitalDetail.overallSuccessRatio")}</Text>
                 <Text style={{ fontSize: 12, fontWeight: "700", color: colors.success }}>
                   ✓ {hospital.overall_success_ratio || "97.8%"} Track Record
                 </Text>

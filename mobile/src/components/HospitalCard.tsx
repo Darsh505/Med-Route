@@ -1,13 +1,15 @@
 /**
  * HospitalCard.tsx — Mobile Hospital Card
- * Clean, modern, de-cluttered healthcare card with essential signals.
+ * Clean, modern, de-cluttered healthcare card with essential signals and 100% localization.
  */
 
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { View, Text, StyleSheet, TouchableOpacity, Linking } from "react-native";
 import { colors } from "../theme/colors";
 import { borderRadius, shadows, spacing } from "../theme/spacing";
 import { MobileHospital } from "../services/api";
+import { localizeHospital } from "../i18n/hospitalLocalization";
 
 interface HospitalCardProps {
   hospital: MobileHospital;
@@ -23,10 +25,12 @@ export default function HospitalCard({
   onCompare,
   isInCompare = false,
 }: HospitalCardProps) {
+  const { t, i18n } = useTranslation();
+  const locHosp = localizeHospital(hospital, i18n.language || "en");
   const isGovt = hospital.type?.toLowerCase() === "government";
 
   const handleCallAmbulance = () => {
-    const phone = hospital.ambulance_phone || hospital.emergency_phone || "108";
+    const phone = locHosp.ambulance_phone || locHosp.emergency_phone || "108";
     Linking.openURL(`tel:${phone}`);
   };
 
@@ -40,21 +44,21 @@ export default function HospitalCard({
       <View style={styles.headerRow}>
         <View style={{ flex: 1, paddingRight: spacing.sm }}>
           <Text style={styles.name} numberOfLines={1}>
-            {hospital.name}
+            {locHosp.name}
           </Text>
           <Text style={styles.location}>
-            📍 {hospital.city}, {hospital.state} • {hospital.distance_km || 3.2} km
+            📍 {locHosp.city}, {locHosp.state} • {locHosp.distance_km || 3.2} {t("common.km")}
           </Text>
         </View>
 
         <View style={styles.ratingBadge}>
           <Text style={styles.star}>★</Text>
           <Text style={styles.ratingText}>
-            {typeof hospital.overall_rating === "number"
-              ? hospital.overall_rating.toFixed(1)
+            {typeof locHosp.overall_rating === "number"
+              ? locHosp.overall_rating.toFixed(1)
               : "4.6"}
           </Text>
-          <Text style={styles.reviewCount}>({hospital.total_reviews})</Text>
+          <Text style={styles.reviewCount}>({locHosp.total_reviews})</Text>
         </View>
       </View>
 
@@ -62,44 +66,44 @@ export default function HospitalCard({
       <View style={styles.signalsRow}>
         {/* ICU Signal */}
         <View style={[styles.signalPill, styles.icuPill]}>
-          <View style={[styles.dot, { backgroundColor: hospital.beds_icu_available > 0 ? colors.success : colors.emergency }]} />
+          <View style={[styles.dot, { backgroundColor: locHosp.beds_icu_available > 0 ? colors.success : colors.emergency }]} />
           <Text style={styles.icuText}>
-            {hospital.beds_icu_available} ICU Beds Free
+            {t("hospitalCard.icuBedsFree", { count: locHosp.beds_icu_available })}
           </Text>
         </View>
 
         {/* PMJAY Signal */}
-        {hospital.is_pmjay_empanelled ? (
+        {locHosp.is_pmjay_empanelled ? (
           <View style={[styles.signalPill, styles.pmjayPill]}>
-            <Text style={styles.pmjayText}>🛡️ PM-JAY Cashless</Text>
+            <Text style={styles.pmjayText}>💳 {t("hospitalCard.pmjayCashless")}</Text>
           </View>
         ) : null}
 
         {/* Type Pill */}
         <View style={[styles.signalPill, isGovt ? styles.govtPill : styles.pvtPill]}>
           <Text style={[styles.typeText, isGovt ? styles.govtText : styles.pvtText]}>
-            {hospital.type}
+            {locHosp.type}
           </Text>
         </View>
       </View>
 
-      {/* Clinical Track Record (Mock Data) */}
-      {hospital.top_disease_treated ? (
+      {/* Clinical Track Record */}
+      {locHosp.top_disease_treated ? (
         <View style={styles.clinicalRow}>
-          <Text style={styles.clinicalIcon}>🩺</Text>
+          <Text style={styles.clinicalIcon}>🔬</Text>
           <Text style={styles.clinicalText} numberOfLines={1}>
-            <Text style={styles.clinicalHighlight}>{hospital.top_disease_treated}</Text>
-            {hospital.total_patients_treated ? ` • ${Number(hospital.total_patients_treated).toLocaleString()} treated` : ""}
-            {hospital.overall_success_ratio ? ` (✓ ${hospital.overall_success_ratio})` : ""}
+            <Text style={styles.clinicalHighlight}>{locHosp.top_disease_treated}</Text>
+            {locHosp.total_patients_treated ? ` • ${Number(locHosp.total_patients_treated).toLocaleString()} ${t("hospitalCard.treated")}` : ""}
+            {locHosp.overall_success_ratio ? ` (✓ ${locHosp.overall_success_ratio})` : ""}
           </Text>
         </View>
       ) : null}
 
       {/* Indicative Tariff */}
       <View style={styles.tariffRow}>
-        <Text style={styles.tariffLabel}>Indicative Tariff:</Text>
+        <Text style={styles.tariffLabel}>{t("hospitalCard.indicativeTariff")}</Text>
         <Text style={styles.tariffValue} numberOfLines={1}>
-          {hospital.cost_indicative || (isGovt ? "100% Free / Subsidized" : "₹75,000 – ₹1,80,000")}
+          {locHosp.cost_indicative || (isGovt ? t("hospitalCard.freeSubsidized") : "₹75,000 - ₹1,80,000")}
         </Text>
       </View>
 
@@ -111,7 +115,7 @@ export default function HospitalCard({
           activeOpacity={0.8}
         >
           <Text style={styles.callIcon}>📞</Text>
-          <Text style={styles.callText}>Emergency Call</Text>
+          <Text style={styles.callText}>{t("hospitalCard.emergencyCall")}</Text>
         </TouchableOpacity>
 
         {onCompare && (
@@ -121,13 +125,13 @@ export default function HospitalCard({
             activeOpacity={0.8}
           >
             <Text style={[styles.compareText, isInCompare && styles.compareActiveText]}>
-              {isInCompare ? "✓ Added" : "+ Compare"}
+              {isInCompare ? `✓ ${t("hospitalCard.added")}` : t("hospitalCard.compare")}
             </Text>
           </TouchableOpacity>
         )}
 
         <View style={styles.viewDetailsButton}>
-          <Text style={styles.viewDetailsText}>View Details →</Text>
+          <Text style={styles.viewDetailsText}>{t("hospitalCard.viewDetails")} ➔</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -146,13 +150,15 @@ const styles = StyleSheet.create({
   },
   headerRow: {
     flexDirection: "row",
-    alignItems: "flex-start",
     justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: spacing.sm,
   },
   name: {
     fontSize: 16,
     fontWeight: "700",
     color: colors.textPrimary,
+    lineHeight: 22,
   },
   location: {
     fontSize: 12,
@@ -162,175 +168,169 @@ const styles = StyleSheet.create({
   ratingBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(245, 158, 11, 0.1)",
-    paddingHorizontal: 8,
+    backgroundColor: colors.surfaceAmber,
+    paddingHorizontal: spacing.xs + 2,
     paddingVertical: 3,
-    borderRadius: 8,
+    borderRadius: borderRadius.pill,
     gap: 3,
   },
   star: {
-    color: "#D97706",
+    color: colors.warning,
     fontSize: 12,
   },
   ratingText: {
     fontSize: 12,
     fontWeight: "700",
-    color: "#B45309",
+    color: colors.textPrimary,
   },
   reviewCount: {
-    fontSize: 11,
-    color: colors.textTertiary,
+    fontSize: 10,
+    color: colors.textSecondary,
   },
   signalsRow: {
     flexDirection: "row",
-    alignItems: "center",
     flexWrap: "wrap",
-    gap: 6,
-    marginTop: spacing.sm,
+    gap: spacing.xs,
+    marginBottom: spacing.sm,
   },
   signalPill: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 8,
+    paddingHorizontal: spacing.sm,
     paddingVertical: 3,
-    borderRadius: 6,
+    borderRadius: borderRadius.pill,
+    gap: 4,
+  },
+  icuPill: {
+    backgroundColor: colors.surfaceMint,
   },
   dot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    marginRight: 5,
-  },
-  icuPill: {
-    backgroundColor: "rgba(22, 163, 74, 0.1)",
-    borderWidth: 1,
-    borderColor: "rgba(22, 163, 74, 0.25)",
   },
   icuText: {
     fontSize: 11,
-    fontWeight: "800",
     color: colors.success,
+    fontWeight: "600",
   },
   pmjayPill: {
-    backgroundColor: colors.thistleLight,
-    borderWidth: 1,
-    borderColor: colors.thistleBorder,
+    backgroundColor: colors.surfaceIce,
   },
   pmjayText: {
     fontSize: 11,
-    fontWeight: "700",
     color: colors.primary,
+    fontWeight: "600",
   },
   govtPill: {
-    backgroundColor: "#F4ECF6",
-    borderWidth: 1,
-    borderColor: colors.thistleBorder,
+    backgroundColor: colors.surfaceAmber,
+  },
+  govtText: {
+    fontSize: 11,
+    color: colors.warning,
+    fontWeight: "600",
   },
   pvtPill: {
-    backgroundColor: colors.cardElevated,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
+    backgroundColor: colors.surfaceIce,
+  },
+  pvtText: {
+    fontSize: 11,
+    color: colors.secondary,
+    fontWeight: "600",
   },
   typeText: {
     fontSize: 11,
-    fontWeight: "700",
-  },
-  govtText: {
-    color: colors.primary,
-  },
-  pvtText: {
-    color: colors.textSecondary,
+    fontWeight: "600",
   },
   clinicalRow: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(13, 148, 136, 0.08)",
-    paddingHorizontal: 8,
+    backgroundColor: colors.surfaceSubtle,
+    borderRadius: borderRadius.sm,
+    paddingHorizontal: spacing.sm,
     paddingVertical: 5,
-    borderRadius: 6,
-    marginTop: spacing.xs,
-    gap: 4,
+    marginBottom: spacing.sm,
+    gap: spacing.xs,
   },
   clinicalIcon: {
-    fontSize: 11,
+    fontSize: 12,
   },
   clinicalText: {
     fontSize: 11,
-    color: "#0f766e",
+    color: colors.textSecondary,
     flex: 1,
   },
   clinicalHighlight: {
     fontWeight: "700",
+    color: colors.textPrimary,
   },
   tariffRow: {
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    gap: 6,
-    marginTop: spacing.sm,
-    paddingTop: spacing.xs,
+    paddingVertical: spacing.xs,
     borderTopWidth: 1,
     borderTopColor: colors.borderLight,
+    marginBottom: spacing.sm,
   },
   tariffLabel: {
     fontSize: 11,
-    color: colors.textTertiary,
+    color: colors.textSecondary,
   },
   tariffValue: {
     fontSize: 12,
     fontWeight: "700",
     color: colors.textPrimary,
-    flex: 1,
   },
   actionsRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginTop: spacing.sm,
+    gap: spacing.xs,
   },
   callButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(239, 68, 68, 0.08)",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
+    backgroundColor: colors.surfaceMint,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 7,
+    borderRadius: borderRadius.sm,
     gap: 4,
   },
   callIcon: {
     fontSize: 12,
   },
   callText: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: colors.emergency,
+    fontSize: 12,
+    fontWeight: "600",
+    color: colors.success,
   },
   compareButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+    borderRadius: borderRadius.sm,
   },
   compareActive: {
-    backgroundColor: colors.accent,
-    borderColor: colors.accent,
+    backgroundColor: colors.surfaceIce,
+    borderColor: colors.primary,
   },
   compareText: {
-    fontSize: 11,
-    fontWeight: "600",
+    fontSize: 12,
     color: colors.textSecondary,
+    fontWeight: "500",
   },
   compareActiveText: {
-    color: colors.textInverse,
+    color: colors.primary,
+    fontWeight: "700",
   },
   viewDetailsButton: {
-    marginLeft: "auto",
-    paddingVertical: 6,
+    flex: 1,
+    alignItems: "flex-end",
   },
   viewDetailsText: {
     fontSize: 12,
-    fontWeight: "700",
-    color: colors.accent,
+    color: colors.primary,
+    fontWeight: "600",
   },
 });

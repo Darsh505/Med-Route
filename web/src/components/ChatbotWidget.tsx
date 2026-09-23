@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useLocation } from "@/context/LocationContext";
+import { useTranslations } from "next-intl";
 import { ALL_HOSPITALS } from "@/data/hospitalsData";
 
 interface MessageItem {
@@ -157,6 +158,7 @@ const INITIAL_MESSAGES: MessageItem[] = [
 ];
 
 export default function ChatbotWidget() {
+  const t = useTranslations();
   const { selectedCity, coords } = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
@@ -538,7 +540,7 @@ export default function ChatbotWidget() {
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask about procedure costs, ICU beds, pre-auth..."
+                placeholder={t("chatbot.inputPlaceholder")}
                 className="w-full bg-transparent text-xs sm:text-sm text-on-surface placeholder:text-on-surface-variant focus:outline-none"
               />
               {input && (

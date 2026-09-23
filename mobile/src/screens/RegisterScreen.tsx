@@ -16,15 +16,17 @@ import {
   StatusBar,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import { colors } from "../theme/colors";
 import { authService } from "../services/auth";
 import MedRouteLogo from "../components/MedRouteLogo";
 
 export default function RegisterScreen({ navigation }: any) {
+  const { t } = useTranslation();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<"patient" | "admin">("patient");
+  const role = "patient";
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -83,7 +85,7 @@ export default function RegisterScreen({ navigation }: any) {
             <Text style={styles.inputLabel}>Full Name</Text>
             <TextInput
               style={styles.input}
-              placeholder="e.g. Dr. Arjun Sharma"
+              placeholder="e.g. Rahul Sharma"
               placeholderTextColor={colors.textTertiary}
               value={name}
               onChangeText={setName}
@@ -99,26 +101,6 @@ export default function RegisterScreen({ navigation }: any) {
               value={email}
               onChangeText={setEmail}
             />
-
-            <Text style={styles.inputLabel}>Account Type</Text>
-            <View style={styles.roleRow}>
-              <TouchableOpacity
-                style={[styles.roleButton, role === "patient" && styles.roleButtonActive]}
-                onPress={() => setRole("patient")}
-              >
-                <Text style={[styles.roleButtonText, role === "patient" && styles.roleButtonTextActive]}>
-                  👤 Patient
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.roleButton, role === "admin" && styles.roleButtonActive]}
-                onPress={() => setRole("admin")}
-              >
-                <Text style={[styles.roleButtonText, role === "admin" && styles.roleButtonTextActive]}>
-                  🛡️ Hospital Admin
-                </Text>
-              </TouchableOpacity>
-            </View>
 
             <Text style={styles.inputLabel}>Password</Text>
             <TextInput

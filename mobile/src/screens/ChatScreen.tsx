@@ -18,8 +18,12 @@ import {
   ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import { colors } from "../theme/colors";
-import { api, MOCK_HOSPITALS, CITY_ALIASES, haversineKm, USER_LAT, USER_LNG } from "../services/api";
+import { api, MOCK_HOSPITALS, CITY_ALIASES, haversineKm, USER_LAT, USER_LNG, extractCityFromQuery } from "../services/api";
+import MedRouteLogo from "../components/MedRouteLogo";
+import LanguageSwitcher from "../components/LanguageSwitcher";
+import { localizeHospitalName, localizeAddress } from "../i18n/hospitalLocalization";
 
 interface MessageItem {
   id: string;
@@ -52,7 +56,7 @@ const INITIAL_MESSAGES: MessageItem[] = [
     id: "m-welcome",
     role: "assistant",
     content:
-      "👋 **Hello! Welcome to Medi Route Clinical AI.**\n\n" +
+      "👋 **Hello! Welcome to Med Route AI.**\n\n" +
       "I am your real-time medical guide and hospital dispatch assistant. I can help you with:\n\n" +
       "• **Live ICU & Ventilator Telemetry**: Check verified vacant ICU beds in your city with zero-deposit bed reservations.\n" +
       "• **Emergency Red-Flag Triage**: Immediate clinical guidance for chest pain, stroke symptoms, and 108 ambulance dispatch.\n" +
@@ -130,7 +134,37 @@ function FormattedClinicalTextRN({ content, isUser }: { content: string; isUser:
 }
 
 export default function ChatScreen({ navigation }: any) {
+  const { t, i18n } = useTranslation();
+  const currentLang = i18n.language || "en";
   const [messages, setMessages] = useState<MessageItem[]>(INITIAL_MESSAGES);
+  // Synchronize initial greeting when language changes
+  React.useEffect(() => {
+    setMessages((prev) => {
+      if (prev.length <= 1) {
+        let content = INITIAL_MESSAGES[0].content;
+        let suggestions = INITIAL_MESSAGES[0].quick_suggestions;
+        if (currentLang === "hi") {
+          content = "👋 **नमस्ते! मेडरूट क्लिनिकल एआई में आपका स्वागत है।**\n\nमैं आपका रीयल-टाइम मेडिकल गाइड और अस्पताल सहायता सहायक हूं:\n\n• **लाइव आईसीयू एवं वेंटिलेटर स्थिति**: अपने शहर में खाली आईसीयू बेड जांचें।\n• **आपातकालीन ट्राइएज**: सीने में दर्द, स्ट्रोक और 108 एम्बुलेंस सहायता।\n• **उपचार एवं पैकेज दरें**: पीएमजेएवाई के तहत एंजियोप्लास्टी, घुटना प्रत्यारोपण, डायलिसिस के खर्च।\n• **20-मिनट कैशलेस गारंटी**: ₹0 अग्रिम जमा के साथ प्री-ऑथ प्रक्रिया।\n\nमैं आपकी क्या सहायता कर सकता हूँ?";
+          suggestions = [
+            t("chat.suggestion1"),
+            t("chat.suggestion2"),
+            t("chat.suggestion3"),
+            t("chat.suggestion4"),
+          ];
+        } else if (currentLang === "pa") {
+          content = "👋 **ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਡਰੂਟ ਕਲੀਨਿਕਲ ਏਆਈ ਵਿੱਚ ਤੁਹਾਡਾ ਸੁਆਗਤ ਹੈ।**\n\nਮੈਂ ਤੁਹਾਡਾ ਰੀਅਲ-ਟਾਈਮ ਮੈਡੀਕਲ ਗਾਈਡ ਅਤੇ ਹਸਪਤਾਲ ਸਹਾਇਕ ਹਾਂ:\n\n• **ਲਾਈਵ ਆਈ.ਸੀ.ਯੂ. ਅਤੇ ਵੈਂਟੀਲੇਟਰ ਸਥਿਤੀ**: ਆਪਣੇ ਸ਼ਹਿਰ ਵਿੱਚ ਖਾਲੀ ਆਈ.ਸੀ.ਯੂ. ਬੈੱਡ ਦੇਖੋ।\n• **ਐਮਰਜੈਂਸੀ ਟ੍ਰਾਈਏਜ**: ਛਾਤੀ ਦਾ ਦਰਦ, ਸਟ੍ਰੋਕ ਅਤੇ 108 ਐਂਬੂਲੈਂਸ ਸਹਾਇਤਾ।\n• **ਇਲਾਜ ਅਤੇ ਪੈਕੇਜ ਦਰਾਂ**: ਪੀਐਮਜੇਏਵਾਈ ਅਧੀਨ ਐਂਜੀਓਪਲਾਸਟੀ, ਗੋਡਾ ਬਦਲਣਾ, ਡਾਇਲਸਿਸ ਦੇ ਖ਼ਰਚੇ।\n• **20-ਮਿੰਟ ਕੈਸ਼ਲੈਸ ਗਾਰੰਟੀ**: ₹0 ਅਗਾਊਂ ਜਮ੍ਹਾਂ ਨਾਲ ਪ੍ਰੀ-ਔਥ ਪ੍ਰਕਿਰਿਆ।\n\nਮੈਂ ਤੁਹਾਡੀ ਕੀ ਮਦਦ ਕਰ ਸਕਦਾ ਹਾਂ?";
+          suggestions = [
+            t("chat.suggestion1"),
+            t("chat.suggestion2"),
+            t("chat.suggestion3"),
+            t("chat.suggestion4"),
+          ];
+        }
+        return [{ ...INITIAL_MESSAGES[0], content, quick_suggestions: suggestions }];
+      }
+      return prev;
+    });
+  }, [currentLang]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const flatListRef = useRef<FlatList>(null);
@@ -190,7 +224,7 @@ export default function ChatScreen({ navigation }: any) {
         {isEmergency && !isUser && (
           <View style={styles.emergencyBanner}>
             <Text style={styles.emergencyBannerText}>
-              🚨 CRITICAL TRIAGE: Call 1800-MEDI-ROUTE immediately!
+              🚨 CRITICAL EMERGENCY: Call 108 Ambulance immediately!
             </Text>
           </View>
         )}
@@ -204,12 +238,12 @@ export default function ChatScreen({ navigation }: any) {
               {item.recommended_hospitals.map((hosp, idx) => (
                 <View key={idx} style={styles.hospitalMiniCard}>
                   <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                    <Text style={styles.miniCardName}>{hosp.name}</Text>
+                    <Text style={styles.miniCardName}>{localizeHospitalName(hosp.name, currentLang)}</Text>
                     {hosp.distance_km && (
                       <Text style={styles.miniCardDist}>{hosp.distance_km} km</Text>
                     )}
                   </View>
-                  <Text style={styles.miniCardAddress}>📍 {hosp.address}</Text>
+                  <Text style={styles.miniCardAddress}>📍 {localizeAddress(hosp.address, currentLang)}</Text>
 
                   <View style={styles.miniCardMeta}>
                     <Text style={styles.miniCardIcu}>● {hosp.beds_icu_available} ICU Beds Free</Text>
@@ -232,7 +266,7 @@ export default function ChatScreen({ navigation }: any) {
                       style={styles.miniCardViewBtn}
                       onPress={() => navigation.navigate("SOS")}
                     >
-                      <Text style={styles.miniCardViewBtnText}>Reserve Bed</Text>
+                      <Text style={styles.miniCardViewBtnText}>{t("home.liveBeds")}</Text>
                     </TouchableOpacity>
 
                     {hosp.emergency_phone && (
@@ -240,7 +274,7 @@ export default function ChatScreen({ navigation }: any) {
                         style={styles.miniCardCallBtn}
                         onPress={() => Linking.openURL(`tel:${hosp.emergency_phone}`)}
                       >
-                        <Text style={styles.miniCardCallBtnText}>Call Desk</Text>
+                        <Text style={styles.miniCardCallBtnText}>{t("hospitalDetail.callHospital")}</Text>
                       </TouchableOpacity>
                     )}
                   </View>
@@ -300,19 +334,12 @@ export default function ChatScreen({ navigation }: any) {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTitleRow}>
-          <View style={styles.headerIcon}>
-            <Text style={{ fontSize: 18 }}>🩺</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-              <Text style={styles.headerTitle}>Medi Route Clinical AI</Text>
-              <View style={styles.partnerBadge}>
-                <Text style={styles.partnerBadgeText}>TPA Verified</Text>
-              </View>
-            </View>
+          <MedRouteLogo size="sm" showBadge={false} />
+          <View style={{ flex: 1, marginLeft: 8 }}>
+            <Text style={styles.headerTitle}>Med Route AI</Text>
             <View style={styles.headerStatusRow}>
               <View style={styles.liveDot} />
-              <Text style={styles.headerSubtitle}>Online • Clinical Triage &amp; Bed Telemetry</Text>
+              <Text style={styles.headerSubtitle}>24/7 Verified Healthcare Guide</Text>
             </View>
           </View>
         </View>
@@ -343,9 +370,9 @@ export default function ChatScreen({ navigation }: any) {
       </View>
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.chatContainer}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 25}
       >
         <FlatList
           ref={flatListRef}
@@ -359,7 +386,7 @@ export default function ChatScreen({ navigation }: any) {
         {loading && (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="small" color={colors.primary} />
-            <Text style={styles.loadingText}>Connecting to clinical database...</Text>
+            <Text style={styles.loadingText}>{currentLang === "hi" ? "क्लिनिकल डेटाबेस से कनेक्ट हो रहा है..." : currentLang === "pa" ? "ਕਲੀਨਿਕਲ ਡਾਟਾਬੇਸ ਨਾਲ ਜੁੜ ਰਿਹਾ ਹੈ..." : "Connecting to clinical database..."}</Text>
           </View>
         )}
 
@@ -369,17 +396,22 @@ export default function ChatScreen({ navigation }: any) {
             style={styles.textInput}
             value={input}
             onChangeText={setInput}
-            placeholder="Ask about hospital pre-auth, ICU beds, room rent..."
+            placeholder={t("chat.inputPlaceholder")}
             placeholderTextColor={colors.textTertiary}
             onSubmitEditing={() => handleSend()}
             returnKeyType="send"
+            onFocus={() => {
+              setTimeout(() => {
+                flatListRef.current?.scrollToEnd({ animated: true });
+              }, 200);
+            }}
           />
           <TouchableOpacity
             style={[styles.sendButton, (!input.trim() || loading) && styles.sendButtonDisabled]}
             onPress={() => handleSend()}
             disabled={!input.trim() || loading}
           >
-            <Text style={styles.sendButtonText}>Send</Text>
+            <Text style={styles.sendButtonText}>{currentLang === "hi" ? "भेजें" : currentLang === "pa" ? "ਭੇਜੋ" : "Send"}</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -831,15 +863,7 @@ function resolveMobileHospitals(
   const q = query.toLowerCase();
 
   // Detect city from query
-  let matchedCity: string | null = null;
-  const tokens = q.replace(/[^a-z0-9\s]/g, " ").split(/\s+/);
-  for (const token of tokens) {
-    if (token.length < 3) continue;
-    if (CITY_ALIASES[token]) {
-      matchedCity = CITY_ALIASES[token];
-      break;
-    }
-  }
+  let matchedCity = extractCityFromQuery(q);
 
   let pool = MOCK_HOSPITALS;
   if (matchedCity) {
@@ -1009,15 +1033,7 @@ function generateClientSideNLP(text: string): MessageItem {
   const matchedDisease = matchDiseaseFromQuery(q);
   if (matchedDisease) {
     // Detect city from query or default to Hoshiarpur
-    let queryCity = "Hoshiarpur";
-    const tokens = q.replace(/[^a-z0-9\s]/g, " ").split(/\s+/);
-    for (const token of tokens) {
-      if (token.length < 3) continue;
-      if (CITY_ALIASES[token]) {
-        queryCity = CITY_ALIASES[token];
-        break;
-      }
-    }
+    let queryCity = extractCityFromQuery(q) || "Hoshiarpur";
 
     const diseaseHospitals = resolveMobileHospitalsForDisease(
       matchedDisease.id,

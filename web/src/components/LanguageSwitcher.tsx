@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -7,8 +7,8 @@ import { setUserLocale } from "@/services/locale";
 
 const LOCALE_OPTIONS = [
   { value: "en", label: "English", shortLabel: "EN" },
-  { value: "hi", label: "हिन्दी", shortLabel: "हि" },
-  { value: "pa", label: "ਪੰਜਾਬੀ", shortLabel: "ਪੰ" },
+  { value: "hi", label: "\u0939\u093f\u0902\u0926\u0940 (Hindi)", shortLabel: "HI" },
+  { value: "pa", label: "\u0a2a\u0a70\u0a1c\u0a3e\u0a2c\u0a40 (Punjabi)", shortLabel: "PA" },
 ] as const;
 
 export default function LanguageSwitcher() {

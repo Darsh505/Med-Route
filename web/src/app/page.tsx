@@ -906,7 +906,7 @@ export default function HomePage() {
                   
                   {/* Title & Reset */}
                   <div className="flex items-center justify-between pb-space-xs border-b border-border-subtle/60">
-                    <h3 className="font-headline-md text-headline-md text-on-surface font-bold">Filter Discovery</h3>
+                    <h3 className="font-headline-md text-headline-md text-on-surface font-bold">{t("home.filterDiscovery")}</h3>
                     <button
                       className="font-label-sm text-label-sm text-secondary hover:underline font-bold"
                       type="button"
@@ -919,9 +919,9 @@ export default function HomePage() {
                   {/* Distance Radius */}
                   <div className="flex flex-col gap-space-sm">
                     <div className="flex justify-between items-center">
-                      <span className="font-title-md text-title-md text-on-surface font-semibold">Distance Radius</span>
+                      <span className="font-title-md text-title-md text-on-surface font-semibold">{t("home.distanceRadius")}</span>
                       <span className="font-label-md text-label-md text-secondary font-bold" id="radius-val">
-                        {distanceRadius >= 50 ? "Within 50+ km (All)" : `Within ${distanceRadius} km`}
+                        {distanceRadius >= 50 ? t("home.withinAll") : t("home.withinDistance", { km: distanceRadius })}
                       </span>
                     </div>
                     <input
@@ -969,7 +969,7 @@ export default function HomePage() {
                   {/* Accreditations & Quality */}
                   <div className="flex flex-col gap-space-xs border-t border-border-subtle/50 pt-space-sm">
                     <span className="font-title-md text-title-md text-on-surface font-semibold mb-space-xs">
-                      Accreditations &amp; Quality
+                      {t("home.accreditations")}
                     </span>
                     <label className="flex items-center justify-between p-space-xs rounded-lg hover:bg-surface-canvas cursor-pointer select-none">
                       <div className="flex items-center gap-space-xs">
@@ -979,7 +979,7 @@ export default function HomePage() {
                           className="accent-secondary w-4 h-4 cursor-pointer"
                           type="checkbox"
                         />
-                        <span className="font-body-md text-body-md text-on-surface">NABH Accredited</span>
+                        <span className="font-body-md text-body-md text-on-surface">{t("home.nabhAccredited")}</span>
                       </div>
                       <span className="font-label-sm text-label-sm text-on-surface-variant">{accredCounts.nabh}</span>
                     </label>
@@ -992,7 +992,7 @@ export default function HomePage() {
                           className="accent-secondary w-4 h-4 cursor-pointer"
                           type="checkbox"
                         />
-                        <span className="font-body-md text-body-md text-on-surface">JCI International</span>
+                        <span className="font-body-md text-body-md text-on-surface">{t("home.jciInternational")}</span>
                       </div>
                       <span className="font-label-sm text-label-sm text-on-surface-variant">{accredCounts.jci}</span>
                     </label>
@@ -1005,7 +1005,7 @@ export default function HomePage() {
                           className="accent-secondary w-4 h-4 cursor-pointer"
                           type="checkbox"
                         />
-                        <span className="font-body-md text-body-md text-on-surface">NABL Diagnostic Labs</span>
+                        <span className="font-body-md text-body-md text-on-surface">{t("home.nablDiagnostic")}</span>
                       </div>
                       <span className="font-label-sm text-label-sm text-on-surface-variant">{accredCounts.nabl}</span>
                     </label>
@@ -1013,7 +1013,7 @@ export default function HomePage() {
 
                   {/* Hospital Type */}
                   <div className="flex flex-col gap-space-xs border-t border-border-subtle/50 pt-space-sm">
-                    <span className="font-title-md text-title-md text-on-surface font-semibold mb-space-xs">Hospital Type</span>
+                    <span className="font-title-md text-title-md text-on-surface font-semibold mb-space-xs">{t("home.hospitalType")}</span>
                     {(["all", "government", "private", "trust"] as const).map((t) => (
                       <label key={t} className="flex items-center gap-space-xs p-space-xs rounded-lg hover:bg-surface-canvas cursor-pointer select-none">
                         <input
@@ -1134,7 +1134,7 @@ export default function HomePage() {
                 {paginatedHospitals.length === 0 ? (
                   <div className="bg-surface-card rounded-xl p-space-xl text-center border border-border-subtle flex flex-col items-center gap-space-sm">
                     <span className="material-symbols-outlined text-[48px] text-on-surface-variant">search_off</span>
-                    <h3 className="font-headline-md text-headline-md font-bold">No hospitals found matching criteria</h3>
+                    <h3 className="font-headline-md text-headline-md font-bold">{t("home.noHospitals")}</h3>
                     <p className="font-body-md text-on-surface-variant">Try expanding your distance radius or clearing some filters.</p>
                     <button
                       type="button"

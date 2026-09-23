@@ -17,11 +17,13 @@ import {
   StatusBar,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import { colors } from "../theme/colors";
 import { authService } from "../services/auth";
 import MedRouteLogo from "../components/MedRouteLogo";
 
 export default function LoginScreen({ navigation }: any) {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -81,25 +83,16 @@ export default function LoginScreen({ navigation }: any) {
             </Text>
           </View>
 
-          {/* 1-Click Demo Buttons for Presentations */}
+          {/* 1-Click Demo Patient Access */}
           <View style={styles.demoCard}>
             <Text style={styles.demoTitle}>⚡ 1-CLICK DEMO ACCESS</Text>
-            <View style={styles.demoRow}>
-              <TouchableOpacity
-                style={styles.demoButton}
-                onPress={() => handleDemoLogin("admin")}
-                disabled={loading}
-              >
-                <Text style={styles.demoButtonText}>🛡️ Demo Admin</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.demoButton}
-                onPress={() => handleDemoLogin("patient")}
-                disabled={loading}
-              >
-                <Text style={styles.demoButtonText}>👤 Demo Patient</Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              style={[styles.demoButton, { width: "100%", marginTop: 8 }]}
+              onPress={() => handleDemoLogin("patient")}
+              disabled={loading}
+            >
+              <Text style={styles.demoButtonText}>👤 Continue as Demo Patient</Text>
+            </TouchableOpacity>
           </View>
 
           {/* Error Message */}

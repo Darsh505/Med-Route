@@ -47,6 +47,8 @@ export function haversineKm(lat1: number, lon1: number, lat2: number, lon2: numb
 }
 
 export const CITY_ALIASES: Record<string, string> = {
+  delhi: "delhi",
+  "new delhi": "delhi",
   bangalore: "bengaluru",
   bengalore: "bengaluru",
   bombay: "mumbai",
@@ -64,6 +66,24 @@ export const CITY_ALIASES: Record<string, string> = {
   banaras: "varanasi",
   kashi: "varanasi",
 };
+
+
+export function extractCityFromQuery(q: string): string | null {
+  if (!q) return null;
+  const norm = q.toLowerCase();
+  const priorityCities = [
+    "delhi", "new delhi", "ncr", "gurugram", "noida", "faridabad",
+    "mumbai", "bombay", "bengaluru", "bangalore", "hyderabad", "chennai", "madras",
+    "kolkata", "calcutta", "chandigarh", "mohali", "panchkula", "hoshiarpur",
+    "ludhiana", "amritsar", "jalandhar", "pune", "ahmedabad", "jaipur", "lucknow", "patna"
+  ];
+  for (const c of priorityCities) {
+    if (norm.includes(c)) {
+      return CITY_ALIASES[c] || c;
+    }
+  }
+  return null;
+}
 
 export function resolveCityCoordinates(cityName: string): { lat: number; lng: number } | null {
   if (!cityName || !cityName.trim()) return null;
@@ -486,19 +506,38 @@ export const api = {
       q.includes("bleeding") ||
       q.includes("ambulance");
 
-    // Dynamic hospital resolution from dataset
-    let matchedCity = "Hoshiarpur";
-    for (const [alias, canonical] of Object.entries(CITY_ALIASES)) {
-      if (q.includes(alias)) {
-        matchedCity = canonical;
+    // Dynamic hospital resolution from dataset with full Indian cities matching
+    const priorityCities = [
+      "delhi", "new delhi", "ncr", "gurugram", "noida", "faridabad",
+      "mumbai", "bombay", "bengaluru", "bangalore", "chandigarh", "mohali",
+      "panchkula", "pune", "hyderabad", "chennai", "kolkata", "jaipur",
+      "lucknow", "amritsar", "ludhiana", "jalandhar", "hoshiarpur", "patiala",
+      "ahmedabad", "surat", "bhopal", "indore", "kochi", "patna"
+    ];
+
+    let matchedCity: string | null = null;
+    for (const c of priorityCities) {
+      if (q.includes(c)) {
+        matchedCity = CITY_ALIASES[c] || c;
         break;
       }
     }
 
-    let cityHosp = (rawAllHospitals as any[]).filter(
-      (h) => (h.city && h.city.toLowerCase() === matchedCity.toLowerCase()) || (h.state && h.state.toLowerCase() === matchedCity.toLowerCase())
-    );
-    if (cityHosp.length === 0) cityHosp = (rawAllHospitals as any[]).slice(0, 10);
+    let cityHosp: any[] = [];
+    if (matchedCity) {
+      cityHosp = (rawAllHospitals as any[]).filter(
+        (h) =>
+          (h.city && h.city.toLowerCase().includes(matchedCity!.toLowerCase())) ||
+          (h.state && h.state.toLowerCase().includes(matchedCity!.toLowerCase()))
+      );
+    }
+
+    if (cityHosp.length === 0) {
+      // Find closest hospitals to user's coordinates
+      cityHosp = [...(rawAllHospitals as any[])].sort(
+        (a, b) => haversineKm(latitude, longitude, a.latitude, a.longitude) - haversineKm(latitude, longitude, b.latitude, b.longitude)
+      ).slice(0, 10);
+    }
 
     const cLat = cityHosp[0]?.latitude || latitude;
     const cLng = cityHosp[0]?.longitude || longitude;

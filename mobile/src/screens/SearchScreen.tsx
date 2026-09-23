@@ -17,12 +17,15 @@ import {
   Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import { colors } from "../theme/colors";
 import { spacing, borderRadius, shadows } from "../theme/spacing";
 import { api, MobileHospital, MOCK_HOSPITALS } from "../services/api";
 import { storage } from "../services/storage";
 import { locationService } from "../services/location";
 import HospitalCard from "../components/HospitalCard";
+import LanguageSwitcher from "../components/LanguageSwitcher";
+import { localizeCity, localizeDisease, localizeHospital } from "../i18n/hospitalLocalization";
 import FloatingSOSButton from "../components/FloatingSOSButton";
 
 const SUGGESTED_TREATMENTS = [
@@ -36,6 +39,8 @@ const SUGGESTED_TREATMENTS = [
 ];
 
 export default function SearchScreen({ route, navigation }: any) {
+  const { t, i18n } = useTranslation();
+  const currentLang = i18n.language || "en";
   const initialQuery = route.params?.query || "";
   const initialCategory = route.params?.category || "";
 
@@ -128,13 +133,14 @@ export default function SearchScreen({ route, navigation }: any) {
             onPress={() => navigation.navigate("SelectLocation")}
             activeOpacity={0.8}
           >
-            <Text style={styles.locationButtonText}>📍 {currentCity} ▾</Text>
+            <Text style={styles.locationButtonText}>📍 {localizeCity(currentCity, currentLang)} ▾</Text>
           </TouchableOpacity>
           <View style={styles.headerRightBadges}>
+            <LanguageSwitcher compact />
             <View style={styles.demoBadge}>
-              <Text style={styles.demoBadgeText}>🧪 Mock Data</Text>
+              <Text style={styles.demoBadgeText}>🧪 {t("search.mockData")}</Text>
             </View>
-            <Text style={styles.resultsBadge}>{filteredHospitals.length} facilities</Text>
+            <Text style={styles.resultsBadge}>{filteredHospitals.length} {t("search.facilities")}</Text>
           </View>
         </View>
 
@@ -142,7 +148,7 @@ export default function SearchScreen({ route, navigation }: any) {
           <Text style={{ fontSize: 16, marginRight: 6 }}>🔍</Text>
           <TextInput
             style={styles.searchInput}
-            placeholder="Search procedure, condition, hospital..."
+            placeholder={t("search.searchPlaceholder")}
             placeholderTextColor={colors.textTertiary}
             value={query}
             onChangeText={setQuery}
@@ -158,9 +164,9 @@ export default function SearchScreen({ route, navigation }: any) {
         {parsedSlots && (
           <View style={styles.aiSlotBanner}>
             <View style={styles.aiSlotHeader}>
-              <Text style={styles.aiSlotTitle}>🤖 AI Query Slot Mapping (94% Conf.)</Text>
+              <Text style={styles.aiSlotTitle}>🤖 {t("search.aiSlotTitle")}</Text>
               <TouchableOpacity onPress={() => setQuery("")}>
-                <Text style={styles.aiSlotClear}>Clear</Text>
+                <Text style={styles.aiSlotClear}>{t("search.clear")}</Text>
               </TouchableOpacity>
             </View>
             <View style={styles.aiSlotRow}>
@@ -194,7 +200,7 @@ export default function SearchScreen({ route, navigation }: any) {
             onPress={() => setQuery("Find kidney treatment near Chandigarh under 2 lakh")}
           >
             <Text style={[styles.diseaseChipText, { color: "#0284C7", fontWeight: "700" }]}>
-              ⚡ Kidney &lt; ₹2L Chandigarh
+              {currentLang === "hi" ? "⚡ किडनी < ₹2L चंडीगढ़" : currentLang === "pa" ? "⚡ ਗੁਰਦਾ < ₹2L ਚੰਡੀਗੜ੍ਹ" : "⚡ Kidney < ₹2L Chandigarh"}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -202,11 +208,12 @@ export default function SearchScreen({ route, navigation }: any) {
             onPress={() => setQuery("Heart surgery in Mohali under 3 lakh")}
           >
             <Text style={[styles.diseaseChipText, { color: "#0284C7", fontWeight: "700" }]}>
-              ⚡ Heart &lt; ₹3L Mohali
+              {currentLang === "hi" ? "⚡ हार्ट < ₹3L मोहाली" : currentLang === "pa" ? "⚡ ਦਿਲ < ₹3L ਮੋਹਾਲੀ" : "⚡ Heart < ₹3L Mohali"}
             </Text>
           </TouchableOpacity>
           {SUGGESTED_TREATMENTS.map((disease) => {
             const isSelected = query.toLowerCase() === disease.toLowerCase();
+            const localizedDisease = localizeDisease(disease, currentLang);
             return (
               <TouchableOpacity
                 key={disease}
@@ -215,7 +222,7 @@ export default function SearchScreen({ route, navigation }: any) {
                 activeOpacity={0.8}
               >
                 <Text style={[styles.diseaseChipText, isSelected && styles.diseaseChipTextActive]}>
-                  🩺 {disease}
+                  🩺 {localizedDisease}
                 </Text>
               </TouchableOpacity>
             );
@@ -231,15 +238,15 @@ export default function SearchScreen({ route, navigation }: any) {
           contentContainerStyle={styles.filterRow}
         >
           {[
-            { id: "all", label: "All Facilities" },
-            { id: "under_50k", label: "< ₹50k Budget" },
-            { id: "under_1l", label: "< ₹1 Lakh" },
-            { id: "under_2l", label: "< ₹2 Lakhs" },
-            { id: "under_5l", label: "< ₹5 Lakhs" },
-            { id: "pmjay", label: "🛡️ 100% PMJAY Cashless" },
-            { id: "icu", label: "🟢 Available ICU Beds" },
-            { id: "govt", label: "Government" },
-            { id: "private", label: "Private" },
+            { id: "all", label: t("search.allFacilities") },
+            { id: "under_50k", label: t("search.under50k") },
+            { id: "under_1l", label: t("search.under1l") },
+            { id: "under_2l", label: t("search.under2l") },
+            { id: "under_5l", label: t("search.under5l") },
+            { id: "pmjay", label: `🛡️ ${t("search.pmjayCashless")}` },
+            { id: "icu", label: `🟢 ${t("search.availableIcu")}` },
+            { id: "govt", label: t("search.government") },
+            { id: "private", label: t("search.private") },
           ].map((f) => (
             <TouchableOpacity
               key={f.id}
@@ -262,9 +269,9 @@ export default function SearchScreen({ route, navigation }: any) {
       {/* Results Header */}
       <View style={styles.resultsInfoRow}>
         <Text style={styles.resultsCount}>
-          {filteredHospitals.length} verified hospitals found
+          {filteredHospitals.length} {t("home.verifiedHospitals")}
         </Text>
-        <Text style={[styles.provenanceTag, { color: colors.success }]}>🟢 Real ICU Telemetry</Text>
+        <Text style={[styles.provenanceTag, { color: colors.success }]}>🟢 {t("sos.liveGrid")}</Text>
       </View>
 
       {/* Mock Data Disclaimer Strip */}
@@ -283,9 +290,9 @@ export default function SearchScreen({ route, navigation }: any) {
         {filteredHospitals.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Text style={{ fontSize: 40 }}>🔍</Text>
-            <Text style={styles.emptyTitle}>No matching hospitals</Text>
+            <Text style={styles.emptyTitle}>{t("search.noResults")}</Text>
             <Text style={styles.emptySubtitle}>
-              Try searching with general terms like &quot;Heart Stent&quot;, &quot;Knee&quot;, or &quot;Hoshiarpur&quot;.
+              {t("search.noResultsSub")}
             </Text>
           </View>
         ) : (
@@ -306,13 +313,13 @@ export default function SearchScreen({ route, navigation }: any) {
       {compareIds.length > 0 && (
         <View style={styles.compareTray}>
           <Text style={styles.compareTrayText}>
-            {compareIds.length} hospital{compareIds.length > 1 ? "s" : ""} in compare tray
+            {compareIds.length} {t("home.hospitalsSelected")}
           </Text>
           <TouchableOpacity
             style={styles.compareTrayButton}
             onPress={() => navigation.navigate("Compare")}
           >
-            <Text style={styles.compareTrayButtonText}>Compare Now ({compareIds.length}) →</Text>
+            <Text style={styles.compareTrayButtonText}>{t("home.compareNow")} ({compareIds.length}) ➔</Text>
           </TouchableOpacity>
         </View>
       )}

@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import Svg, { Rect, Path, Circle, Defs, LinearGradient, Stop, G } from "react-native-svg";
+import { useTranslation } from "react-i18next";
 import { colors } from "../theme/colors";
 
 export interface MedRouteLogoProps {
@@ -27,10 +28,60 @@ export default function MedRouteLogo({
   theme = "light",
   onPress,
 }: MedRouteLogoProps) {
+  const { i18n } = useTranslation();
   const cfg = SIZES[size];
   const isDark = theme === "dark";
+  const currentLang = i18n.language || "en";
 
   const Component = onPress ? TouchableOpacity : View;
+
+  // Localized brand components
+  const renderBrandText = () => {
+    if (currentLang === "hi") {
+      return (
+        <Text
+          style={[
+            styles.title,
+            { fontSize: cfg.title },
+            isDark ? styles.titleDark : styles.titleLight,
+          ]}
+        >
+          मेड<Text style={{ color: colors.primary }}>रूट</Text>
+        </Text>
+      );
+    }
+    if (currentLang === "pa") {
+      return (
+        <Text
+          style={[
+            styles.title,
+            { fontSize: cfg.title },
+            isDark ? styles.titleDark : styles.titleLight,
+          ]}
+        >
+          ਮੈਡ<Text style={{ color: colors.primary }}>ਰੂਟ</Text>
+        </Text>
+      );
+    }
+    return (
+      <Text
+        style={[
+          styles.title,
+          { fontSize: cfg.title },
+          isDark ? styles.titleDark : styles.titleLight,
+        ]}
+      >
+        Med<Text style={{ color: colors.primary }}>Route</Text>
+      </Text>
+    );
+  };
+
+  const partnerText =
+    currentLang === "hi"
+      ? "सत्यापित नेटवर्क"
+      : currentLang === "pa"
+      ? "ਤਸਦੀਕਸ਼ੁਦਾ ਨੈੱਟਵਰਕ"
+      : "Verified Network";
 
   return (
     <Component
@@ -124,15 +175,7 @@ export default function MedRouteLogo({
       {showText && (
         <View style={[styles.textWrapper, layout === "vertical" && styles.textCenter]}>
           <View style={styles.titleRow}>
-            <Text
-              style={[
-                styles.title,
-                { fontSize: cfg.title },
-                isDark ? styles.titleDark : styles.titleLight,
-              ]}
-            >
-              Med<Text style={{ color: colors.primary }}>Route</Text>
-            </Text>
+            {renderBrandText()}
 
             {showBadge && (
               <View
@@ -149,7 +192,7 @@ export default function MedRouteLogo({
                     isDark ? styles.badgeTextDark : styles.badgeTextLight,
                   ]}
                 >
-                  MediBuddy Partner
+                  {partnerText}
                 </Text>
               </View>
             )}
@@ -202,8 +245,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   partnerBadgeLight: {
-    backgroundColor: colors.thistleLight,
-    borderColor: colors.border,
+    backgroundColor: colors.thistleLight || "#F5EBF7",
+    borderColor: colors.border || "#E2E8F0",
   },
   partnerBadgeDark: {
     backgroundColor: "#2D1F35",

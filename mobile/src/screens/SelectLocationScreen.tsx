@@ -17,11 +17,16 @@ import {
   Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import { colors } from "../theme/colors";
 import { spacing, borderRadius, shadows } from "../theme/spacing";
 import { locationService, INDIAN_CITIES, CityLocation } from "../services/location";
+import LanguageSwitcher from "../components/LanguageSwitcher";
+import { localizeCity } from "../i18n/hospitalLocalization";
 
 export default function SelectLocationScreen({ navigation }: any) {
+  const { t, i18n } = useTranslation();
+  const currentLang = i18n.language || "en";
   const [currentCity, setCurrentCity] = useState("Hoshiarpur");
   const [isAuto, setIsAuto] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -79,11 +84,12 @@ export default function SelectLocationScreen({ navigation }: any) {
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <View style={styles.headerTitles}>
-          <Text style={styles.headerTitle}>Select Location</Text>
+          <Text style={styles.headerTitle}>{t("location.selectLocation")}</Text>
           <Text style={styles.headerSubtitle}>
-            Pan-India facilities with live bed telemetry
+            {t("location.subtitle")}
           </Text>
         </View>
+        <LanguageSwitcher compact />
       </View>
 
       <ScrollView
@@ -99,7 +105,7 @@ export default function SelectLocationScreen({ navigation }: any) {
             </View>
             <View style={styles.activeInfo}>
               <Text style={styles.activeLabel}>Currently Selected</Text>
-              <Text style={styles.activeCityName}>{currentCity}</Text>
+              <Text style={styles.activeCityName}>{localizeCity(currentCity, currentLang)}</Text>
             </View>
             <View
               style={[
@@ -136,7 +142,7 @@ export default function SelectLocationScreen({ navigation }: any) {
           )}
           <View style={styles.gpsTexts}>
             <Text style={styles.gpsTitle}>
-              {isLocating ? "Acquiring GPS Telemetry..." : "Auto-Detect My Location"}
+              {isLocating ? t("location.detectingGPS") : t("location.autoDetectGPS")}
             </Text>
             <Text style={styles.gpsSubtitle}>
               Pinpoints nearest accredited trauma center using device coordinates
@@ -149,7 +155,7 @@ export default function SelectLocationScreen({ navigation }: any) {
           <Text style={styles.searchIcon}>🔍</Text>
           <TextInput
             style={styles.searchInput}
-            placeholder="Search city (e.g. Hoshiarpur, Chandigarh, Delhi)..."
+            placeholder={t("location.searchPlaceholder")}
             placeholderTextColor={colors.textTertiary}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -165,7 +171,7 @@ export default function SelectLocationScreen({ navigation }: any) {
         {/* Popular Cities Chips */}
         {searchQuery.length === 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Featured Medical Hubs</Text>
+            <Text style={styles.sectionTitle}>{t("location.featuredHubs")}</Text>
             <View style={styles.popularGrid}>
               {popularCities.map((city) => {
                 const isSelected = city.name.toLowerCase() === currentCity.toLowerCase();
@@ -186,7 +192,7 @@ export default function SelectLocationScreen({ navigation }: any) {
                         city.name === "Hoshiarpur" && styles.popularChipTextHoshiarpur,
                       ]}
                     >
-                      {city.name === "Hoshiarpur" ? "⭐ Hoshiarpur" : city.name}
+                      {city.name === "Hoshiarpur" ? `⭐ ${localizeCity("Hoshiarpur", currentLang)}` : localizeCity(city.name, currentLang)}
                     </Text>
                     {isSelected && <Text style={styles.checkMark}> ✓</Text>}
                   </TouchableOpacity>
@@ -226,7 +232,7 @@ export default function SelectLocationScreen({ navigation }: any) {
                     >
                       {city.name}
                     </Text>
-                    <Text style={styles.cityState}>{city.state}</Text>
+                    <Text style={styles.cityState}>{localizeCity(city.state, currentLang)}</Text>
                   </View>
                 </View>
 

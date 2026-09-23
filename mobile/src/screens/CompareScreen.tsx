@@ -1,6 +1,6 @@
 /**
- * CompareScreen.tsx — Mobile Hospital Comparison Matrix (Clinical Architecture Health)
- * Strictly matches stitch/stitch_healthcare_finder_and_comparison_platform/code.html
+ * CompareScreen.tsx — Mobile 2-Hospital Side-by-Side Comparison
+ * Optimized for mobile screens with zero horizontal scrolling.
  */
 
 import React, { useState } from "react";
@@ -13,12 +13,14 @@ import {
   StatusBar,
   Image,
   Dimensions,
-  Switch,
   Share,
   Modal,
+  Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 import { colors } from "../theme/colors";
+import MedRouteLogo from "../components/MedRouteLogo";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -33,21 +35,19 @@ interface CompareHospital {
   imageUrl: string;
   cashlessEligibility: string;
   approvalTurnaround: string;
-  turnaroundNote: string;
   turnaroundMinutes: number;
   upfrontDeposit: string;
   icuBeds: string;
   openIcus: string;
   deluxeTariff: string;
-  tariffCoverage: string;
   accreditations: string[];
-  nps: string;
   patientsTreated?: string;
   successRatio?: string;
   procedureTariff?: string;
+  phone?: string;
 }
 
-const DEFAULT_HOSPITALS: CompareHospital[] = [
+const ALL_COMPARE_HOSPITALS: CompareHospital[] = [
   {
     id: "pgimer-chandigarh",
     name: "PGIMER Chandigarh",
@@ -59,18 +59,16 @@ const DEFAULT_HOSPITALS: CompareHospital[] = [
     imageUrl: "https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?w=400&q=80",
     cashlessEligibility: "100% Cashless (PMJAY)",
     approvalTurnaround: "18 mins",
-    turnaroundNote: "Apex Ayushman Mitra Desk",
     turnaroundMinutes: 18,
-    upfrontDeposit: "₹0 Deposit",
+    upfrontDeposit: "₹0 Waived",
     icuBeds: "88 Beds",
-    openIcus: "14 open ICUs",
+    openIcus: "14 Open ICUs",
     deluxeTariff: "Subsidized Ward",
-    tariffCoverage: "100% covered",
     accreditations: ["Apex Autonomous", "NABH", "Level 1 Trauma"],
-    nps: "98%",
     patientsTreated: "24,500 / yr",
     successRatio: "98.5% Success",
-    procedureTariff: "100% Free (PMJAY Cashless)",
+    procedureTariff: "100% Free (PMJAY)",
+    phone: "01722747585",
   },
   {
     id: "max-mohali",
@@ -83,18 +81,16 @@ const DEFAULT_HOSPITALS: CompareHospital[] = [
     imageUrl: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=400&q=80",
     cashlessEligibility: "100% Cashless (PMJAY)",
     approvalTurnaround: "25 mins",
-    turnaroundNote: "Max Priority TPA Desk",
     turnaroundMinutes: 25,
-    upfrontDeposit: "₹0 Deposit",
+    upfrontDeposit: "₹0 Waived",
     icuBeds: "45 Beds",
-    openIcus: "8 open ICUs",
-    deluxeTariff: "₹5,200",
-    tariffCoverage: "100% covered",
+    openIcus: "8 Open ICUs",
+    deluxeTariff: "₹5,200 / day",
     accreditations: ["NABH", "JCI Global", "Level 2 Trauma"],
-    nps: "95%",
     patientsTreated: "16,200 / yr",
     successRatio: "97.8% Success",
     procedureTariff: "₹1,45,000 (or ₹0 PMJAY)",
+    phone: "01725212000",
   },
   {
     id: "fortis-mohali",
@@ -107,22 +103,17 @@ const DEFAULT_HOSPITALS: CompareHospital[] = [
     imageUrl: "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=400&q=80",
     cashlessEligibility: "100% Cashless (PMJAY)",
     approvalTurnaround: "28 mins",
-    turnaroundNote: "Priority corridor",
     turnaroundMinutes: 28,
-    upfrontDeposit: "₹0 Deposit",
+    upfrontDeposit: "₹0 Waived",
     icuBeds: "52 Beds",
-    openIcus: "6 open ICUs",
-    deluxeTariff: "₹5,600",
-    tariffCoverage: "100% covered",
+    openIcus: "6 Open ICUs",
+    deluxeTariff: "₹5,600 / day",
     accreditations: ["NABH", "NABL", "Level 2 Trauma"],
-    nps: "94%",
     patientsTreated: "15,800 / yr",
     successRatio: "97.4% Success",
     procedureTariff: "₹1,55,000 (or ₹0 PMJAY)",
+    phone: "01725021222",
   },
-];
-
-const AVAILABLE_TO_ADD: CompareHospital[] = [
   {
     id: "civil-hoshiarpur",
     name: "Civil Hospital Hoshiarpur",
@@ -132,20 +123,18 @@ const AVAILABLE_TO_ADD: CompareHospital[] = [
     eta: "10m ETA",
     rating: 4.3,
     imageUrl: "https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=400&q=80",
-    cashlessEligibility: "100% Cashless",
+    cashlessEligibility: "100% Cashless (PMJAY)",
     approvalTurnaround: "15 mins",
-    turnaroundNote: "District EMR Desk",
     turnaroundMinutes: 15,
-    upfrontDeposit: "₹0 Deposit",
+    upfrontDeposit: "₹0 Waived",
     icuBeds: "18 Beds",
-    openIcus: "3 open ICUs",
+    openIcus: "4 Open ICUs",
     deluxeTariff: "Free Ward",
-    tariffCoverage: "100% covered",
-    accreditations: ["NQAS Certified", "Government"],
-    nps: "91%",
+    accreditations: ["NQAS Certified", "Govt"],
     patientsTreated: "18,900 / yr",
     successRatio: "96.2% Success",
-    procedureTariff: "100% Free / Subsidized",
+    procedureTariff: "100% Free (PMJAY)",
+    phone: "01882220108",
   },
   {
     id: "ivy-hoshiarpur",
@@ -156,54 +145,42 @@ const AVAILABLE_TO_ADD: CompareHospital[] = [
     eta: "14m ETA",
     rating: 4.6,
     imageUrl: "https://images.unsplash.com/photo-1586773860418-d37222d8fce3?w=400&q=80",
-    cashlessEligibility: "100% Cashless",
+    cashlessEligibility: "100% Cashless (PMJAY)",
     approvalTurnaround: "22 mins",
-    turnaroundNote: "TPA Desk",
     turnaroundMinutes: 22,
-    upfrontDeposit: "₹0 Deposit",
+    upfrontDeposit: "₹0 Waived",
     icuBeds: "22 Beds",
-    openIcus: "5 open ICUs",
-    deluxeTariff: "₹4,200",
-    tariffCoverage: "100% covered",
+    openIcus: "5 Open ICUs",
+    deluxeTariff: "₹4,200 / day",
     accreditations: ["NABH", "NABL"],
-    nps: "93%",
     patientsTreated: "11,400 / yr",
     successRatio: "97.1% Success",
     procedureTariff: "₹85,000 (or ₹0 PMJAY)",
+    phone: "01882500000",
   },
 ];
 
-export default function CompareScreen({ navigation }: any) {
-  const [hospitals, setHospitals] = useState<CompareHospital[]>(DEFAULT_HOSPITALS);
-  const [diffOnly, setDiffOnly] = useState(false);
-  const [addModalOpen, setAddModalOpen] = useState(false);
-  const [expandedFaq, setExpandedFaq] = useState<number | null>(0);
-  const [bookedHospId, setBookedHospId] = useState<string | null>(null);
+export default function CompareScreen({ navigation, route }: any) {
+  const { t } = useTranslation();
+  const [hosp1Id, setHosp1Id] = useState<string>("pgimer-chandigarh");
+  const [hosp2Id, setHosp2Id] = useState<string>("max-mohali");
+  const [pickerModalSlot, setPickerModalSlot] = useState<1 | 2 | null>(null);
 
-  const removeHospital = (id: string) => {
-    if (hospitals.length <= 1) {
-      alert("At least 1 hospital must remain in comparison.");
-      return;
-    }
-    setHospitals((prev) => prev.filter((h) => h.id !== id));
-  };
-
-  const addHospital = (h: CompareHospital) => {
-    if (hospitals.some((item) => item.id === h.id)) return;
-    if (hospitals.length >= 4) {
-      alert("Maximum 4 hospitals can be compared.");
-      return;
-    }
-    setHospitals((prev) => [...prev, h]);
-    setAddModalOpen(false);
-  };
+  const hosp1 = ALL_COMPARE_HOSPITALS.find((h) => h.id === hosp1Id) || ALL_COMPARE_HOSPITALS[0];
+  const hosp2 = ALL_COMPARE_HOSPITALS.find((h) => h.id === hosp2Id) || ALL_COMPARE_HOSPITALS[1];
 
   const handleShare = async () => {
     try {
       await Share.share({
-        message: "Compare hospitals side-by-side on Medi Route for cashless pre-auth and live ICU bed status.",
+        message: `Comparing ${hosp1.name} vs ${hosp2.name} on Med Route: Live ICU Beds, Pre-Auth Turnaround & Cashless Tariffs.`,
       });
     } catch {}
+  };
+
+  const swapHospitals = () => {
+    const temp = hosp1Id;
+    setHosp1Id(hosp2Id);
+    setHosp2Id(temp);
   };
 
   return (
@@ -216,426 +193,235 @@ export default function CompareScreen({ navigation }: any) {
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
             <Text style={styles.backBtnText}>←</Text>
           </TouchableOpacity>
-          <View>
+          <MedRouteLogo size="sm" showBadge={false} />
+          <View style={{ marginLeft: 8 }}>
             <Text style={styles.headerTitle}>Hospital Comparison</Text>
             <Text style={styles.headerSub}>Side-by-side clinical benchmark</Text>
           </View>
         </View>
 
-        <TouchableOpacity style={styles.shareBtn} onPress={handleShare}>
-          <Text style={styles.shareIcon}>🔗 Share</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: "row", gap: 6 }}>
+          <TouchableOpacity style={styles.swapBtn} onPress={swapHospitals}>
+            <Text style={styles.swapBtnText}>⇄ Swap</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.shareBtn} onPress={handleShare}>
+            <Text style={styles.shareIcon}>🔗</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        
-        {/* Hospital Chips Strip */}
-        <View style={styles.dockCard}>
-          <View style={styles.hospChipsRow}>
-            {hospitals.map((h, idx) => (
-              <View key={h.id} style={styles.hospChip}>
-                <View style={styles.chipNumBadge}>
-                  <Text style={styles.chipNumText}>{idx + 1}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.chipName} numberOfLines={1}>
-                    {h.shortName}
-                  </Text>
-                  <Text style={styles.chipLoc} numberOfLines={1}>
-                    {h.location}
-                  </Text>
-                </View>
-                <TouchableOpacity onPress={() => removeHospital(h.id)} style={{ padding: 2 }}>
-                  <Text style={styles.chipClose}>✕</Text>
-                </TouchableOpacity>
-              </View>
-            ))}
-
-            {hospitals.length < 4 && (
-              <TouchableOpacity
-                style={styles.addHospBtn}
-                onPress={() => setAddModalOpen(true)}
-              >
-                <Text style={styles.addHospBtnText}>+ Add Hospital</Text>
-              </TouchableOpacity>
-            )}
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Top 2 Hospitals Header Cards (50% / 50% Split) */}
+        <View style={styles.topCardsRow}>
+          {/* Hospital 1 */}
+          <View style={styles.hospColumnCard}>
+            <Image source={{ uri: hosp1.imageUrl }} style={styles.hospImage} />
+            <Text style={styles.columnTag}>HOSPITAL A</Text>
+            <Text style={styles.hospName} numberOfLines={2}>{hosp1.name}</Text>
+            <Text style={styles.hospLoc} numberOfLines={1}>📍 {hosp1.location}</Text>
+            <View style={styles.ratingBadge}>
+              <Text style={styles.ratingText}>★ {hosp1.rating} Rating</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.changeBtn}
+              onPress={() => setPickerModalSlot(1)}
+            >
+              <Text style={styles.changeBtnText}>Change ▾</Text>
+            </TouchableOpacity>
           </View>
 
-          {/* Toggle Diff Strip */}
-          <View style={styles.toggleStrip}>
-            <View style={styles.diffToggleRow}>
-              <Switch
-                value={diffOnly}
-                onValueChange={setDiffOnly}
-                trackColor={{ false: colors.borderSubtle, true: colors.brandBlue }}
-                thumbColor="#FFFFFF"
-              />
-              <Text style={styles.diffLabel}>Show differences only</Text>
+          {/* Hospital 2 */}
+          <View style={styles.hospColumnCard}>
+            <Image source={{ uri: hosp2.imageUrl }} style={styles.hospImage} />
+            <Text style={[styles.columnTag, { color: colors.secondary }]}>HOSPITAL B</Text>
+            <Text style={styles.hospName} numberOfLines={2}>{hosp2.name}</Text>
+            <Text style={styles.hospLoc} numberOfLines={1}>📍 {hosp2.location}</Text>
+            <View style={styles.ratingBadge}>
+              <Text style={styles.ratingText}>★ {hosp2.rating} Rating</Text>
             </View>
+            <TouchableOpacity
+              style={styles.changeBtn}
+              onPress={() => setPickerModalSlot(2)}
+            >
+              <Text style={styles.changeBtnText}>Change ▾</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
 
-            <View style={styles.starBadge}>
-              <Text style={styles.starBadgeText}>🛡️ Star Health</Text>
+        {/* METRIC 1: Live ICU Beds */}
+        <View style={styles.metricCard}>
+          <Text style={styles.metricTitle}>🛏️ LIVE ICU BEDS AVAILABLE</Text>
+          <View style={styles.metricComparisonRow}>
+            <View style={[styles.metricValBox, styles.metricHighlight]}>
+              <Text style={styles.metricValPrimary}>{hosp1.openIcus}</Text>
+              <Text style={styles.metricSub}>{hosp1.icuBeds} Total</Text>
+            </View>
+            <View style={styles.metricDivider} />
+            <View style={styles.metricValBox}>
+              <Text style={styles.metricValPrimary}>{hosp2.openIcus}</Text>
+              <Text style={styles.metricSub}>{hosp2.icuBeds} Total</Text>
             </View>
           </View>
         </View>
 
-        {/* Benchmark Matrix Table */}
-        <View style={styles.tableCard}>
-          {/* Hospital Headers Row (Horizontal Scroll) */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View>
-              {/* Top Overview Row */}
-              <View style={styles.tableRow}>
-                <View style={[styles.tableCellLabel, { justifyContent: "flex-end" }]}>
-                  <Text style={styles.metricSuper}>METRICS</Text>
-                  <Text style={styles.metricMainHeader}>Hospital Overview</Text>
-                </View>
-
-                {hospitals.map((h) => (
-                  <View key={h.id} style={styles.tableCellHeader}>
-                    <Image source={{ uri: h.imageUrl }} style={styles.tableHospImage} />
-                    <View style={styles.tableHospInfo}>
-                      <Text style={styles.tableHospName} numberOfLines={1}>{h.name}</Text>
-                      <Text style={styles.tableHospDist}>{h.distance} • {h.location}</Text>
-                      <View style={styles.tableRatingPill}>
-                        <Text style={{ fontSize: 10, color: colors.badgeRating }}>★</Text>
-                        <Text style={styles.tableRatingVal}>{h.rating}</Text>
-                      </View>
-                    </View>
-                  </View>
-                ))}
-              </View>
-
-              {/* Section 1: Cashless & Insurance Pre-Auth */}
-              <View style={styles.sectionHeaderRow}>
-                <Text style={styles.sectionHeaderText}>CASHLESS &amp; INSURANCE PRE-AUTH</Text>
-              </View>
-
-              {!diffOnly && (
-                <View style={styles.tableRow}>
-                  <View style={styles.tableCellLabel}>
-                    <Text style={styles.rowTitle}>Cashless Eligibility</Text>
-                    <Text style={styles.rowSub}>Star Health Network</Text>
-                  </View>
-                  {hospitals.map((h) => (
-                    <View key={h.id} style={styles.tableCellData}>
-                      <Text style={[styles.cellValueBold, { color: colors.badgeCashless }]}>
-                        ✓ {h.cashlessEligibility}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              )}
-
-              <View style={[styles.tableRow, { backgroundColor: colors.canvas }]}>
-                <View style={styles.tableCellLabel}>
-                  <Text style={styles.rowTitle}>Approval Turnaround</Text>
-                  <Text style={styles.rowSub}>Median clearance</Text>
-                </View>
-                {hospitals.map((h) => (
-                  <View key={h.id} style={styles.tableCellData}>
-                    <Text style={[styles.cellValueBig, h.turnaroundMinutes <= 30 && { color: colors.secondary }]}>
-                      {h.approvalTurnaround}
-                    </Text>
-                    <Text style={styles.rowSub}>{h.turnaroundNote}</Text>
-                  </View>
-                ))}
-              </View>
-
-              {!diffOnly && (
-                <View style={styles.tableRow}>
-                  <View style={styles.tableCellLabel}>
-                    <Text style={styles.rowTitle}>Upfront Deposit</Text>
-                    <Text style={styles.rowSub}>Under pre-auth guarantee</Text>
-                  </View>
-                  {hospitals.map((h) => (
-                    <View key={h.id} style={styles.tableCellData}>
-                      <Text style={[styles.cellValueBold, { color: colors.badgeCashless }]}>
-                        {h.upfrontDeposit}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              )}
-
-              {/* Section: Mandatory Verifiable Metrics */}
-              <View style={[styles.sectionHeaderRow, { backgroundColor: "#E0F2FE" }]}>
-                <Text style={[styles.sectionHeaderText, { color: "#0369A1" }]}>
-                  MANDATORY VERIFIABLE CLINICAL METRICS
-                </Text>
-              </View>
-
-              <View style={styles.tableRow}>
-                <View style={styles.tableCellLabel}>
-                  <Text style={styles.rowTitle}>Annual Patient Volume</Text>
-                  <Text style={styles.rowSub}>Patients treated / yr</Text>
-                </View>
-                {hospitals.map((h) => (
-                  <View key={h.id} style={styles.tableCellData}>
-                    <Text style={styles.cellValueBold}>{h.patientsTreated || "16,500 / yr"}</Text>
-                    <Text style={styles.rowSub}>Audited clinical volume</Text>
-                  </View>
-                ))}
-              </View>
-
-              <View style={[styles.tableRow, { backgroundColor: colors.canvas }]}>
-                <View style={styles.tableCellLabel}>
-                  <Text style={styles.rowTitle}>Clinical Success Ratio</Text>
-                  <Text style={styles.rowSub}>Verified outcome rate</Text>
-                </View>
-                {hospitals.map((h) => (
-                  <View key={h.id} style={styles.tableCellData}>
-                    <Text style={[styles.cellValueBold, { color: colors.success }]}>
-                      {h.successRatio || "98% Success"}
-                    </Text>
-                    <Text style={styles.rowSub}>Post-op success</Text>
-                  </View>
-                ))}
-              </View>
-
-              <View style={styles.tableRow}>
-                <View style={styles.tableCellLabel}>
-                  <Text style={styles.rowTitle}>Angioplasty Tariff</Text>
-                  <Text style={styles.rowSub}>PMJAY MC004 Stent</Text>
-                </View>
-                {hospitals.map((h) => (
-                  <View key={h.id} style={styles.tableCellData}>
-                    <Text style={[styles.cellValueBold, { color: colors.primary }]}>
-                      {h.procedureTariff || "100% Cashless"}
-                    </Text>
-                    <Text style={styles.rowSub}>Package ceiling</Text>
-                  </View>
-                ))}
-              </View>
-
-              {/* Section 2: Ward & Bed Capacity */}
-              <View style={styles.sectionHeaderRow}>
-                <Text style={styles.sectionHeaderText}>WARD &amp; BED CAPACITY</Text>
-              </View>
-
-              <View style={styles.tableRow}>
-                <View style={styles.tableCellLabel}>
-                  <Text style={styles.rowTitle}>Live ICU Beds</Text>
-                  <Text style={styles.rowSub}>Verified telemetry</Text>
-                </View>
-                {hospitals.map((h) => (
-                  <View key={h.id} style={styles.tableCellData}>
-                    <Text style={styles.cellValueBold}>{h.icuBeds}</Text>
-                    <Text style={[styles.rowSub, { color: colors.badgeCashless, fontWeight: "700" }]}>
-                      {h.openIcus}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-
-              <View style={[styles.tableRow, { backgroundColor: colors.canvas }]}>
-                <View style={styles.tableCellLabel}>
-                  <Text style={styles.rowTitle}>Single Deluxe Tariff</Text>
-                  <Text style={styles.rowSub}>Cap: ₹6,000/day</Text>
-                </View>
-                {hospitals.map((h) => (
-                  <View key={h.id} style={styles.tableCellData}>
-                    <Text style={styles.cellValueBold}>{h.deluxeTariff}</Text>
-                    <Text style={[styles.rowSub, { color: colors.badgeCashless, fontWeight: "700" }]}>
-                      {h.tariffCoverage}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-
-              {/* Section 3: Clinical Quality & Ratings */}
-              <View style={styles.sectionHeaderRow}>
-                <Text style={styles.sectionHeaderText}>CLINICAL QUALITY &amp; RATINGS</Text>
-              </View>
-
-              <View style={styles.tableRow}>
-                <View style={styles.tableCellLabel}>
-                  <Text style={styles.rowTitle}>Accreditations</Text>
-                  <Text style={styles.rowSub}>Safety standards</Text>
-                </View>
-                {hospitals.map((h) => (
-                  <View key={h.id} style={styles.tableCellData}>
-                    <Text style={styles.cellValueBold}>{h.accreditations.join(" • ")}</Text>
-                  </View>
-                ))}
-              </View>
-
-              <View style={[styles.tableRow, { backgroundColor: colors.canvas }]}>
-                <View style={styles.tableCellLabel}>
-                  <Text style={styles.rowTitle}>Net Promoter Score</Text>
-                  <Text style={styles.rowSub}>Patient feedback</Text>
-                </View>
-                {hospitals.map((h) => (
-                  <View key={h.id} style={styles.tableCellData}>
-                    <Text style={[styles.cellValueBig, { color: colors.secondary }]}>{h.nps}</Text>
-                    <Text style={styles.rowSub}>Recommended</Text>
-                  </View>
-                ))}
-              </View>
-
-              {/* Direct Admission CTAs */}
-              <View style={styles.tableRow}>
-                <View style={styles.tableCellLabel}>
-                  <Text style={styles.rowTitle}>Direct Admission</Text>
-                  <Text style={styles.rowSub}>Lock tariff rate</Text>
-                </View>
-                {hospitals.map((h) => (
-                  <View key={h.id} style={styles.tableCellData}>
-                    <TouchableOpacity
-                      style={[
-                        styles.tableActionBtn,
-                        bookedHospId === h.id && styles.tableActionBtnSuccess,
-                      ]}
-                      onPress={() => {
-                        setBookedHospId(h.id);
-                        setTimeout(() => setBookedHospId(null), 3000);
-                      }}
-                    >
-                      <Text style={styles.tableActionBtnText}>
-                        {bookedHospId === h.id ? "Reserved!" : "Book Cashless"}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                ))}
-              </View>
+        {/* METRIC 2: Pre-Auth Clearance Time */}
+        <View style={styles.metricCard}>
+          <Text style={styles.metricTitle}>⚡ PRE-AUTH TURNAROUND</Text>
+          <View style={styles.metricComparisonRow}>
+            <View style={styles.metricValBox}>
+              <Text style={[styles.metricValPrimary, hosp1.turnaroundMinutes <= hosp2.turnaroundMinutes && { color: "#16A34A" }]}>
+                {hosp1.approvalTurnaround}
+              </Text>
+              <Text style={styles.metricSub}>
+                {hosp1.turnaroundMinutes <= hosp2.turnaroundMinutes ? "✓ Faster Approval" : "Standard Speed"}
+              </Text>
             </View>
-          </ScrollView>
-        </View>
-
-        {/* Comparative Bento Cards */}
-        <View style={styles.bentoContainer}>
-          {/* Card 1: Speed Benchmark */}
-          <View style={styles.bentoCard}>
-            <Text style={styles.bentoSuper}>SPEED BENCHMARK</Text>
-            <Text style={styles.bentoTitle}>Median Approval Time</Text>
-            <Text style={styles.bentoDesc}>Pre-auth clearance across corridor.</Text>
-
-            <View style={{ marginTop: 12 }}>
-              {hospitals.map((h) => (
-                <View key={h.id} style={{ marginBottom: 8 }}>
-                  <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                    <Text style={styles.barLabel}>{h.shortName}</Text>
-                    <Text style={styles.barVal}>{h.approvalTurnaround}</Text>
-                  </View>
-                  <View style={styles.barBg}>
-                    <View
-                      style={[
-                        styles.barFill,
-                        { width: `${Math.min(100, (h.turnaroundMinutes / 60) * 100)}%` },
-                      ]}
-                    />
-                  </View>
-                </View>
-              ))}
-            </View>
-          </View>
-
-          {/* Card 2: Geo Proximity */}
-          <View style={styles.bentoCard}>
-            <Text style={styles.bentoSuper}>GEO PROXIMITY</Text>
-            <Text style={styles.bentoTitle}>Ambulance &amp; Distance</Text>
-            <Text style={styles.bentoDesc}>Active GPS trajectory from your location.</Text>
-
-            <View style={styles.geoGrid}>
-              {hospitals.map((h) => (
-                <View key={h.id} style={styles.geoBox}>
-                  <Text style={styles.geoName}>{h.shortName}</Text>
-                  <Text style={styles.geoDist}>{h.distance}</Text>
-                  <Text style={styles.geoEta}>{h.eta}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
-
-          {/* Card 3: Policy Protection */}
-          <View style={styles.bentoCard}>
-            <Text style={styles.bentoSuper}>POLICY PROTECTION</Text>
-            <Text style={styles.bentoTitle}>Star Health Room Cap</Text>
-            <Text style={styles.bentoDesc}>100% pre-authorized under daily ceiling limit.</Text>
-
-            <View style={styles.capRow}>
-              <View style={styles.capCol}>
-                <Text style={styles.capVal}>100%</Text>
-                <Text style={styles.capSub}>Pre-Authorized</Text>
-              </View>
-              <View style={styles.capCol}>
-                <Text style={styles.capVal}>₹0</Text>
-                <Text style={styles.capSub}>Room Co-Pay</Text>
-              </View>
-              <View style={styles.capCol}>
-                <Text style={styles.capVal}>0hr</Text>
-                <Text style={styles.capSub}>Wait Period</Text>
-              </View>
+            <View style={styles.metricDivider} />
+            <View style={styles.metricValBox}>
+              <Text style={[styles.metricValPrimary, hosp2.turnaroundMinutes <= hosp1.turnaroundMinutes && { color: "#16A34A" }]}>
+                {hosp2.approvalTurnaround}
+              </Text>
+              <Text style={styles.metricSub}>
+                {hosp2.turnaroundMinutes <= hosp1.turnaroundMinutes ? "✓ Faster Approval" : "Standard Speed"}
+              </Text>
             </View>
           </View>
         </View>
 
-        {/* Frequently Asked Questions */}
-        <View style={styles.faqCard}>
-          <Text style={styles.faqTitle}>Frequently Asked Questions</Text>
-          <Text style={styles.faqSub}>How Medi Route coordinates clinical comparisons.</Text>
-
-          {[
-            {
-              q: "How does Medi Route calculate the cashless approval guarantee?",
-              a: "Medi Route interfaces directly via IRDAI-compliant API gateways to the hospital TPA desk. Approvals are cleared in under 28 minutes.",
-            },
-            {
-              q: "What happens if room tariff exceeds policy ceiling?",
-              a: "Our system calculates daily room limits dynamically and alerts you to avoid out-of-pocket deductions upfront.",
-            },
-            {
-              q: "Can I switch hospitals if ICU beds fill up?",
-              a: "Yes. Our Care Buddy coordinates re-routing your pre-auth dossier to any partner hospital without restarting insurer paperwork.",
-            },
-          ].map((item, idx) => {
-            const isExpanded = expandedFaq === idx;
-            return (
-              <TouchableOpacity
-                key={idx}
-                style={styles.faqItem}
-                onPress={() => setExpandedFaq(isExpanded ? null : idx)}
-              >
-                <View style={styles.faqHeader}>
-                  <Text style={styles.faqQ}>{item.q}</Text>
-                  <Text style={styles.faqToggle}>{isExpanded ? "▲" : "▼"}</Text>
-                </View>
-                {isExpanded && <Text style={styles.faqA}>{item.a}</Text>}
-              </TouchableOpacity>
-            );
-          })}
+        {/* METRIC 3: Cashless & PMJAY Eligibility */}
+        <View style={styles.metricCard}>
+          <Text style={styles.metricTitle}>🛡️ CASHLESS &amp; PMJAY ELIGIBILITY</Text>
+          <View style={styles.metricComparisonRow}>
+            <View style={styles.metricValBox}>
+              <Text style={styles.metricValPrimary}>{hosp1.cashlessEligibility}</Text>
+              <Text style={styles.metricSub}>Zero Out-of-Pocket</Text>
+            </View>
+            <View style={styles.metricDivider} />
+            <View style={styles.metricValBox}>
+              <Text style={styles.metricValPrimary}>{hosp2.cashlessEligibility}</Text>
+              <Text style={styles.metricSub}>Zero Out-of-Pocket</Text>
+            </View>
+          </View>
         </View>
 
-        <View style={{ height: 60 }} />
+        {/* METRIC 4: Upfront Security Deposit */}
+        <View style={styles.metricCard}>
+          <Text style={styles.metricTitle}>💰 UPFRONT SECURITY DEPOSIT</Text>
+          <View style={styles.metricComparisonRow}>
+            <View style={styles.metricValBox}>
+              <Text style={[styles.metricValPrimary, { color: "#16A34A" }]}>{hosp1.upfrontDeposit}</Text>
+              <Text style={styles.metricSub}>100% Waived at Intake</Text>
+            </View>
+            <View style={styles.metricDivider} />
+            <View style={styles.metricValBox}>
+              <Text style={[styles.metricValPrimary, { color: "#16A34A" }]}>{hosp2.upfrontDeposit}</Text>
+              <Text style={styles.metricSub}>100% Waived at Intake</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* METRIC 5: Estimated Package Cost */}
+        <View style={styles.metricCard}>
+          <Text style={styles.metricTitle}>📊 INDICATIVE TREATMENT PACKAGE</Text>
+          <View style={styles.metricComparisonRow}>
+            <View style={styles.metricValBox}>
+              <Text style={styles.metricValPrimary}>{hosp1.procedureTariff}</Text>
+              <Text style={styles.metricSub}>{hosp1.deluxeTariff}</Text>
+            </View>
+            <View style={styles.metricDivider} />
+            <View style={styles.metricValBox}>
+              <Text style={styles.metricValPrimary}>{hosp2.procedureTariff}</Text>
+              <Text style={styles.metricSub}>{hosp2.deluxeTariff}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* METRIC 6: Quality & Accreditation */}
+        <View style={styles.metricCard}>
+          <Text style={styles.metricTitle}>🏅 ACCREDITATIONS &amp; TRAUMA LEVEL</Text>
+          <View style={styles.metricComparisonRow}>
+            <View style={styles.metricValBox}>
+              <Text style={styles.metricValPrimary}>{hosp1.accreditations.join(" • ")}</Text>
+              <Text style={styles.metricSub}>{hosp1.successRatio}</Text>
+            </View>
+            <View style={styles.metricDivider} />
+            <View style={styles.metricValBox}>
+              <Text style={styles.metricValPrimary}>{hosp2.accreditations.join(" • ")}</Text>
+              <Text style={styles.metricSub}>{hosp2.successRatio}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* ACTION BUTTONS (50% / 50% Split) */}
+        <View style={styles.actionsRow}>
+          <View style={{ flex: 1, gap: 6 }}>
+            <TouchableOpacity
+              style={styles.actionCallBtn}
+              onPress={() => Linking.openURL(`tel:${hosp1.phone || "108"}`)}
+            >
+              <Text style={styles.actionCallText}>📞 Call {hosp1.shortName}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.actionDetailBtn}
+              onPress={() => navigation.navigate("HospitalDetail", { slug: hosp1.id })}
+            >
+              <Text style={styles.actionDetailText}>View Details</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={{ flex: 1, gap: 6 }}>
+            <TouchableOpacity
+              style={styles.actionCallBtn}
+              onPress={() => Linking.openURL(`tel:${hosp2.phone || "108"}`)}
+            >
+              <Text style={styles.actionCallText}>📞 Call {hosp2.shortName}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.actionDetailBtn}
+              onPress={() => navigation.navigate("HospitalDetail", { slug: hosp2.id })}
+            >
+              <Text style={styles.actionDetailText}>View Details</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={{ height: 30 }} />
       </ScrollView>
 
-      {/* Add Hospital Modal */}
-      <Modal visible={addModalOpen} transparent animationType="fade">
+      {/* Hospital Picker Modal */}
+      <Modal visible={pickerModalSlot !== null} transparent animationType="slide">
         <View style={styles.modalOverlay}>
-          <View style={styles.modalBox}>
-            <View style={styles.modalTop}>
-              <Text style={styles.modalHeaderTitle}>Add Network Hospital</Text>
-              <TouchableOpacity onPress={() => setAddModalOpen(false)}>
-                <Text style={{ fontSize: 18, color: colors.textSecondary }}>✕</Text>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Hospital for Column {pickerModalSlot}</Text>
+              <TouchableOpacity onPress={() => setPickerModalSlot(null)} style={{ padding: 4 }}>
+                <Text style={styles.modalCloseText}>✕</Text>
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={{ maxHeight: 300 }}>
-              {AVAILABLE_TO_ADD.filter(
-                (a) => !hospitals.some((h) => h.id === a.id)
-              ).map((avail) => (
-                <TouchableOpacity
-                  key={avail.id}
-                  style={styles.availItem}
-                  onPress={() => addHospital(avail)}
-                >
-                  <View>
-                    <Text style={styles.availName}>{avail.name}</Text>
-                    <Text style={styles.availLoc}>{avail.location}</Text>
-                  </View>
-                  <Text style={styles.availTag}>100% Cashless</Text>
-                </TouchableOpacity>
-              ))}
+            <ScrollView style={{ maxHeight: 400 }}>
+              {ALL_COMPARE_HOSPITALS.map((h) => {
+                const isSelected = (pickerModalSlot === 1 && h.id === hosp1Id) || (pickerModalSlot === 2 && h.id === hosp2Id);
+                return (
+                  <TouchableOpacity
+                    key={h.id}
+                    style={[styles.modalItem, isSelected && styles.modalItemSelected]}
+                    onPress={() => {
+                      if (pickerModalSlot === 1) setHosp1Id(h.id);
+                      if (pickerModalSlot === 2) setHosp2Id(h.id);
+                      setPickerModalSlot(null);
+                    }}
+                  >
+                    <Image source={{ uri: h.imageUrl }} style={styles.modalItemImg} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.modalItemName}>{h.name}</Text>
+                      <Text style={styles.modalItemLoc}>{h.location} • ★ {h.rating}</Text>
+                      <Text style={styles.modalItemIcu}>● {h.openIcus}</Text>
+                    </View>
+                    {isSelected && <Text style={styles.modalItemCheck}>✓</Text>}
+                  </TouchableOpacity>
+                );
+              })}
             </ScrollView>
           </View>
         </View>
@@ -647,482 +433,271 @@ export default function CompareScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.card,
+    backgroundColor: "#FFFFFF",
   },
   header: {
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: colors.card,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderSubtle,
   },
   headerLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
   },
   backBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: colors.surfaceIce,
-    alignItems: "center",
-    justifyContent: "center",
+    padding: 6,
+    marginRight: 6,
   },
   backBtnText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: colors.primary,
+    fontSize: 20,
+    fontWeight: "700",
+    color: colors.onSurface,
   },
   headerTitle: {
     fontSize: 16,
     fontWeight: "800",
-    color: colors.primary,
+    color: colors.onSurface,
   },
   headerSub: {
     fontSize: 11,
     color: colors.textSecondary,
   },
-  shareBtn: {
+  swapBtn: {
+    backgroundColor: colors.surfaceIce,
     paddingHorizontal: 10,
     paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+  },
+  swapBtnText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: colors.secondary,
+  },
+  shareBtn: {
     backgroundColor: colors.surfaceIce,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: colors.borderSubtle,
   },
   shareIcon: {
     fontSize: 12,
-    fontWeight: "700",
-    color: colors.secondary,
   },
   scrollView: {
     flex: 1,
     backgroundColor: colors.canvas,
   },
   scrollContent: {
-    padding: 16,
+    padding: 12,
+    gap: 12,
   },
-  dockCard: {
+  topCardsRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  hospColumnCard: {
+    flex: 1,
     backgroundColor: colors.card,
     borderRadius: 14,
-    padding: 12,
+    padding: 10,
     borderWidth: 1,
     borderColor: colors.borderSubtle,
-    marginBottom: 16,
   },
-  hospChipsRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  hospChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
+  hospImage: {
+    width: "100%",
+    height: 80,
     borderRadius: 8,
-    backgroundColor: colors.canvas,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-    maxWidth: (SCREEN_WIDTH - 64) / 2,
+    marginBottom: 6,
   },
-  chipNumBadge: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  chipNumText: {
-    fontSize: 10,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-  },
-  chipName: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: colors.onSurface,
-  },
-  chipLoc: {
-    fontSize: 9,
-    color: colors.textSecondary,
-  },
-  chipClose: {
-    fontSize: 11,
-    color: colors.textTertiary,
-    marginLeft: 2,
-  },
-  addHospBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    backgroundColor: colors.surfaceIce,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-    justifyContent: "center",
-  },
-  addHospBtnText: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: colors.secondary,
-  },
-  toggleStrip: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 10,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: colors.borderLight,
-  },
-  diffToggleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  diffLabel: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: colors.onSurface,
-  },
-  starBadge: {
-    backgroundColor: colors.surfaceIce,
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-  },
-  starBadgeText: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: colors.secondary,
-  },
-  tableCard: {
-    backgroundColor: colors.card,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-    overflow: "hidden",
-    marginBottom: 16,
-  },
-  tableRow: {
-    flexDirection: "row",
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderSubtle,
-  },
-  tableCellLabel: {
-    width: 140,
-    padding: 12,
-    borderRightWidth: 1,
-    borderRightColor: colors.borderSubtle,
-    backgroundColor: colors.card,
-  },
-  metricSuper: {
+  columnTag: {
     fontSize: 9,
     fontWeight: "800",
-    color: colors.outline,
+    color: colors.primary,
     letterSpacing: 0.5,
   },
-  metricMainHeader: {
-    fontSize: 13,
+  hospName: {
+    fontSize: 12,
     fontWeight: "800",
     color: colors.onSurface,
     marginTop: 2,
+    minHeight: 32,
   },
-  tableCellHeader: {
-    width: 150,
-    padding: 10,
-    borderRightWidth: 1,
-    borderRightColor: colors.borderSubtle,
-    backgroundColor: colors.card,
+  hospLoc: {
+    fontSize: 10,
+    color: colors.textSecondary,
+    marginTop: 2,
   },
-  tableHospImage: {
-    width: "100%",
-    height: 70,
-    borderRadius: 8,
-    backgroundColor: colors.surfaceContainer,
-  },
-  tableHospInfo: {
+  ratingBadge: {
+    backgroundColor: "#FEF3C7",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    alignSelf: "flex-start",
     marginTop: 6,
   },
-  tableHospName: {
-    fontSize: 12,
-    fontWeight: "800",
-    color: colors.onSurface,
-  },
-  tableHospDist: {
+  ratingText: {
     fontSize: 10,
-    color: colors.textSecondary,
-    marginTop: 1,
+    fontWeight: "800",
+    color: "#B45309",
   },
-  tableRatingPill: {
+  changeBtn: {
+    backgroundColor: colors.surfaceIce,
+    borderRadius: 6,
+    paddingVertical: 5,
+    alignItems: "center",
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+  },
+  changeBtnText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: colors.secondary,
+  },
+  metricCard: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+  },
+  metricTitle: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: colors.textSecondary,
+    letterSpacing: 0.6,
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  metricComparisonRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 2,
-    marginTop: 4,
-    alignSelf: "flex-start",
-    backgroundColor: "#FEF3C7",
-    paddingHorizontal: 5,
-    paddingVertical: 1,
-    borderRadius: 4,
   },
-  tableRatingVal: {
-    fontSize: 10,
-    fontWeight: "800",
-    color: colors.onSurface,
+  metricValBox: {
+    flex: 1,
+    alignItems: "center",
+    paddingHorizontal: 4,
   },
-  sectionHeaderRow: {
-    backgroundColor: colors.canvas,
-    paddingHorizontal: 12,
+  metricHighlight: {
+    backgroundColor: "#F0FDF4",
+    borderRadius: 8,
     paddingVertical: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderSubtle,
   },
-  sectionHeaderText: {
-    fontSize: 10,
+  metricDivider: {
+    width: 1,
+    height: "80%",
+    backgroundColor: colors.borderSubtle,
+  },
+  metricValPrimary: {
+    fontSize: 13,
     fontWeight: "800",
     color: colors.onSurface,
-    letterSpacing: 0.5,
+    textAlign: "center",
   },
-  tableCellData: {
-    width: 150,
-    padding: 12,
-    borderRightWidth: 1,
-    borderRightColor: colors.borderSubtle,
-    justifyContent: "center",
+  metricSub: {
+    fontSize: 10,
+    color: colors.textSecondary,
+    marginTop: 2,
+    textAlign: "center",
   },
-  rowTitle: {
+  actionsRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 4,
+  },
+  actionCallBtn: {
+    backgroundColor: colors.surfaceIce,
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+  },
+  actionCallText: {
     fontSize: 11,
     fontWeight: "700",
-    color: colors.onSurface,
+    color: colors.secondary,
   },
-  rowSub: {
-    fontSize: 9,
-    color: colors.textSecondary,
-    marginTop: 1,
+  actionDetailBtn: {
+    backgroundColor: colors.primary,
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: "center",
   },
-  cellValueBold: {
-    fontSize: 12,
+  actionDetailText: {
+    fontSize: 11,
     fontWeight: "800",
-    color: colors.onSurface,
+    color: "#FFFFFF",
   },
-  cellValueBig: {
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 16,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  modalTitle: {
     fontSize: 15,
     fontWeight: "800",
     color: colors.onSurface,
   },
-  tableActionBtn: {
-    backgroundColor: colors.primary,
-    borderRadius: 8,
-    paddingVertical: 7,
-    alignItems: "center",
-  },
-  tableActionBtnSuccess: {
-    backgroundColor: colors.badgeCashless,
-  },
-  tableActionBtnText: {
-    fontSize: 11,
-    fontWeight: "800",
-    color: "#FFFFFF",
-  },
-  bentoContainer: {
-    gap: 12,
-    marginBottom: 16,
-  },
-  bentoCard: {
-    backgroundColor: colors.card,
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-  },
-  bentoSuper: {
-    fontSize: 9,
-    fontWeight: "800",
-    color: colors.secondary,
-    letterSpacing: 0.5,
-  },
-  bentoTitle: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: colors.primary,
-    marginTop: 1,
-  },
-  bentoDesc: {
-    fontSize: 11,
+  modalCloseText: {
+    fontSize: 18,
     color: colors.textSecondary,
-    marginTop: 2,
   },
-  barLabel: {
-    fontSize: 11,
-    color: colors.onSurface,
-    fontWeight: "600",
-  },
-  barVal: {
-    fontSize: 11,
-    fontWeight: "800",
-    color: colors.secondary,
-  },
-  barBg: {
-    height: 6,
-    backgroundColor: colors.surfaceContainer,
-    borderRadius: 3,
-    marginTop: 3,
-  },
-  barFill: {
-    height: 6,
-    backgroundColor: colors.secondary,
-    borderRadius: 3,
-  },
-  geoGrid: {
+  modalItem: {
     flexDirection: "row",
-    gap: 8,
-    marginTop: 10,
-  },
-  geoBox: {
-    flex: 1,
-    backgroundColor: colors.canvas,
-    borderRadius: 8,
-    padding: 8,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
     alignItems: "center",
-  },
-  geoName: {
-    fontSize: 10,
-    color: colors.textSecondary,
-    fontWeight: "600",
-  },
-  geoDist: {
-    fontSize: 13,
-    fontWeight: "800",
-    color: colors.onSurface,
-    marginVertical: 2,
-  },
-  geoEta: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: colors.secondary,
-  },
-  capRow: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    marginTop: 12,
-    backgroundColor: colors.canvas,
-    borderRadius: 8,
-    padding: 10,
-  },
-  capCol: {
-    alignItems: "center",
-  },
-  capVal: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: colors.badgeCashless,
-  },
-  capSub: {
-    fontSize: 9,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  faqCard: {
-    backgroundColor: colors.card,
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-  },
-  faqTitle: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: colors.primary,
-  },
-  faqSub: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    marginBottom: 8,
-  },
-  faqItem: {
+    gap: 10,
     paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
-  },
-  faqHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  faqQ: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: colors.onSurface,
-    flex: 1,
-    paddingRight: 8,
-  },
-  faqToggle: {
-    fontSize: 10,
-    color: colors.textSecondary,
-  },
-  faqA: {
-    fontSize: 11,
-    color: colors.onSurfaceVariant,
-    marginTop: 6,
-    lineHeight: 16,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(19, 27, 46, 0.65)",
-    justifyContent: "center",
-    padding: 20,
-  },
-  modalBox: {
-    backgroundColor: colors.card,
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-  },
-  modalTop: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderSubtle,
-    marginBottom: 10,
   },
-  modalHeaderTitle: {
-    fontSize: 14,
+  modalItemSelected: {
+    backgroundColor: colors.surfaceIce,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+  },
+  modalItemImg: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+  },
+  modalItemName: {
+    fontSize: 12,
     fontWeight: "800",
-    color: colors.primary,
-  },
-  availItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
-  },
-  availName: {
-    fontSize: 13,
-    fontWeight: "700",
     color: colors.onSurface,
   },
-  availLoc: {
+  modalItemLoc: {
     fontSize: 10,
     color: colors.textSecondary,
   },
-  availTag: {
+  modalItemIcu: {
     fontSize: 10,
+    fontWeight: "700",
+    color: "#16A34A",
+  },
+  modalItemCheck: {
+    fontSize: 16,
     fontWeight: "800",
-    color: colors.badgeCashless,
+    color: colors.primary,
   },
 });

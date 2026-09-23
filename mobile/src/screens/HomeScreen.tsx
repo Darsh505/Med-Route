@@ -1,6 +1,6 @@
 /**
  * HomeScreen.tsx — Mobile Home Screen (Clinical Architecture Health System)
- * Strictly matches the visual identity, tokens, and components of stitch (4)/code.html
+ * Strictly matches the visual identity, tokens, and components with 100% Multi-Language Localization.
  */
 
 import React, { useState, useMemo } from "react";
@@ -18,8 +18,12 @@ import {
   Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "../components/LanguageSwitcher";
 import { colors } from "../theme/colors";
+import MedRouteLogo from "../components/MedRouteLogo";
 import { MOCK_HOSPITALS, MobileHospital, haversineKm, setUserLocation, resolveCityCoordinates, CITY_ALIASES } from "../services/api";
+import { localizeHospital, localizeCity, localizeSpecialty } from "../i18n/hospitalLocalization";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -63,6 +67,9 @@ interface MobileHospitalItem {
 }
 
 export default function HomeScreen({ navigation }: any) {
+  const { t, i18n } = useTranslation();
+  const currentLang = i18n.language || "en";
+
   // Search & Filter State
   const [cityInput, setCityInput] = useState("Hoshiarpur, Punjab");
   const [specialtyInput, setSpecialtyInput] = useState("");
@@ -74,8 +81,9 @@ export default function HomeScreen({ navigation }: any) {
   const [accreditedOnly, setAccreditedOnly] = useState(false);
   const [emergencyOnly, setEmergencyOnly] = useState(false);
 
-  // Discovery Filter
-  const [distanceRadius, setDistanceRadius] = useState(25);
+  // Discovery Filter & Filter Modal
+  const [maxDistanceKm, setMaxDistanceKm] = useState<number | null>(null);
+  const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [sortBy, setSortBy] = useState<"relevance" | "beds" | "rating" | "cost">("relevance");
 
   // New filters
@@ -125,8 +133,6 @@ export default function HomeScreen({ navigation }: any) {
   // Hospital Data — fully wired real-data filters
   const hospitalList: MobileHospitalItem[] = useMemo(() => {
     let list: MobileHospitalItem[] = MOCK_HOSPITALS.map((h: MobileHospital) => {
-      // Use real computed Haversine distance (already computed at MOCK_HOSPITALS mapping time)
-      // Re-compute here with current userLat/userLng for live accuracy
       const distance = parseFloat(haversineKm(userLat, userLng, h.latitude, h.longitude).toFixed(1));
 
       const liveIcu = h.beds_icu_available ?? 5;
@@ -170,7 +176,7 @@ export default function HomeScreen({ navigation }: any) {
         turnaround,
         qualityBadge,
         imageUrl: (h as any).image_url || "https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?w=400&q=80",
-        emergencyPhone: h.emergency_phone || "18006334768",
+        emergencyPhone: h.emergency_phone || "108",
         isPmjay,
         isTrauma,
         typeRaw,
@@ -234,12 +240,11 @@ export default function HomeScreen({ navigation }: any) {
       );
     }
 
-    // Distance filter (real Haversine)
-    if (distanceRadius < 50) {
-      list = list.filter((h) => h.distance <= distanceRadius);
+    // Distance filter only if user explicitly set a max distance limit
+    if (maxDistanceKm !== null) {
+      list = list.filter((h) => h.distance <= maxDistanceKm);
     }
 
-    // Sorting
     if (sortBy === "beds") {
       list.sort((a, b) => b.liveIcu - a.liveIcu);
     } else if (sortBy === "rating") {
@@ -253,14 +258,13 @@ export default function HomeScreen({ navigation }: any) {
     return list;
   }, [
     cashlessOnly, liveIcuOnly, accreditedOnly, emergencyOnly,
-    distanceRadius, sortBy, specialtyInput, cityInput,
+    maxDistanceKm, sortBy, specialtyInput, cityInput,
     hospitalType, minRating, userLat, userLng,
   ]);
 
-  // Reset pagination to page 1 whenever filters change
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [cashlessOnly, liveIcuOnly, accreditedOnly, emergencyOnly, specialtyInput, distanceRadius, sortBy, cityInput]);
+  }, [cashlessOnly, liveIcuOnly, accreditedOnly, emergencyOnly, specialtyInput, maxDistanceKm, sortBy, cityInput]);
 
   const totalPages = Math.ceil(hospitalList.length / HOSPITALS_PER_PAGE) || 1;
   const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
@@ -270,7 +274,6 @@ export default function HomeScreen({ navigation }: any) {
     return hospitalList.slice(startIndex, startIndex + HOSPITALS_PER_PAGE);
   }, [hospitalList, safeCurrentPage]);
 
-  // Dynamic pagination items: 1, 2, ..., last
   const paginationItems = useMemo(() => {
     if (totalPages <= 3) {
       return Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -284,39 +287,48 @@ export default function HomeScreen({ navigation }: any) {
     return [1, "...", safeCurrentPage, "...", totalPages];
   }, [totalPages, safeCurrentPage]);
 
+  // Localized displayed city name
+  const cityDisplay = useMemo(() => {
+    const parts = cityInput.split(",");
+    const c = localizeCity(parts[0], currentLang);
+    const s = parts[1] ? localizeCity(parts[1].trim(), currentLang) : "";
+    return s ? `${c}, ${s}` : c;
+  }, [cityInput, currentLang]);
+
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
-      {/* 1. TOP INSTITUTIONAL HEADER */}
+      {/* 1. TOP INSTITUTIONAL HEADER WITH INTEGRATED LANGUAGE SWITCHER */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <View style={styles.logoBadge}>
-            <Text style={styles.logoBadgeText}>🏥</Text>
-          </View>
-          <View>
-            <Text style={styles.brandTitle}>Medi Route</Text>
+          <MedRouteLogo size="sm" showBadge={false} />
+          <View style={{ marginLeft: 8 }}>
+            <Text style={styles.brandTitle}>Med Route</Text>
             <TouchableOpacity
               style={styles.locationPill}
-              onPress={() => navigation.navigate("SelectLocation")}
+              onPress={() => setFilterModalOpen(true)}
             >
               <Text style={styles.locationPin}>📍</Text>
-              <Text style={styles.locationText}>{cityInput}</Text>
+              <Text style={styles.locationText} numberOfLines={1}>{cityDisplay}</Text>
               <Text style={styles.chevron}>▾</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        <TouchableOpacity
-          style={styles.emergencyBtn}
-          onPress={() => Linking.openURL("tel:18006334768")}
-        >
-          <Text style={styles.emergencyIcon}>📞</Text>
-          <View>
-            <Text style={styles.emergencySub}>24x7 Hotline</Text>
-            <Text style={styles.emergencyTitle}>1800-MEDI</Text>
-          </View>
-        </TouchableOpacity>
+        <View style={styles.headerRight}>
+          <LanguageSwitcher compact />
+          <TouchableOpacity
+            style={styles.emergencyBtn}
+            onPress={() => Linking.openURL("tel:108")}
+          >
+            <Text style={styles.emergencyIcon}>🚨</Text>
+            <View>
+              <Text style={styles.emergencySub}>24x7</Text>
+              <Text style={styles.emergencyTitle}>108 SOS</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView
@@ -326,9 +338,9 @@ export default function HomeScreen({ navigation }: any) {
       >
         {/* 2. PAGE TITLE LEAD */}
         <View style={styles.pageTitleBlock}>
-          <Text style={styles.heroHeading}>Find Verified Network Hospitals</Text>
+          <Text style={styles.heroHeading}>{t("home.showingHospitals")}</Text>
           <Text style={styles.heroSub}>
-            Access 10,000+ cashless partner hospitals, track real-time ICU beds, and verify insurance acceptance with zero upfront friction.
+            {t("home.heroSub")}
           </Text>
         </View>
 
@@ -336,14 +348,14 @@ export default function HomeScreen({ navigation }: any) {
         <View style={styles.searchHubCard}>
           {/* Locality Input */}
           <View style={styles.searchField}>
-            <Text style={styles.fieldLabel}>CITY / LOCALITY</Text>
+            <Text style={styles.fieldLabel}>{t("home.activeCity")}</Text>
             <View style={styles.inputRow}>
               <Text style={styles.fieldIcon}>📍</Text>
               <TextInput
                 style={styles.textInput}
                 value={cityInput}
                 onChangeText={setCityInput}
-                placeholder="e.g. Bangalore, Indiranagar"
+                placeholder={t("home.searchPlaceholder")}
                 placeholderTextColor={colors.textTertiary}
               />
             </View>
@@ -351,14 +363,14 @@ export default function HomeScreen({ navigation }: any) {
 
           {/* Specialty / Doctor Input */}
           <View style={[styles.searchField, { marginTop: 10 }]}>
-            <Text style={styles.fieldLabel}>SPECIALTY, HOSPITAL OR DOCTOR</Text>
+            <Text style={styles.fieldLabel}>{t("home.specialtyOrDoctorLabel")}</Text>
             <View style={styles.inputRow}>
               <Text style={styles.fieldIcon}>🩺</Text>
               <TextInput
                 style={styles.textInput}
                 value={specialtyInput}
                 onChangeText={setSpecialtyInput}
-                placeholder="Cardiology, Aster, Ortho..."
+                placeholder={t("home.specialtyPlaceholder")}
                 placeholderTextColor={colors.textTertiary}
               />
               {specialtyInput ? (
@@ -371,25 +383,28 @@ export default function HomeScreen({ navigation }: any) {
 
           {/* Quick Specialty Chips */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.quickChipsScroll}>
-            {["Cardiology", "Orthopedics", "Oncology", "Neurology", "Gynecology"].map((spec) => (
-              <TouchableOpacity
-                key={spec}
-                style={[
-                  styles.specChip,
-                  specialtyInput.includes(spec) && styles.specChipActive,
-                ]}
-                onPress={() => setSpecialtyInput(spec)}
-              >
-                <Text
+            {["Cardiology", "Orthopedics", "Oncology", "Neurology", "Gynecology"].map((spec) => {
+              const localizedSpec = localizeSpecialty(spec, currentLang);
+              return (
+                <TouchableOpacity
+                  key={spec}
                   style={[
-                    styles.specChipText,
-                    specialtyInput.includes(spec) && styles.specChipTextActive,
+                    styles.specChip,
+                    specialtyInput.includes(spec) && styles.specChipActive,
                   ]}
+                  onPress={() => setSpecialtyInput(spec)}
                 >
-                  {spec}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <Text
+                    style={[
+                      styles.specChipText,
+                      specialtyInput.includes(spec) && styles.specChipTextActive,
+                    ]}
+                  >
+                    {localizedSpec}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </ScrollView>
 
           {/* Find Button */}
@@ -397,7 +412,7 @@ export default function HomeScreen({ navigation }: any) {
             style={styles.findBtn}
             onPress={() => {}}
           >
-            <Text style={styles.findBtnText}>🔍 Find Network Hospitals</Text>
+            <Text style={styles.findBtnText}>📍 {t("home.findNetworkHospitals")}</Text>
           </TouchableOpacity>
         </View>
 
@@ -412,9 +427,9 @@ export default function HomeScreen({ navigation }: any) {
             style={[styles.filterPill, cashlessOnly && styles.filterPillActive]}
             onPress={() => setCashlessOnly(!cashlessOnly)}
           >
-            <Text style={styles.filterPillIcon}>🛡️</Text>
+            <Text style={styles.filterPillIcon}>💳</Text>
             <Text style={[styles.filterPillText, cashlessOnly && styles.filterPillTextActive]}>
-              Cashless Network
+              {t("home.cashlessNetwork")}
             </Text>
             {cashlessOnly && <Text style={styles.checkIcon}> ✓</Text>}
           </TouchableOpacity>
@@ -425,7 +440,7 @@ export default function HomeScreen({ navigation }: any) {
           >
             <Text style={styles.filterPillIcon}>🛏️</Text>
             <Text style={[styles.filterPillText, liveIcuOnly && styles.filterPillTextActive]}>
-              Live ICU Beds
+              {t("home.liveIcuBeds")}
             </Text>
           </TouchableOpacity>
 
@@ -433,9 +448,9 @@ export default function HomeScreen({ navigation }: any) {
             style={[styles.filterPill, accreditedOnly && styles.filterPillActive]}
             onPress={() => setAccreditedOnly(!accreditedOnly)}
           >
-            <Text style={styles.filterPillIcon}>🏅</Text>
+            <Text style={styles.filterPillIcon}>🎖️</Text>
             <Text style={[styles.filterPillText, accreditedOnly && styles.filterPillTextActive]}>
-              NABH / JCI
+              {t("home.nabhJci")}
             </Text>
           </TouchableOpacity>
 
@@ -443,9 +458,9 @@ export default function HomeScreen({ navigation }: any) {
             style={[styles.filterPill, emergencyOnly && styles.filterPillActive]}
             onPress={() => setEmergencyOnly(!emergencyOnly)}
           >
-            <Text style={styles.filterPillIcon}>⚡</Text>
+            <Text style={styles.filterPillIcon}>🚨</Text>
             <Text style={[styles.filterPillText, emergencyOnly && styles.filterPillTextActive]}>
-              24x7 Emergency
+              {t("home.emergency24x7")}
             </Text>
           </TouchableOpacity>
         </ScrollView>
@@ -455,24 +470,24 @@ export default function HomeScreen({ navigation }: any) {
           <View style={styles.emergencyBannerTop}>
             <View style={styles.beaconDot} />
             <Text style={styles.emergencyBannerTitle}>
-              Priority Zero-Deposit Emergency Triage Desk
+              {t("home.emergencyBannerTitle")}
             </Text>
           </View>
           <Text style={styles.emergencyBannerDesc}>
-            Need instant bed reservation without upfront security deposit? Medi Route TPA field officers take over approvals in under 20 minutes.
+            {t("home.emergencyBannerDesc")}
           </Text>
           <View style={styles.emergencyBannerActions}>
             <TouchableOpacity
               style={styles.bannerCallBtn}
-              onPress={() => Linking.openURL("tel:18006334768")}
+              onPress={() => Linking.openURL("tel:108")}
             >
-              <Text style={styles.bannerCallBtnText}>📞 1800-MEDI-ROUTE</Text>
+              <Text style={styles.bannerCallBtnText}>🚨 Call 108 Ambulance</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.bannerWhatsAppBtn}
-              onPress={() => Linking.openURL("https://wa.me/9118006334768?text=Hello%20Medi%20Route,%20I%20need%20urgent%20hospital%20admission%20assistance.")}
+              onPress={() => Linking.openURL("https://wa.me/919592543404?text=Hello%20Medi%20Route,%20I%20need%20urgent%20hospital%20admission%20assistance.")}
             >
-              <Text style={styles.bannerWhatsAppBtnText}>💬 WhatsApp Desk</Text>
+              <Text style={styles.bannerWhatsAppBtnText}>💬 WhatsApp (9592543404)</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -481,76 +496,61 @@ export default function HomeScreen({ navigation }: any) {
         <View style={styles.discoveryHeader}>
           <View>
             <Text style={styles.resultsCount}>
-              {hospitalList.length} Verified Hospitals
+              {hospitalList.length} {t("home.verifiedHospitals")}
             </Text>
             <Text style={styles.resultsSub}>
-              Showing {hospitalList.length > 0 ? (safeCurrentPage - 1) * HOSPITALS_PER_PAGE + 1 : 0} -{" "}
-              {Math.min(safeCurrentPage * HOSPITALS_PER_PAGE, hospitalList.length)} of {hospitalList.length}
+              {t("home.showingResults", {
+                start: hospitalList.length > 0 ? (safeCurrentPage - 1) * HOSPITALS_PER_PAGE + 1 : 0,
+                end: Math.min(safeCurrentPage * HOSPITALS_PER_PAGE, hospitalList.length),
+                total: hospitalList.length,
+              })}
             </Text>
           </View>
 
-          <View style={styles.radiusPills}>
-            {[
-              { km: 5, count: 4 },
-              { km: 15, count: 9 },
-              { km: 25, count: 14 },
-            ].map((item) => (
-              <TouchableOpacity
-                key={item.km}
-                style={[
-                  styles.radiusPill,
-                  distanceRadius === item.km && styles.radiusPillActive,
-                ]}
-                onPress={() => setDistanceRadius(item.km)}
-              >
-                <Text
-                  style={[
-                    styles.radiusPillText,
-                    distanceRadius === item.km && styles.radiusPillTextActive,
-                  ]}
-                >
-                  {distanceRadius === item.km ? "☑" : "☐"} {item.km}km ({item.count})
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity
+            style={styles.filterTriggerBtn}
+            onPress={() => setFilterModalOpen(true)}
+          >
+            <Text style={styles.filterTriggerText}>⚙️ Filter Options</Text>
+          </TouchableOpacity>
         </View>
 
-        {/* 7. STRUCTURED HOSPITAL CARDS (4 Hospitals per Page) */}
+        {/* 7. STRUCTURED HOSPITAL CARDS (Localized Hospital Data) */}
         {paginatedHospitals.map((hospital) => {
-          const isCompared = comparedIds.includes(hospital.id);
+          const locHosp = localizeHospital(hospital, currentLang);
+          const isCompared = comparedIds.includes(locHosp.id);
 
           return (
-            <View key={hospital.id} style={styles.hospitalCard}>
+            <View key={locHosp.id} style={styles.hospitalCard}>
               {/* Card Top: Image & Header */}
               <View style={styles.cardHeader}>
-                <Image source={{ uri: hospital.imageUrl }} style={styles.hospitalThumb} />
+                <Image source={{ uri: locHosp.imageUrl }} style={styles.hospitalThumb} />
                 <View style={styles.cardHeaderInfo}>
                   <View style={styles.badgeRow}>
                     <View style={styles.distanceBadge}>
                       <Text style={styles.distanceText}>
-                        {Math.round(hospital.distance * 3)}m • {hospital.distance} km
+                        {t("home.minsAway", { mins: Math.round(locHosp.distance * 3) })} • {locHosp.distance} {t("common.km")}
                       </Text>
                     </View>
                     <View style={styles.ratingBadge}>
                       <Text style={styles.starText}>★</Text>
-                      <Text style={styles.ratingText}>{hospital.rating}</Text>
-                      <Text style={styles.reviewCount}>({hospital.reviewCount})</Text>
+                      <Text style={styles.ratingText}>{locHosp.rating}</Text>
+                      <Text style={styles.reviewCount}>({locHosp.reviewCount})</Text>
                     </View>
                   </View>
 
                   <Text style={styles.hospitalName} numberOfLines={1}>
-                    {hospital.name}
+                    {locHosp.name}
                   </Text>
                   <Text style={styles.hospitalAddress} numberOfLines={1}>
-                    📍 {hospital.address}
+                    📍 {locHosp.address}
                   </Text>
                 </View>
               </View>
 
               {/* 4-Metric Telemetry Grid */}
               <View style={styles.telemetryGrid}>
-                {hospital.metrics?.map((metric, mIdx) => (
+                {locHosp.metrics?.map((metric, mIdx) => (
                   <View key={mIdx} style={styles.telemetryCol}>
                     <Text style={styles.telemetryLabel}>{metric.label}</Text>
                     <Text
@@ -570,7 +570,7 @@ export default function HomeScreen({ navigation }: any) {
 
               {/* Tag Strip */}
               <View style={styles.tagStrip}>
-                {hospital.tags?.map((tag, tIdx) => (
+                {locHosp.tags?.map((tag, tIdx) => (
                   <View
                     key={tIdx}
                     style={tag.isCheck ? styles.cashlessTag : styles.featureTag}
@@ -584,24 +584,24 @@ export default function HomeScreen({ navigation }: any) {
                 ))}
               </View>
 
-              {/* Disease Stats Strip — shown directly on card, no click needed */}
-              {hospital.topDisease ? (
+              {/* Disease Stats Strip */}
+              {locHosp.topDisease ? (
                 <View style={styles.diseaseStatsStrip}>
-                  <Text style={styles.diseaseName} numberOfLines={1}>🔬 {hospital.topDisease}</Text>
+                  <Text style={styles.diseaseName} numberOfLines={1}>🔬 {locHosp.topDisease}</Text>
                   <View style={styles.diseaseStatsRow}>
-                    {hospital.totalPatients ? (
+                    {locHosp.totalPatients ? (
                       <Text style={styles.diseaseStat}>
-                        <Text style={styles.diseaseStatBold}>{fmtCount(hospital.totalPatients)}</Text> patients
+                        <Text style={styles.diseaseStatBold}>{fmtCount(locHosp.totalPatients)}</Text> {t("home.patientsTreated", { count: "" }).trim()}
                       </Text>
                     ) : null}
-                    {hospital.avgCost ? (
+                    {locHosp.avgCost ? (
                       <Text style={styles.diseaseStat}>
-                        Avg: <Text style={styles.diseaseStatBold}>{fmtCost(hospital.avgCost)}</Text>
+                        {t("home.avgCost", { cost: fmtCost(locHosp.avgCost) })}
                       </Text>
                     ) : null}
-                    {hospital.successRatio ? (
+                    {locHosp.successRatio ? (
                       <Text style={[styles.diseaseStat, { color: "#16a34a" }]}>
-                        ✓ <Text style={styles.diseaseStatBold}>{hospital.successRatio}</Text>
+                        ✓ <Text style={styles.diseaseStatBold}>{locHosp.successRatio}</Text>
                       </Text>
                     ) : null}
                   </View>
@@ -610,13 +610,12 @@ export default function HomeScreen({ navigation }: any) {
 
               {/* Actions Footer */}
               <View style={styles.cardActions}>
-
                 <TouchableOpacity
                   style={[
                     styles.compareToggleBtn,
                     isCompared && styles.compareToggleBtnActive,
                   ]}
-                  onPress={() => toggleCompare(hospital.id)}
+                  onPress={() => toggleCompare(locHosp.id)}
                 >
                   <Text
                     style={[
@@ -624,25 +623,25 @@ export default function HomeScreen({ navigation }: any) {
                       isCompared && styles.compareToggleTextActive,
                     ]}
                   >
-                    {isCompared ? "✓ Compared" : "+ Compare"}
+                    {isCompared ? `✓ ${t("home.compared")}` : t("home.compare")}
                   </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   style={styles.bedCheckBtn}
-                  onPress={() => setActiveModal({ type: "beds", hospital })}
+                  onPress={() => setActiveModal({ type: "beds", hospital: locHosp })}
                 >
-                  <Text style={styles.bedCheckText}>Live Beds</Text>
+                  <Text style={styles.bedCheckText}>{t("home.liveBeds")}</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   style={styles.admissionBtn}
                   onPress={() => {
-                    setActiveModal({ type: "admission", hospital });
+                    setActiveModal({ type: "admission", hospital: locHosp });
                     setAdmissionSuccess(false);
                   }}
                 >
-                  <Text style={styles.admissionBtnText}>Book Cashless</Text>
+                  <Text style={styles.admissionBtnText}>{t("home.bookCashless")}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -658,7 +657,7 @@ export default function HomeScreen({ navigation }: any) {
               onPress={() => setCurrentPage((p) => Math.max(1, p - 1))}
             >
               <Text style={[styles.pageNavBtnText, safeCurrentPage <= 1 && styles.pageNavBtnTextDisabled]}>
-                ‹ Prev
+                ◀ {t("home.prev")}
               </Text>
             </TouchableOpacity>
 
@@ -693,7 +692,7 @@ export default function HomeScreen({ navigation }: any) {
               onPress={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
             >
               <Text style={[styles.pageNavBtnText, safeCurrentPage >= totalPages && styles.pageNavBtnTextDisabled]}>
-                Next ›
+                {t("home.next")} ▶
               </Text>
             </TouchableOpacity>
           </View>
@@ -707,17 +706,17 @@ export default function HomeScreen({ navigation }: any) {
         <View style={styles.floatingCompareDock}>
           <View style={styles.dockLeft}>
             <View style={styles.dockIconBox}>
-              <Text style={{ fontSize: 16 }}>⚖️</Text>
+              <Text style={{ fontSize: 16 }}>📊</Text>
             </View>
             <Text style={styles.dockText}>
-              <Text style={{ fontWeight: "800", color: colors.secondary }}>{comparedIds.length}</Text> Hospitals selected
+              <Text style={{ fontWeight: "800", color: colors.secondary }}>{comparedIds.length}</Text> {t("home.hospitalsSelected")}
             </Text>
           </View>
           <TouchableOpacity
             style={styles.dockCompareBtn}
             onPress={() => navigation.navigate("Compare")}
           >
-            <Text style={styles.dockCompareText}>Compare Now →</Text>
+            <Text style={styles.dockCompareText}>{t("home.compareNow")} ➔</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -729,7 +728,7 @@ export default function HomeScreen({ navigation }: any) {
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>
-                  {activeModal.type === "beds" ? "Real-Time ICU Bed Status" : "Cashless Pre-Auth Admission"}
+                  {activeModal.type === "beds" ? t("home.icuModalTitle") : t("home.admissionModalTitle")}
                 </Text>
                 <TouchableOpacity onPress={() => setActiveModal(null)}>
                   <Text style={styles.modalCloseText}>✕</Text>
@@ -744,64 +743,63 @@ export default function HomeScreen({ navigation }: any) {
               {activeModal.type === "beds" ? (
                 <View style={styles.modalBody}>
                   <View style={styles.modalMetricBox}>
-                    <Text style={styles.modalMetricLabel}>Live CCU / ICU Beds</Text>
+                    <Text style={styles.modalMetricLabel}>{t("home.liveCcuIcuBeds")}</Text>
                     <Text style={[styles.modalMetricVal, { color: colors.badgeCashless }]}>
-                      ● {activeModal.hospital.liveIcu} Open Now
+                      ● {t("home.openNow", { count: activeModal.hospital.liveIcu })}
                     </Text>
                   </View>
                   <View style={styles.modalMetricBox}>
-                    <Text style={styles.modalMetricLabel}>Single Deluxe Room</Text>
+                    <Text style={styles.modalMetricLabel}>{t("home.singleDeluxeRoom")}</Text>
                     <Text style={styles.modalMetricVal}>{activeModal.hospital.roomAvailable}</Text>
                   </View>
                   <Text style={styles.modalNote}>
-                    Beds held for 90 minutes after admission request generation.
+                    {t("home.bedsHeldNotice")}
                   </Text>
                   <TouchableOpacity
                     style={styles.modalPrimaryBtn}
                     onPress={() => setActiveModal({ type: "admission", hospital: activeModal.hospital })}
                   >
-                    <Text style={styles.modalPrimaryBtnText}>Proceed to Cashless Admission</Text>
+                    <Text style={styles.modalPrimaryBtnText}>{t("home.proceedToCashless")}</Text>
                   </TouchableOpacity>
                 </View>
               ) : (
                 <View style={styles.modalBody}>
                   {admissionSuccess ? (
                     <View style={styles.successBox}>
-                      <Text style={{ fontSize: 36 }}>✅</Text>
-                      <Text style={styles.successTitle}>Pre-Auth Guarantee Approved!</Text>
+                      <Text style={{ fontSize: 36 }}>✓</Text>
+                      <Text style={styles.successTitle}>{t("home.approvedTitle")}</Text>
                       <Text style={styles.successDesc}>
-                        Token #MR-8849-BLR generated. Upfront deposit ₹0 confirmed. Proceed to Reception Desk 4.
+                        {t("home.approvedDesc")}
                       </Text>
                       <TouchableOpacity
                         style={styles.modalPrimaryBtn}
                         onPress={() => setActiveModal(null)}
                       >
-                        <Text style={styles.modalPrimaryBtnText}>Done</Text>
+                        <Text style={styles.modalPrimaryBtnText}>{t("home.done")}</Text>
                       </TouchableOpacity>
                     </View>
                   ) : (
                     <>
-                      <Text style={styles.fieldLabel}>POLICY OR ABHA ID</Text>
+                      <Text style={styles.fieldLabel}>{t("home.policyAbhaLabel")}</Text>
                       <TextInput
                         style={styles.modalInput}
                         defaultValue="STAR-2024-8849-BLR"
                         placeholder="e.g. ABHA or Policy ID"
                       />
-                      <Text style={[styles.fieldLabel, { marginTop: 8 }]}>PATIENT PHONE</Text>
+                      <Text style={[styles.fieldLabel, { marginTop: 8 }]}>{t("home.patientPhoneLabel")}</Text>
                       <TextInput
                         style={styles.modalInput}
                         defaultValue="+91 98450 12345"
                         placeholder="+91 Mobile Number"
                       />
                       <View style={styles.depositWaivedBox}>
-                        <Text style={styles.depositLabel}>Pre-Auth Security Deposit:</Text>
-                        <Text style={styles.depositVal}>Waived (₹0)</Text>
+                        <Text style={styles.depositVal}>{t("home.depositWaived")}</Text>
                       </View>
                       <TouchableOpacity
                         style={styles.modalPrimaryBtn}
                         onPress={() => setAdmissionSuccess(true)}
                       >
-                        <Text style={styles.modalPrimaryBtnText}>Generate Cashless Token</Text>
+                        <Text style={styles.modalPrimaryBtnText}>{t("home.generateToken")}</Text>
                       </TouchableOpacity>
                     </>
                   )}
@@ -811,6 +809,187 @@ export default function HomeScreen({ navigation }: any) {
           </View>
         </Modal>
       )}
+
+      {/* 10. ADVANCED FILTER SELECTION MODAL */}
+      <Modal visible={filterModalOpen} transparent animationType="slide">
+        <View style={styles.filterModalOverlay}>
+          <View style={styles.filterModalCard}>
+            <View style={styles.filterModalHeader}>
+              <View>
+                <Text style={styles.filterModalTitle}>Filter Network Hospitals</Text>
+                <Text style={styles.filterModalSub}>Refine by location, accreditation &amp; tariffs</Text>
+              </View>
+              <TouchableOpacity onPress={() => setFilterModalOpen(false)} style={{ padding: 4 }}>
+                <Text style={styles.filterModalClose}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={{ maxHeight: 480 }} showsVerticalScrollIndicator={false}>
+              {/* City Selection */}
+              <Text style={styles.filterSectionTitle}>📍 City / Region</Text>
+              <View style={styles.filterPillGrid}>
+                {["All India", "Delhi", "Mumbai", "Bengaluru", "Chandigarh", "Mohali", "Hoshiarpur", "Jaipur", "Pune", "Hyderabad"].map((city) => {
+                  const isSel = (city === "All India" && (cityInput === "All Cities" || cityInput === "All India")) || cityInput.toLowerCase().includes(city.toLowerCase());
+                  return (
+                    <TouchableOpacity
+                      key={city}
+                      style={[styles.modalFilterPill, isSel && styles.modalFilterPillActive]}
+                      onPress={() => {
+                        setCityInput(city === "All India" ? "All Cities" : city);
+                      }}
+                    >
+                      <Text style={[styles.modalFilterPillText, isSel && styles.modalFilterPillTextActive]}>
+                        {city}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              {/* Hospital Ownership */}
+              <Text style={[styles.filterSectionTitle, { marginTop: 14 }]}>🏥 Hospital Type</Text>
+              <View style={styles.filterPillGrid}>
+                {[
+                  { label: "All Facilities", value: "all" },
+                  { label: "Govt Subsidized (PMJAY)", value: "government" },
+                  { label: "Private (NABH)", value: "private" },
+                  { label: "Trust / Non-Profit", value: "trust" },
+                ].map((type) => (
+                  <TouchableOpacity
+                    key={type.value}
+                    style={[styles.modalFilterPill, hospitalType === type.value && styles.modalFilterPillActive]}
+                    onPress={() => setHospitalType(type.value as any)}
+                  >
+                    <Text style={[styles.modalFilterPillText, hospitalType === type.value && styles.modalFilterPillTextActive]}>
+                      {type.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Sort By */}
+              <Text style={[styles.filterSectionTitle, { marginTop: 14 }]}>📊 Sort Results By</Text>
+              <View style={styles.filterPillGrid}>
+                {[
+                  { label: "Closest Distance", val: "relevance" },
+                  { label: "Most Live ICU Beds", val: "beds" },
+                  { label: "Highest Rated (★)", val: "rating" },
+                  { label: "Lowest Indicative Cost", val: "cost" },
+                ].map((s) => (
+                  <TouchableOpacity
+                    key={s.val}
+                    style={[styles.modalFilterPill, sortBy === s.val && styles.modalFilterPillActive]}
+                    onPress={() => setSortBy(s.val as any)}
+                  >
+                    <Text style={[styles.modalFilterPillText, sortBy === s.val && styles.modalFilterPillTextActive]}>
+                      {s.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Minimum Rating */}
+              <Text style={[styles.filterSectionTitle, { marginTop: 14 }]}>⭐ Minimum Rating</Text>
+              <View style={styles.filterPillGrid}>
+                {[
+                  { label: "Any Rating", val: 0 },
+                  { label: "4.0+ Stars", val: 4.0 },
+                  { label: "4.5+ Stars", val: 4.5 },
+                  { label: "4.8+ Stars", val: 4.8 },
+                ].map((r) => (
+                  <TouchableOpacity
+                    key={r.val}
+                    style={[styles.modalFilterPill, minRating === r.val && styles.modalFilterPillActive]}
+                    onPress={() => setMinRating(r.val)}
+                  >
+                    <Text style={[styles.modalFilterPillText, minRating === r.val && styles.modalFilterPillTextActive]}>
+                      {r.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Maximum Distance */}
+              <Text style={[styles.filterSectionTitle, { marginTop: 14 }]}>📏 Distance Radius</Text>
+              <View style={styles.filterPillGrid}>
+                {[
+                  { label: "Any Distance", val: null },
+                  { label: "Within 10 km", val: 10 },
+                  { label: "Within 25 km", val: 25 },
+                  { label: "Within 50 km", val: 50 },
+                ].map((d) => (
+                  <TouchableOpacity
+                    key={String(d.val)}
+                    style={[styles.modalFilterPill, maxDistanceKm === d.val && styles.modalFilterPillActive]}
+                    onPress={() => setMaxDistanceKm(d.val)}
+                  >
+                    <Text style={[styles.modalFilterPillText, maxDistanceKm === d.val && styles.modalFilterPillTextActive]}>
+                      {d.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Fast Toggles */}
+              <Text style={[styles.filterSectionTitle, { marginTop: 14 }]}>⚡ Quick Filters</Text>
+              <View style={{ gap: 8, marginTop: 4 }}>
+                <TouchableOpacity
+                  style={[styles.toggleRowBox, cashlessOnly && styles.toggleRowBoxActive]}
+                  onPress={() => setCashlessOnly(!cashlessOnly)}
+                >
+                  <Text style={styles.toggleRowLabel}>🛡️ PMJAY Cashless Empanelled Only</Text>
+                  <Text style={styles.toggleRowCheck}>{cashlessOnly ? "☑" : "☐"}</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.toggleRowBox, liveIcuOnly && styles.toggleRowBoxActive]}
+                  onPress={() => setLiveIcuOnly(!liveIcuOnly)}
+                >
+                  <Text style={styles.toggleRowLabel}>🛏️ Live ICU Beds Available (5+)</Text>
+                  <Text style={styles.toggleRowCheck}>{liveIcuOnly ? "☑" : "☐"}</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.toggleRowBox, emergencyOnly && styles.toggleRowBoxActive]}
+                  onPress={() => setEmergencyOnly(!emergencyOnly)}
+                >
+                  <Text style={styles.toggleRowLabel}>🚨 24x7 Emergency &amp; Trauma Center</Text>
+                  <Text style={styles.toggleRowCheck}>{emergencyOnly ? "☑" : "☐"}</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+
+            {/* Modal Footer Buttons */}
+            <View style={styles.modalFilterFooter}>
+              <TouchableOpacity
+                style={styles.modalFilterResetBtn}
+                onPress={() => {
+                  setCashlessOnly(false);
+                  setLiveIcuOnly(false);
+                  setAccreditedOnly(false);
+                  setEmergencyOnly(false);
+                  setHospitalType("all");
+                  setMinRating(0);
+                  setMaxDistanceKm(null);
+                  setSortBy("relevance");
+                }}
+              >
+                <Text style={styles.modalFilterResetText}>Reset All</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.modalFilterApplyBtn}
+                onPress={() => setFilterModalOpen(false)}
+              >
+                <Text style={styles.modalFilterApplyText}>
+                  Apply Filters ({hospitalList.length} Found)
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </SafeAreaView>
   );
 }
@@ -825,7 +1004,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 10,
     backgroundColor: colors.card,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderSubtle,
@@ -834,6 +1013,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
+    flex: 1,
+  },
+  headerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   logoBadge: {
     width: 38,
@@ -865,7 +1050,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
     color: colors.secondary,
-    maxWidth: 130,
+    maxWidth: 120,
   },
   chevron: {
     fontSize: 10,
@@ -897,63 +1082,44 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-    backgroundColor: colors.canvas,
+    backgroundColor: colors.background,
   },
   scrollContent: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingBottom: 24,
   },
   pageTitleBlock: {
-    marginBottom: 16,
-  },
-  verifiedTag: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    marginBottom: 6,
-  },
-  verifiedTagIcon: {
-    fontSize: 12,
-  },
-  verifiedTagText: {
-    fontSize: 10,
-    fontWeight: "800",
-    color: colors.secondary,
-    letterSpacing: 0.5,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
   },
   heroHeading: {
     fontSize: 22,
     fontWeight: "800",
-    color: colors.onSurface,
+    color: colors.textPrimary,
     letterSpacing: -0.5,
-    lineHeight: 28,
   },
   heroSub: {
     fontSize: 13,
-    color: colors.onSurfaceVariant,
+    color: colors.textSecondary,
     marginTop: 4,
     lineHeight: 18,
   },
   searchHubCard: {
+    marginHorizontal: 16,
+    marginTop: 8,
     backgroundColor: colors.card,
     borderRadius: 16,
-    padding: 16,
-    borderWidth: 1.5,
-    borderColor: colors.borderSubtle,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    elevation: 3,
-    marginBottom: 16,
-  },
-  searchField: {
-    backgroundColor: colors.canvas,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    padding: 14,
     borderWidth: 1,
     borderColor: colors.borderSubtle,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+  },
+  searchField: {
+    gap: 4,
   },
   fieldLabel: {
     fontSize: 10,
@@ -964,141 +1130,139 @@ const styles = StyleSheet.create({
   inputRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginTop: 2,
+    backgroundColor: colors.background,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+    paddingHorizontal: 10,
+    height: 44,
   },
   fieldIcon: {
     fontSize: 16,
+    marginRight: 6,
   },
   textInput: {
     flex: 1,
     fontSize: 14,
-    fontWeight: "700",
-    color: colors.onSurface,
-    padding: 0,
+    color: colors.textPrimary,
+    fontWeight: "600",
   },
   clearIcon: {
     fontSize: 14,
     color: colors.textTertiary,
-    paddingHorizontal: 4,
+    padding: 4,
   },
   quickChipsScroll: {
     marginTop: 10,
   },
   specChip: {
     paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 20,
+    paddingVertical: 6,
+    borderRadius: 14,
     backgroundColor: colors.surfaceIce,
     borderWidth: 1,
     borderColor: colors.borderSubtle,
     marginRight: 8,
   },
   specChipActive: {
-    backgroundColor: colors.secondaryContainer,
-    borderColor: colors.secondary,
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   specChipText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "600",
     color: colors.secondary,
   },
   specChipTextActive: {
-    color: colors.onSecondaryContainer,
+    color: "#FFFFFF",
     fontWeight: "700",
   },
   findBtn: {
+    marginTop: 12,
     backgroundColor: colors.primary,
-    borderRadius: 12,
-    paddingVertical: 14,
+    borderRadius: 10,
+    height: 44,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 14,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
   },
   findBtnText: {
+    color: "#FFFFFF",
     fontSize: 14,
-    fontWeight: "800",
-    color: colors.onPrimary,
-    letterSpacing: 0.3,
+    fontWeight: "700",
   },
   fastFiltersScroll: {
-    marginBottom: 16,
+    marginTop: 12,
   },
   fastFiltersContainer: {
+    paddingHorizontal: 16,
     gap: 8,
   },
   filterPill: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: colors.surfaceIce,
+    backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.borderSubtle,
   },
   filterPillActive: {
-    backgroundColor: colors.secondaryContainer,
+    backgroundColor: colors.secondary,
     borderColor: colors.secondary,
   },
   filterPillIcon: {
-    fontSize: 13,
+    fontSize: 14,
   },
   filterPillText: {
     fontSize: 12,
     fontWeight: "600",
-    color: colors.secondary,
+    color: colors.textPrimary,
   },
   filterPillTextActive: {
-    color: colors.onSecondaryContainer,
-    fontWeight: "800",
+    color: "#FFFFFF",
   },
   checkIcon: {
+    color: "#FFFFFF",
     fontSize: 12,
-    fontWeight: "800",
-    color: colors.secondary,
+    fontWeight: "bold",
   },
   emergencyBanner: {
-    backgroundColor: "#410001",
+    marginHorizontal: 16,
+    marginTop: 12,
+    backgroundColor: "#450A0A",
     borderRadius: 14,
     padding: 14,
-    marginBottom: 16,
     borderWidth: 1,
-    borderColor: "rgba(185, 28, 28, 0.4)",
+    borderColor: "#7F1D1D",
   },
   emergencyBannerTop: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    marginBottom: 4,
+    gap: 8,
   },
   beaconDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#FFB4A9",
+    backgroundColor: "#EF4444",
   },
   emergencyBannerTitle: {
     fontSize: 13,
     fontWeight: "800",
     color: "#FFFFFF",
-    flex: 1,
   },
   emergencyBannerDesc: {
     fontSize: 11,
-    color: "#FFDAD5",
+    color: "#FCA5A5",
+    marginTop: 4,
     lineHeight: 16,
-    marginBottom: 10,
   },
   emergencyBannerActions: {
     flexDirection: "row",
-    gap: 8,
+    gap: 10,
+    marginTop: 10,
   },
   bannerCallBtn: {
     flex: 1,
@@ -1108,191 +1272,217 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   bannerCallBtnText: {
-    fontSize: 12,
+    color: "#7F1D1D",
     fontWeight: "800",
-    color: colors.error,
+    fontSize: 11,
   },
   bannerWhatsAppBtn: {
     flex: 1,
-    backgroundColor: "#25D366",
+    backgroundColor: "#22C55E",
     borderRadius: 8,
     paddingVertical: 8,
     alignItems: "center",
   },
   bannerWhatsAppBtnText: {
-    fontSize: 12,
-    fontWeight: "800",
     color: "#FFFFFF",
+    fontWeight: "800",
+    fontSize: 11,
   },
   discoveryHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 12,
+    paddingHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 8,
   },
   resultsCount: {
     fontSize: 15,
     fontWeight: "800",
-    color: colors.onSurface,
+    color: colors.textPrimary,
   },
   resultsSub: {
     fontSize: 11,
     color: colors.textSecondary,
+    marginTop: 1,
   },
   radiusPills: {
     flexDirection: "row",
-    gap: 6,
+    gap: 4,
   },
   radiusPill: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: 12,
     backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.borderSubtle,
   },
   radiusPillActive: {
-    backgroundColor: colors.secondary,
-    borderColor: colors.secondary,
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   radiusPillText: {
     fontSize: 10,
     fontWeight: "600",
-    color: colors.onSurface,
+    color: colors.textSecondary,
   },
   radiusPillTextActive: {
     color: "#FFFFFF",
-    fontWeight: "800",
   },
   hospitalCard: {
+    marginHorizontal: 16,
+    marginTop: 10,
     backgroundColor: colors.card,
     borderRadius: 14,
     padding: 14,
     borderWidth: 1,
     borderColor: colors.borderSubtle,
-    marginBottom: 14,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
     elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
   },
   cardHeader: {
     flexDirection: "row",
     gap: 12,
   },
   hospitalThumb: {
-    width: 72,
-    height: 72,
+    width: 60,
+    height: 60,
     borderRadius: 10,
-    backgroundColor: colors.surfaceContainer,
+    backgroundColor: colors.background,
   },
   cardHeaderInfo: {
     flex: 1,
-    justifyContent: "center",
   },
   badgeRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    justifyContent: "space-between",
     marginBottom: 3,
   },
   distanceBadge: {
-    backgroundColor: colors.surfaceContainer,
-    borderRadius: 6,
     paddingHorizontal: 6,
     paddingVertical: 2,
+    borderRadius: 6,
+    backgroundColor: colors.surfaceIce,
   },
   distanceText: {
-    fontSize: 9,
+    fontSize: 10,
     fontWeight: "700",
     color: colors.secondary,
   },
   ratingBadge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 2,
+    gap: 3,
     backgroundColor: "#FEF3C7",
-    borderRadius: 6,
     paddingHorizontal: 6,
     paddingVertical: 2,
+    borderRadius: 6,
   },
   starText: {
-    fontSize: 9,
-    color: colors.badgeRating,
+    fontSize: 10,
+    color: "#D97706",
   },
   ratingText: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: "800",
-    color: colors.onSurface,
+    color: "#92400E",
   },
   reviewCount: {
-    fontSize: 9,
-    color: colors.textSecondary,
+    fontSize: 10,
+    color: colors.textTertiary,
   },
   hospitalName: {
     fontSize: 15,
     fontWeight: "800",
-    color: colors.onSurface,
-    letterSpacing: -0.3,
+    color: colors.textPrimary,
   },
   hospitalAddress: {
     fontSize: 11,
-    color: colors.onSurfaceVariant,
+    color: colors.textSecondary,
     marginTop: 2,
   },
   telemetryGrid: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    backgroundColor: colors.canvas,
+    backgroundColor: colors.background,
     borderRadius: 10,
-    padding: 10,
-    marginTop: 12,
+    padding: 8,
+    marginTop: 10,
     borderWidth: 1,
     borderColor: colors.borderSubtle,
   },
   telemetryCol: {
-    width: "50%",
-    paddingVertical: 3,
+    flex: 1,
+    alignItems: "center",
   },
   telemetryLabel: {
     fontSize: 9,
+    fontWeight: "700",
     color: colors.textSecondary,
-    fontWeight: "600",
   },
   telemetryValue: {
     fontSize: 11,
     fontWeight: "800",
-    color: colors.onSurface,
-    marginTop: 1,
+    color: colors.textPrimary,
+    marginTop: 2,
   },
   tagStrip: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 6,
-    marginTop: 10,
+    marginTop: 8,
   },
   cashlessTag: {
-    backgroundColor: "rgba(13, 148, 136, 0.1)",
-    borderRadius: 6,
-    paddingHorizontal: 7,
+    paddingHorizontal: 8,
     paddingVertical: 3,
+    borderRadius: 8,
+    backgroundColor: "#DCFCE7",
   },
   cashlessTagText: {
     fontSize: 10,
     fontWeight: "700",
-    color: colors.badgeCashless,
+    color: "#15803D",
   },
   featureTag: {
-    backgroundColor: colors.surfaceContainer,
-    borderRadius: 6,
-    paddingHorizontal: 7,
+    paddingHorizontal: 8,
     paddingVertical: 3,
+    borderRadius: 8,
+    backgroundColor: colors.surfaceIce,
   },
   featureTagText: {
     fontSize: 10,
     fontWeight: "600",
-    color: colors.onSurface,
+    color: colors.secondary,
+  },
+  diseaseStatsStrip: {
+    marginTop: 8,
+    padding: 8,
+    backgroundColor: "#F8FAFC",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+  },
+  diseaseName: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: colors.textPrimary,
+  },
+  diseaseStatsRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 3,
+  },
+  diseaseStat: {
+    fontSize: 10,
+    color: colors.textSecondary,
+  },
+  diseaseStatBold: {
+    fontWeight: "700",
+    color: colors.textPrimary,
   },
   cardActions: {
     flexDirection: "row",
@@ -1300,77 +1490,136 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: colors.borderLight,
+    borderTopColor: colors.borderSubtle,
   },
   compareToggleBtn: {
-    paddingHorizontal: 10,
+    flex: 1,
     paddingVertical: 8,
     borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: colors.surfaceIce,
     borderWidth: 1,
     borderColor: colors.borderSubtle,
-    alignItems: "center",
-    justifyContent: "center",
   },
   compareToggleBtnActive: {
-    backgroundColor: colors.brandBlue,
-    borderColor: colors.brandBlue,
+    backgroundColor: colors.secondary,
+    borderColor: colors.secondary,
   },
   compareToggleText: {
     fontSize: 11,
     fontWeight: "700",
-    color: colors.brandBlue,
+    color: colors.secondary,
   },
   compareToggleTextActive: {
     color: "#FFFFFF",
   },
   bedCheckBtn: {
-    paddingHorizontal: 12,
+    flex: 1,
     paddingVertical: 8,
     borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: colors.surfaceIce,
     borderWidth: 1,
     borderColor: colors.borderSubtle,
-    alignItems: "center",
-    justifyContent: "center",
   },
   bedCheckText: {
     fontSize: 11,
     fontWeight: "700",
-    color: colors.secondary,
+    color: colors.primary,
   },
   admissionBtn: {
-    flex: 1,
+    flex: 1.2,
     paddingVertical: 8,
     borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: colors.primary,
+  },
+  admissionBtnText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+  paginationBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+    marginTop: 16,
+    paddingHorizontal: 16,
+  },
+  pageNavBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+  },
+  pageNavBtnDisabled: {
+    opacity: 0.4,
+  },
+  pageNavBtnText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: colors.textPrimary,
+  },
+  pageNavBtnTextDisabled: {
+    color: colors.textTertiary,
+  },
+  pageNumbersRow: {
+    flexDirection: "row",
+    gap: 6,
+    alignItems: "center",
+  },
+  pageNumBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
     alignItems: "center",
     justifyContent: "center",
   },
-  admissionBtnText: {
+  pageNumBtnActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  pageNumText: {
     fontSize: 12,
-    fontWeight: "800",
+    fontWeight: "700",
+    color: colors.textPrimary,
+  },
+  pageNumTextActive: {
     color: "#FFFFFF",
+  },
+  pageEllipsisBox: {
+    paddingHorizontal: 4,
+  },
+  pageEllipsisText: {
+    fontSize: 12,
+    color: colors.textSecondary,
   },
   floatingCompareDock: {
     position: "absolute",
     bottom: 20,
-    left: 20,
-    right: 20,
-    backgroundColor: colors.card,
-    borderRadius: 16,
-    paddingHorizontal: 16,
+    left: 16,
+    right: 16,
+    backgroundColor: "#0F172A",
+    borderRadius: 14,
     paddingVertical: 10,
+    paddingHorizontal: 14,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
     elevation: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
   },
   dockLeft: {
     flexDirection: "row",
@@ -1378,103 +1627,101 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   dockIconBox: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: colors.surfaceIce,
+    width: 28,
+    height: 28,
+    borderRadius: 6,
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
     alignItems: "center",
     justifyContent: "center",
   },
   dockText: {
-    fontSize: 12,
+    fontSize: 13,
+    color: "#FFFFFF",
     fontWeight: "600",
-    color: colors.onSurface,
   },
   dockCompareBtn: {
     backgroundColor: colors.primary,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
   },
   dockCompareText: {
-    fontSize: 12,
-    fontWeight: "800",
     color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "700",
   },
   modalBackdrop: {
     flex: 1,
-    backgroundColor: "rgba(19, 27, 46, 0.65)",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
   },
   modalContent: {
     width: "100%",
-    backgroundColor: colors.card,
+    backgroundColor: "#FFFFFF",
     borderRadius: 16,
     padding: 16,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
   },
   modalHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingBottom: 8,
+    paddingBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderSubtle,
   },
   modalTitle: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "800",
-    color: colors.primary,
+    color: colors.textPrimary,
   },
   modalCloseText: {
     fontSize: 16,
+    fontWeight: "700",
     color: colors.textSecondary,
     padding: 4,
   },
   modalHospitalSummary: {
-    backgroundColor: colors.surfaceIce,
-    borderRadius: 10,
-    padding: 10,
-    marginVertical: 10,
+    paddingVertical: 8,
   },
   modalHospName: {
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: "800",
-    color: colors.onSurface,
+    color: colors.textPrimary,
   },
   modalHospAddr: {
-    fontSize: 10,
+    fontSize: 11,
     color: colors.textSecondary,
     marginTop: 2,
   },
   modalBody: {
-    gap: 8,
+    marginTop: 10,
+    gap: 10,
   },
   modalMetricBox: {
-    backgroundColor: colors.canvas,
-    borderRadius: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: colors.background,
     padding: 10,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
+    borderRadius: 8,
   },
   modalMetricLabel: {
-    fontSize: 10,
+    fontSize: 12,
     color: colors.textSecondary,
     fontWeight: "600",
   },
   modalMetricVal: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "800",
-    color: colors.onSurface,
-    marginTop: 2,
+    color: colors.textPrimary,
   },
   modalNote: {
     fontSize: 10,
-    color: colors.textSecondary,
-    lineHeight: 14,
+    color: colors.textTertiary,
+    fontStyle: "italic",
+    textAlign: "center",
   },
   modalPrimaryBtn: {
     backgroundColor: colors.primary,
@@ -1484,146 +1731,185 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   modalPrimaryBtnText: {
-    fontSize: 13,
-    fontWeight: "800",
     color: "#FFFFFF",
+    fontWeight: "700",
+    fontSize: 13,
   },
   modalInput: {
-    backgroundColor: colors.canvas,
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 8,
     fontSize: 13,
-    fontWeight: "700",
-    color: colors.onSurface,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
+    color: colors.textPrimary,
   },
   depositWaivedBox: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    backgroundColor: colors.canvas,
+    padding: 8,
+    backgroundColor: "#DCFCE7",
     borderRadius: 8,
-    padding: 10,
-    marginVertical: 4,
-  },
-  depositLabel: {
-    fontSize: 11,
-    color: colors.textSecondary,
+    alignItems: "center",
   },
   depositVal: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "800",
-    color: colors.secondary,
+    color: "#15803D",
   },
   successBox: {
     alignItems: "center",
-    gap: 6,
-    paddingVertical: 10,
+    paddingVertical: 16,
+    gap: 8,
   },
   successTitle: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "800",
-    color: colors.primary,
+    color: "#15803D",
   },
   successDesc: {
-    fontSize: 11,
+    fontSize: 12,
     color: colors.textSecondary,
     textAlign: "center",
-    lineHeight: 16,
+    lineHeight: 18,
   },
-  pageEllipsisBox: {
-    width: 24,
-    height: 32,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  pageEllipsisText: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: colors.textSecondary,
-  },
-  paginationBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: 10,
-    marginTop: 8,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-  },
-  pageNavBtn: {
+
+  filterTriggerBtn: {
+    backgroundColor: colors.surfaceIce,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: colors.surfaceIce,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+    alignSelf: "flex-start",
   },
-  pageNavBtnDisabled: {
-    opacity: 0.4,
-  },
-  pageNavBtnText: {
-    fontSize: 12,
+  filterTriggerText: {
+    fontSize: 11,
     fontWeight: "700",
     color: colors.secondary,
   },
-  pageNavBtnTextDisabled: {
-    color: colors.textTertiary,
+  filterModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
   },
-  pageNumbersRow: {
+  filterModalCard: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 16,
+    paddingBottom: 24,
+  },
+  filterModalHeader: {
     flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderSubtle,
+    paddingBottom: 10,
+  },
+  filterModalTitle: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: colors.onSurface,
+  },
+  filterModalSub: {
+    fontSize: 11,
+    color: colors.textSecondary,
+  },
+  filterModalClose: {
+    fontSize: 18,
+    color: colors.textSecondary,
+  },
+  filterSectionTitle: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: colors.onSurface,
+    marginBottom: 6,
+  },
+  filterPillGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: 6,
   },
-  pageNumBtn: {
-    width: 32,
-    height: 32,
+  modalFilterPill: {
+    backgroundColor: colors.surfaceIce,
     borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.canvas,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderWidth: 1,
     borderColor: colors.borderSubtle,
   },
-  pageNumBtnActive: {
+  modalFilterPillActive: {
     backgroundColor: colors.primary,
     borderColor: colors.primary,
   },
-  pageNumText: {
-    fontSize: 13,
+  modalFilterPillText: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: colors.onSurface,
+  },
+  modalFilterPillTextActive: {
+    color: "#FFFFFF",
+    fontWeight: "800",
+  },
+  toggleRowBox: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: colors.surfaceIce,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+  },
+  toggleRowBoxActive: {
+    borderColor: colors.secondary,
+    backgroundColor: "#F0FDF4",
+  },
+  toggleRowLabel: {
+    fontSize: 12,
     fontWeight: "700",
     color: colors.onSurface,
   },
-  pageNumTextActive: {
-    color: "#FFFFFF",
+  toggleRowCheck: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: colors.secondary,
   },
-
-  diseaseStatsStrip: {
-    backgroundColor: "rgba(99,102,241,0.07)",
-    borderRadius: 8,
-    padding: 10,
-    marginTop: 10,
+  modalFilterFooter: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 14,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderSubtle,
+  },
+  modalFilterResetBtn: {
+    flex: 1,
+    backgroundColor: colors.surfaceIce,
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: "rgba(99,102,241,0.15)",
+    borderColor: colors.borderSubtle,
   },
-  diseaseName: {
+  modalFilterResetText: {
     fontSize: 12,
     fontWeight: "700",
-    color: "#4f46e5",
-    marginBottom: 4,
+    color: colors.textSecondary,
   },
-  diseaseStatsRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
+  modalFilterApplyBtn: {
+    flex: 2,
+    backgroundColor: colors.primary,
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: "center",
   },
-  diseaseStat: {
-    fontSize: 11,
-    color: "#6B7280",
-  },
-  diseaseStatBold: {
-    fontWeight: "700",
-    color: "#111827",
+  modalFilterApplyText: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#FFFFFF",
   },
 });
