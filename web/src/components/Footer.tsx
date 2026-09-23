@@ -1,6 +1,11 @@
+"use client";
+
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 export default function Footer() {
+  const t = useTranslations();
+
   return (
     <footer className="w-full bg-surface-card shadow-[0_1px_8px_rgba(0,0,0,0.04)] mt-space-xl border-t border-border-subtle">
       <div className="max-w-[1280px] mx-auto px-margin lg:px-margin-lg py-space-xl">
@@ -13,22 +18,22 @@ export default function Footer() {
                 <span className="material-symbols-outlined text-[22px]">local_hospital</span>
               </div>
               <span className="font-headline-md text-headline-md text-primary-container tracking-tight font-bold">
-                Medi Route
+                {t("navbar.brandName")}
               </span>
             </div>
             
             <p className="font-body-sm text-body-sm text-on-surface-variant max-w-sm leading-relaxed">
-              Authoritative digital healthcare gateway providing guaranteed cashless hospitalization, direct NABH hospital admissions, and seamless ABHA health records integration.
+              {t("footer.brandDescription")}
             </p>
 
             <div className="flex flex-wrap items-center gap-space-sm mt-space-xs">
-              <div className="flex items-center gap-space-xs px-space-sm py-space-xs rounded-lg bg-surface-ice text-secondary font-label-sm text-label-sm border border-border-subtle">
+              <div className="flex items-center gap-space-xs px-space-sm py-space-xs rounded-lg bg-surface-ice text-secondary font-label-sm text-label-sm border border-border-subtle min-w-fit">
                 <span className="material-symbols-outlined text-[16px]">verified</span>
-                <span>IRDAI Registered Network</span>
+                <span>{t("footer.irdaiRegistered")}</span>
               </div>
-              <div className="flex items-center gap-space-xs px-space-sm py-space-xs rounded-lg bg-surface-ice text-secondary font-label-sm text-label-sm border border-border-subtle">
+              <div className="flex items-center gap-space-xs px-space-sm py-space-xs rounded-lg bg-surface-ice text-secondary font-label-sm text-label-sm border border-border-subtle min-w-fit">
                 <span className="material-symbols-outlined text-[16px]">health_and_safety</span>
-                <span>NABH Partner Network</span>
+                <span>{t("footer.nabhPartner")}</span>
               </div>
             </div>
           </div>
@@ -36,27 +41,27 @@ export default function Footer() {
           {/* Col 3: Discovery */}
           <div>
             <h4 className="font-title-md text-title-md text-on-surface mb-space-sm font-bold">
-              Hospital Discovery
+              {t("footer.hospitalDiscovery")}
             </h4>
             <ul className="flex flex-col gap-space-xs">
               <li>
                 <Link href="/" className="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors">
-                  Find Hospitals
+                  {t("footer.findHospitals")}
                 </Link>
               </li>
               <li>
                 <Link href="/compare" className="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors">
-                  Compare Network Hospitals
+                  {t("footer.compareNetworkHospitals")}
                 </Link>
               </li>
               <li>
                 <Link href="/emergency-cashless" className="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors">
-                  ICU &amp; Bed Capacity
+                  {t("footer.icuBedCapacity")}
                 </Link>
               </li>
               <li>
                 <Link href="/#specialty-hub" className="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors">
-                  Doctor Specialties
+                  {t("footer.doctorSpecialties")}
                 </Link>
               </li>
               <li>
@@ -70,27 +75,27 @@ export default function Footer() {
           {/* Col 4: Cashless & Claims */}
           <div>
             <h4 className="font-title-md text-title-md text-on-surface mb-space-sm font-bold">
-              Cashless &amp; Claims
+              {t("footer.cashlessClaims")}
             </h4>
             <ul className="flex flex-col gap-space-xs">
               <li>
                 <Link href="/emergency-cashless" className="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors">
-                  20-Min Cashless Approval
+                  {t("footer.cashlessApproval")}
                 </Link>
               </li>
               <li>
                 <Link href="/emergency-cashless#checker-tool" className="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors">
-                  TPA Network Tie-ups
+                  {t("footer.tpaNetworkTieups")}
                 </Link>
               </li>
               <li>
                 <Link href="/emergency-cashless#checker-tool" className="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors">
-                  ABHA Record Locker
+                  {t("footer.abhaRecordLocker")}
                 </Link>
               </li>
               <li>
                 <Link href="/portal" className="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors">
-                  Track Claim Status
+                  {t("footer.trackClaimStatus")}
                 </Link>
               </li>
             </ul>
@@ -99,17 +104,17 @@ export default function Footer() {
           {/* Col 5: Mobile Healthcare */}
           <div>
             <h4 className="font-title-md text-title-md text-on-surface mb-space-sm font-bold">
-              Mobile Healthcare
+              {t("footer.mobileHealthcare")}
             </h4>
             <p className="font-body-sm text-body-sm text-on-surface-variant mb-space-sm">
-              Carry 24x7 instant medical desk &amp; digital health locker on your device.
+              {t("footer.mobileHealthcareDesc")}
             </p>
             <div className="flex flex-col gap-space-xs">
               <div className="flex items-center gap-space-sm px-space-sm py-space-xs rounded-lg bg-surface-container hover:bg-surface-container-high transition-colors text-left cursor-pointer border border-border-subtle">
                 <span className="material-symbols-outlined text-secondary text-[24px]">android</span>
                 <div>
-                  <div className="font-label-sm text-label-sm text-on-surface-variant leading-none">Use it on</div>
-                  <div className="font-label-md text-label-md text-on-surface font-bold leading-tight">Android App</div>
+                  <div className="font-label-sm text-label-sm text-on-surface-variant leading-none">{t("footer.useItOn")}</div>
+                  <div className="font-label-md text-label-md text-on-surface font-bold leading-tight">{t("footer.androidApp")}</div>
                 </div>
               </div>
             </div>
@@ -119,17 +124,17 @@ export default function Footer() {
         {/* Legal & Copyright */}
         <div className="mt-space-xl pt-space-lg flex flex-col md:flex-row items-center justify-between gap-space-md border-t border-border-subtle">
           <span className="font-body-sm text-body-sm text-on-surface-variant">
-            © 2025 Medi Route Healthcare Technologies Ltd. All rights reserved.
+            {t("footer.copyright")}
           </span>
-          <div className="flex items-center gap-space-lg">
+          <div className="flex flex-wrap items-center gap-space-lg">
             <span className="font-label-sm text-label-sm text-on-surface-variant hover:text-on-surface cursor-pointer">
-              Privacy Policy
+              {t("footer.privacyPolicy")}
             </span>
             <span className="font-label-sm text-label-sm text-on-surface-variant hover:text-on-surface cursor-pointer">
-              Terms of Service
+              {t("footer.termsOfService")}
             </span>
             <span className="font-label-sm text-label-sm text-on-surface-variant hover:text-on-surface cursor-pointer">
-              Grievance Redressal
+              {t("footer.grievanceRedressal")}
             </span>
           </div>
         </div>
