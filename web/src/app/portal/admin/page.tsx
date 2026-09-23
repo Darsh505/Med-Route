@@ -391,6 +391,15 @@ export default function AdminPortalPage() {
             </button>
           </nav>
 
+          <a
+            href={process.env.NEXT_PUBLIC_ADMIN_URL || "http://localhost:3001"}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Open Dedicated Admin Dashboard Console on port 3001"
+            className="hidden md:inline-flex items-center gap-1 text-xs text-cyan-400 hover:text-white px-2.5 py-1 rounded border border-cyan-800/80 hover:border-cyan-600 transition-colors font-mono"
+          >
+            <span>Console (:3001)</span>
+          </a>
           <Link
             href="/"
             className="text-xs text-zinc-400 hover:text-white px-2.5 py-1 rounded border border-zinc-800 hover:border-zinc-700 transition-colors"

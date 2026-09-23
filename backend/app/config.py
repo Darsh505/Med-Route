@@ -50,9 +50,12 @@ class Settings(BaseSettings):
     APP_VERSION: str = "1.0.0"
     APP_DESCRIPTION: str = "AI-powered hospital discovery and routing platform for India"
 
-    # CORS — allow frontend and mobile origins
+    # CORS — allow frontend, admin console, and mobile origins
     CORS_ORIGINS: list[str] = [
         "http://localhost:3000",   # Next.js web (dev)
+        "http://127.0.0.1:3000",
+        "http://localhost:3001",   # Next.js admin console (dev)
+        "http://127.0.0.1:3001",
         "http://localhost:8081",   # React Native Metro (dev)
         "https://med-route.vercel.app",  # Production web
     ]

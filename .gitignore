@@ -79,6 +79,10 @@ web/.next/
 web/out/
 web/.vercel
 web/next-env.d.ts
+admin/.next/
+admin/out/
+admin/.vercel
+admin/next-env.d.ts
 
 # Build outputs
 web/dist/

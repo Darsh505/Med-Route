@@ -203,7 +203,19 @@ npm run dev
 ```
 Application interface: `http://localhost:3000`
 
-#### 3. Mobile Application (React Native / Expo)
+#### 3. Dedicated Admin Console (Next.js 16)
+```bash
+cd admin
+
+# Install dependencies
+npm install
+
+# Start admin console server
+npm run dev
+```
+Console interface: `http://localhost:3001`
+
+#### 4. Mobile Application (React Native / Expo)
 ```bash
 cd mobile
 
@@ -231,7 +243,11 @@ cd web
 npx tsc --noEmit
 npm run build
 
-# 3. Mobile Application Type Safety
+# 3. Admin Console Compilation
+cd admin
+npm run build
+
+# 4. Mobile Application Type Safety
 cd mobile
 npx tsc --noEmit
 ```

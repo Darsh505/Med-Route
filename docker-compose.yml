@@ -46,7 +46,7 @@ services:
       - DATABASE_URL_SYNC=postgresql+psycopg2://medroute:password@db:5432/medroute
       - REDIS_URL=redis://redis:6379/0
       - APP_ENV=production
-      - CORS_ORIGINS=["http://localhost:3000","http://localhost:8081"]
+      - CORS_ORIGINS=["http://localhost:3000","http://localhost:3001","http://localhost:8081"]
       - SEED_ON_STARTUP=true
     depends_on:
       db:
@@ -65,6 +65,21 @@ services:
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:8000
       - NEXT_PUBLIC_APP_NAME=Med Route
+    depends_on:
+      - backend
+
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+    container_name: medroute-admin
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_WEB_URL=http://localhost:3000
     depends_on:
       - backend
 
