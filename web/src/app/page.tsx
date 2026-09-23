@@ -2,10 +2,14 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useLocation, INDIAN_CITIES } from "@/context/LocationContext";
 import { ALL_HOSPITALS } from "@/data/hospitalsData";
+
+// Alias to support useTranslation convention
+const useTranslation = useTranslations;
 
 interface CompareItem {
   id: string;
@@ -90,6 +94,7 @@ function fmtCost(n: number): string {
 }
 
 export default function HomePage() {
+  const t = useTranslation();
   const { selectedCity, coords, selectCity } = useLocation();
 
   // Search Hub State — defaults to selectedCity from context (Hoshiarpur)
@@ -532,10 +537,10 @@ export default function HomePage() {
               {/* Header Title */}
               <div className="flex flex-col gap-space-sm max-w-3xl mb-space-sm">
                 <h1 className="font-headline-xl text-headline-xl text-on-surface tracking-tight font-bold">
-                  Find Verified Network Hospitals Near You
+                  {t("hero.title")}
                 </h1>
                 <p className="font-body-lg text-body-lg text-on-surface-variant">
-                  Access 10,000+ cashless partner hospitals, track real-time ICU beds, and verify insurance acceptance with zero upfront friction.
+                  {t("hero.subtitle")}
                 </p>
               </div>
 
@@ -550,19 +555,19 @@ export default function HomePage() {
                     </div>
                     <div className="flex flex-col flex-1 min-w-0">
                       <span className="font-label-sm text-label-sm text-on-surface-variant leading-none font-semibold mb-1">
-                        City / Locality
+                        {t("hero.cityLocality")}
                       </span>
                       <input
                         className="bg-transparent font-title-md text-title-md text-on-surface outline-none w-full truncate font-bold"
                         type="text"
                         value={cityInput}
                         onChange={(e) => handleCityChange(e.target.value)}
-                        placeholder="e.g. Hoshiarpur, Delhi, Mumbai, Bengaluru..."
+                        placeholder={t("hero.cityPlaceholder")}
                       />
                     </div>
                     <button
                       className="text-on-surface-variant hover:text-brand-blue-interactive p-1.5 rounded-lg hover:bg-surface-container transition-colors"
-                      title="Detect GPS location"
+                      title={t("hero.detectLocation")}
                       type="button"
                       onClick={handleGpsDetect}
                     >
@@ -582,7 +587,7 @@ export default function HomePage() {
                       <div className="flex flex-col flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
                           <span className="font-label-sm text-label-sm text-on-surface-variant leading-none font-semibold">
-                            Specialty, Hospital or Doctor
+                            {t("hero.specialtyLabel")}
                           </span>
                           <span className="font-label-sm text-label-sm text-secondary font-bold flex items-center gap-0.5">
                             <span className="material-symbols-outlined text-[14px]">expand_more</span>
@@ -591,7 +596,7 @@ export default function HomePage() {
                         <input
                           className="bg-transparent font-title-md text-title-md text-on-surface outline-none w-full truncate font-bold placeholder:text-outline-variant placeholder:font-normal"
                           id="specialty-input"
-                          placeholder="Cardiology, Aster, Orthopedics..."
+                          placeholder={t("hero.specialtyPlaceholder")}
                           type="text"
                           value={specialtyInput}
                           onChange={(e) => setSpecialtyInput(e.target.value)}
@@ -640,7 +645,7 @@ export default function HomePage() {
                           <div className="flex items-center gap-space-xs">
                             <span className="material-symbols-outlined text-secondary text-[20px]">local_hospital</span>
                             <span className="font-headline-md text-headline-md font-bold text-on-surface text-[16px]">
-                              Popular Clinical Specialties
+                              {t("hero.popularSpecialties")}
                             </span>
                           </div>
                           <button
@@ -685,7 +690,7 @@ export default function HomePage() {
                         </div>
 
                         <div className="flex items-center justify-between pt-space-xs border-t border-border-subtle/50 text-label-sm">
-                          <span className="text-on-surface-variant">Over 140+ verified sub-specialists</span>
+                          <span className="text-on-surface-variant">{t("hero.verifiedSpecialists")}</span>
                           <button
                             type="button"
                             className="text-brand-blue-interactive hover:underline font-bold flex items-center gap-0.5"
@@ -694,7 +699,7 @@ export default function HomePage() {
                               setSpecialtyPopoverOpen(false);
                             }}
                           >
-                            <span>Clear Filter</span>
+                            <span>{t("hero.clearFilter")}</span>
                           </button>
                         </div>
                       </div>
@@ -708,19 +713,19 @@ export default function HomePage() {
                     </div>
                     <div className="flex flex-col flex-1 min-w-0">
                       <span className="font-label-sm text-label-sm text-on-surface-variant leading-none font-semibold mb-1 uppercase tracking-wider">
-                        Budget / Package
+                        {t("hero.budgetLabel")}
                       </span>
                       <select
                         className="bg-transparent font-title-md text-title-md text-on-surface outline-none w-full truncate font-bold cursor-pointer"
                         value={budgetFilter}
                         onChange={(e) => setBudgetFilter(e.target.value)}
                       >
-                        <option value="all">All Budgets / Cashless</option>
-                        <option value="50k">Under ₹50,000 (Daycare / Basic)</option>
-                        <option value="50k-150k">₹50,000 - ₹1.5 Lakh (Standard)</option>
-                        <option value="150k-300k">₹1.5 Lakh - ₹3 Lakh (Surgical)</option>
-                        <option value="300k-500k">₹3 Lakh - ₹5 Lakh (Super Specialty)</option>
-                        <option value="500k-plus">₹5 Lakh+ (Advanced / Transplant)</option>
+                        <option value="all">{t("hero.allBudgets")}</option>
+                        <option value="50k">{t("hero.budgetUnder50k")}</option>
+                        <option value="50k-150k">{t("hero.budget50k150k")}</option>
+                        <option value="150k-300k">{t("hero.budget150k300k")}</option>
+                        <option value="300k-500k">{t("hero.budget300k500k")}</option>
+                        <option value="500k-plus">{t("hero.budget500kPlus")}</option>
                       </select>
                     </div>
                   </div>
@@ -736,7 +741,7 @@ export default function HomePage() {
                       }}
                     >
                       <span className="material-symbols-outlined text-[24px] sm:text-[28px]">search</span>
-                      <span className="tracking-wide font-bold">Find</span>
+                      <span className="tracking-wide font-bold">{t("hero.findHospitals")}</span>
                     </button>
                   </div>
                 </div>
@@ -745,7 +750,7 @@ export default function HomePage() {
                 <div className="flex items-center gap-space-sm overflow-x-auto pb-2 sm:pb-0 sm:flex-wrap pt-space-sm border-t border-border-subtle/50 w-full no-scrollbar">
                   <span className="font-label-sm text-label-sm text-on-surface font-bold uppercase tracking-wider mr-space-xs flex items-center gap-1.5 shrink-0">
                     <span className="material-symbols-outlined text-[18px] text-secondary">tune</span>
-                    Fast Filters:
+                    {t("hero.fastFilters")}
                   </span>
 
                   <button
@@ -758,7 +763,7 @@ export default function HomePage() {
                     onClick={() => setCashlessOnly(!cashlessOnly)}
                   >
                     <span className="material-symbols-outlined text-[18px]">verified</span>
-                    <span>Cashless Network Only</span>
+                    <span>{t("hero.cashlessNetworkOnly")}</span>
                     {cashlessOnly && (
                       <span className="material-symbols-outlined text-[16px] ml-0.5 hover:opacity-75">check</span>
                     )}
@@ -774,7 +779,7 @@ export default function HomePage() {
                     onClick={() => setLiveIcuOnly(!liveIcuOnly)}
                   >
                     <span className="material-symbols-outlined text-[18px]">hotel</span>
-                    <span>Live ICU Beds Available</span>
+                    <span>{t("hero.liveIcuBeds")}</span>
                   </button>
 
                   <button
@@ -787,7 +792,7 @@ export default function HomePage() {
                     onClick={() => setAccreditedOnly(!accreditedOnly)}
                   >
                     <span className="material-symbols-outlined text-[18px]">health_and_safety</span>
-                    <span>NABH / JCI Accredited</span>
+                    <span>{t("hero.accredited")}</span>
                   </button>
 
                   <button
@@ -800,7 +805,7 @@ export default function HomePage() {
                     onClick={() => setEmergencyOnly(!emergencyOnly)}
                   >
                     <span className="material-symbols-outlined text-[18px]">e911_emergency</span>
-                    <span>24x7 Emergency</span>
+                    <span>{t("hero.emergency24x7")}</span>
                   </button>
 
                   <button
@@ -813,7 +818,7 @@ export default function HomePage() {
                     onClick={() => setRoboticSurgery(!roboticSurgery)}
                   >
                     <span className="material-symbols-outlined text-[18px]">precision_manufacturing</span>
-                    <span>Robotic Surgery</span>
+                    <span>{t("hero.roboticSurgery")}</span>
                   </button>
                 </div>
               </div>
@@ -828,11 +833,11 @@ export default function HomePage() {
                     <div className="flex items-center gap-space-xs">
                       <span className="inline-block w-2.5 h-2.5 rounded-full bg-red-400 animate-ping"></span>
                       <span className="font-headline-md text-headline-md font-bold leading-tight text-white">
-                        Priority Zero-Deposit Emergency Triage Desk
+                        {t("hero.emergencyBadge")}
                       </span>
                     </div>
                     <p className="font-body-md text-body-md text-red-100/80 mt-0.5">
-                      Need instant bed reservation without upfront security deposit? Medi Route TPA field officers take over approvals in under 20 minutes.
+                      {t("hero.emergencyBadgeDesc")}
                     </p>
                   </div>
                 </div>
@@ -843,7 +848,7 @@ export default function HomePage() {
                     href="tel:18006334768"
                   >
                     <span className="material-symbols-outlined text-[18px] text-[#b91c1c]">phone_in_talk</span>
-                    <span>1800-MEDI-ROUTE</span>
+                    <span>{t("hero.callEmergency")}</span>
                   </a>
                   <a
                     href="https://wa.me/9118006334768?text=Hello%20Medi%20Route,%20I%20need%20urgent%20hospital%20admission%20assistance."
@@ -852,7 +857,7 @@ export default function HomePage() {
                     className="flex-1 md:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#20ba59] text-white font-label-md text-label-md font-bold shadow-sm transition-colors text-sm"
                   >
                     <span className="material-symbols-outlined text-[18px]">chat</span>
-                    <span>WhatsApp Desk</span>
+                    <span>{t("hero.whatsappDesk")}</span>
                   </a>
                 </div>
               </div>

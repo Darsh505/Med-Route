@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useLocation } from "@/context/LocationContext";
+import { useTranslations } from "next-intl";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -12,6 +14,7 @@ export default function Navbar() {
   const { selectedCity } = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const t = useTranslations();
 
   const isFind = pathname === "/" || pathname === "/search";
   const isCompare = pathname.startsWith("/compare");
@@ -36,7 +39,7 @@ export default function Navbar() {
                 </svg>
               </div>
               <span className="font-headline-md text-headline-md text-primary-container tracking-tight font-bold">
-                Medi Route
+                {t("navbar.brandName")}
               </span>
             </Link>
 
@@ -59,7 +62,7 @@ export default function Navbar() {
             <div className="hidden lg:flex items-center gap-space-xs text-secondary">
               <span className="material-symbols-outlined text-[20px] text-secondary">phone_in_talk</span>
               <div className="flex flex-col">
-                <span className="font-label-sm text-label-sm text-on-surface-variant leading-none">24x7 Emergency</span>
+                <span className="font-label-sm text-label-sm text-on-surface-variant leading-none">{t("navbar.emergency24x7")}</span>
                 <a
                   href="tel:18006334768"
                   className="font-label-md text-label-md text-on-surface font-bold leading-tight hover:text-secondary transition-colors"
@@ -72,11 +75,16 @@ export default function Navbar() {
             {/* ABHA Badge Trigger */}
             <Link
               href="/emergency-cashless#checker-tool"
-              className="hidden xl:flex items-center gap-space-xs px-space-sm py-space-xs rounded-lg bg-surface-container text-secondary font-label-sm text-label-sm hover:bg-secondary-container transition-colors"
+              className="hidden xl:flex items-center gap-space-xs px-space-sm py-space-xs rounded-lg bg-surface-container text-secondary font-label-sm text-label-sm hover:bg-secondary-container transition-colors min-w-fit"
             >
               <span className="material-symbols-outlined text-[16px]">verified_user</span>
-              <span>ABHA ID</span>
+              <span>{t("navbar.abhaId")}</span>
             </Link>
+
+            {/* Language Switcher */}
+            <div className="hidden sm:block">
+              <LanguageSwitcher />
+            </div>
 
             {/* Auth State / Login */}
             {user ? (
@@ -105,7 +113,7 @@ export default function Navbar() {
                       className="block px-4 py-2 font-label-md text-label-md text-on-surface hover:bg-surface-ice"
                       onClick={() => setUserDropdownOpen(false)}
                     >
-                      Medical Records
+                      {t("navbar.medicalRecords")}
                     </Link>
                     <button
                       type="button"
@@ -115,7 +123,7 @@ export default function Navbar() {
                       }}
                       className="w-full text-left px-4 py-2 font-label-md text-label-md text-error hover:bg-error/10"
                     >
-                      Sign Out
+                      {t("navbar.signOut")}
                     </button>
                   </div>
                 )}
@@ -123,9 +131,9 @@ export default function Navbar() {
             ) : (
               <Link
                 href="/auth/login"
-                className="hidden sm:inline-flex items-center justify-center px-space-md py-space-xs rounded-lg bg-primary-container text-on-primary font-label-md text-label-md hover:bg-primary transition-colors shadow-sm font-bold"
+                className="hidden sm:inline-flex items-center justify-center px-space-md py-space-xs rounded-lg bg-primary-container text-on-primary font-label-md text-label-md hover:bg-primary transition-colors shadow-sm font-bold min-w-fit"
               >
-                Login / Sign Up
+                {t("navbar.loginSignUp")}
               </Link>
             )}
 
@@ -133,7 +141,7 @@ export default function Navbar() {
             <Link
               href={user ? "/portal" : "/auth/login"}
               className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary hover:opacity-90 transition-opacity"
-              title="Profile"
+              title={t("navbar.profile")}
             >
               <span className="material-symbols-outlined text-[18px]">person</span>
             </Link>
@@ -143,7 +151,7 @@ export default function Navbar() {
               type="button"
               className="lg:hidden p-1.5 rounded-lg text-on-surface hover:bg-surface-canvas"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Toggle navigation"
+              aria-label={t("navbar.toggleNavigation")}
             >
               <span className="material-symbols-outlined text-[24px]">
                 {mobileMenuOpen ? "close" : "menu"}
@@ -154,49 +162,49 @@ export default function Navbar() {
 
         {/* Row 2: Centered Sub-Nav Bar (Exact match to PNG) */}
         <div className="hidden lg:flex items-center justify-center bg-surface-card border-t border-border-subtle/40 py-2.5">
-          <nav className="flex items-center justify-center gap-space-sm max-w-[1280px] w-full px-margin">
+          <nav className="flex flex-wrap items-center justify-center gap-space-sm max-w-[1280px] w-full px-margin">
             <Link
               href="/"
-              className={`px-space-md py-1.5 transition-all text-title-md rounded-lg ${
+              className={`px-space-md py-1.5 transition-all text-title-md rounded-lg min-w-fit ${
                 isFind
                   ? "bg-primary-container text-on-primary font-bold shadow-sm"
                   : "font-semibold text-on-surface hover:text-primary-container hover:bg-surface-container"
               }`}
             >
-              Find Hospitals
+              {t("navbar.findHospitals")}
             </Link>
 
             <Link
               href="/compare"
-              className={`px-space-md py-1.5 transition-all text-title-md rounded-lg ${
+              className={`px-space-md py-1.5 transition-all text-title-md rounded-lg min-w-fit ${
                 isCompare
                   ? "bg-primary-container text-on-primary font-bold shadow-sm"
                   : "font-semibold text-on-surface hover:text-primary-container hover:bg-surface-container"
               }`}
             >
-              Compare Hospitals
+              {t("navbar.compareHospitals")}
             </Link>
 
             <Link
               href="/emergency-cashless"
-              className={`px-space-md py-1.5 transition-all text-title-md rounded-lg ${
+              className={`px-space-md py-1.5 transition-all text-title-md rounded-lg min-w-fit ${
                 isEmergency
                   ? "bg-primary-container text-on-primary font-bold shadow-sm"
                   : "font-semibold text-on-surface hover:text-primary-container hover:bg-surface-container"
               }`}
             >
-              Emergency &amp; Cashless
+              {t("navbar.emergencyCashless")}
             </Link>
 
             <Link
               href="/#specialty-hub"
-              className={`px-space-md py-1.5 transition-all text-title-md rounded-lg ${
+              className={`px-space-md py-1.5 transition-all text-title-md rounded-lg min-w-fit ${
                 isDoctors
                   ? "bg-primary-container text-on-primary font-bold shadow-sm"
                   : "font-semibold text-on-surface hover:text-primary-container hover:bg-surface-container"
               }`}
             >
-              Doctors &amp; Specialists
+              {t("navbar.doctorsSpecialists")}
             </Link>
           </nav>
         </div>
@@ -214,7 +222,7 @@ export default function Navbar() {
               <span className="material-symbols-outlined text-[18px]">location_on</span>
               <span>{selectedCity || "Bangalore, KA"}</span>
             </span>
-            <span className="text-xs text-on-surface-variant font-bold">Change</span>
+            <span className="text-xs text-on-surface-variant font-bold">{t("navbar.change")}</span>
           </Link>
 
           <Link
@@ -224,7 +232,7 @@ export default function Navbar() {
             }`}
             onClick={() => setMobileMenuOpen(false)}
           >
-            Find Hospitals
+            {t("navbar.findHospitals")}
           </Link>
 
           <Link
@@ -234,7 +242,7 @@ export default function Navbar() {
             }`}
             onClick={() => setMobileMenuOpen(false)}
           >
-            Compare Hospitals
+            {t("navbar.compareHospitals")}
           </Link>
 
           <Link
@@ -244,8 +252,13 @@ export default function Navbar() {
             }`}
             onClick={() => setMobileMenuOpen(false)}
           >
-            Emergency &amp; Cashless Admission
+            {t("navbar.emergencyCashlessAdmission")}
           </Link>
+
+          {/* Mobile Language Switcher */}
+          <div className="px-space-md py-space-xs">
+            <LanguageSwitcher />
+          </div>
 
           <div className="pt-space-xs border-t border-border-subtle flex flex-col gap-space-xs">
             <a
@@ -253,7 +266,7 @@ export default function Navbar() {
               className="flex items-center justify-center gap-2 py-space-sm bg-error text-on-error rounded-lg font-label-md font-bold"
             >
               <span className="material-symbols-outlined text-[18px]">phone_in_talk</span>
-              <span>Call 1800-MEDI-ROUTE</span>
+              <span>{t("navbar.callEmergency")}</span>
             </a>
             {!user && (
               <Link
@@ -261,7 +274,7 @@ export default function Navbar() {
                 className="flex items-center justify-center py-space-sm bg-primary-container text-on-primary rounded-lg font-label-md font-bold"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Login / Sign Up
+                {t("navbar.loginSignUp")}
               </Link>
             )}
           </div>
