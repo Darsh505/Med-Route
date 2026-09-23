@@ -5,8 +5,10 @@ import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useLocation, INDIAN_CITIES, CityInfo } from "@/context/LocationContext";
+import { useTranslations } from "next-intl";
 
 export default function LocationPage() {
+  const t = useTranslations();
   const {
     selectedCity,
     selectedState,

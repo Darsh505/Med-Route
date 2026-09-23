@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import { useTranslations } from "next-intl";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
 export default function PortalPage() {
+  const t = useTranslations();
   const { user } = useAuth();
   const isAdmin = user?.role === "admin" || user?.email?.toLowerCase().includes("admin");
 
@@ -21,11 +23,11 @@ export default function PortalPage() {
               Home
             </Link>
             <span className="material-symbols-outlined text-[14px]">chevron_right</span>
-            <span className="text-primary font-bold">Citizen &amp; Provider Portal</span>
+            <span className="text-primary font-bold">{t("portal.dashboardTitle")}</span>
           </nav>
 
           <span className="text-[11px] font-mono uppercase tracking-wider bg-surface-ice text-secondary px-2.5 py-0.5 rounded-full border border-border-subtle">
-            ABDM Network Connected
+            {t("portal.abhaConnected")}
           </span>
         </div>
 
@@ -39,9 +41,9 @@ export default function PortalPage() {
               <span className="text-[11px] uppercase tracking-widest font-mono text-cyan-400 block font-semibold">
                 Administrative Operations Node
               </span>
-              <h2 className="text-lg font-bold text-white mt-0.5">Hospital Provider Telemetry Terminal</h2>
+              <h2 className="text-lg font-bold text-white mt-0.5">{t("portal.telemetryNode")}</h2>
               <p className="text-xs text-slate-300 mt-1 max-w-xl leading-relaxed">
-                Manage live ICU bed capacity, PMJAY cashless empanelment status, tariff audits, and hospital registration reviews across 1,451 facilities.
+                {t("portal.telemetryDesc")}
               </p>
             </div>
           </div>

@@ -6,8 +6,10 @@ import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/context/AuthContext";
+import { useTranslations } from "next-intl";
 
 export default function RegisterPage() {
+  const t = useTranslations();
   const router = useRouter();
   const { signUp, signInWithGoogle } = useAuth();
 

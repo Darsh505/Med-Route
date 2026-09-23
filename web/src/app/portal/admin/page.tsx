@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import { useTranslations } from "next-intl";
 import {
   getAllHospitalsWithOverrides,
   saveHospitalTelemetryOverride,
@@ -22,6 +23,7 @@ interface PendingVerificationItem {
 }
 
 export default function AdminPortalPage() {
+  const t = useTranslations();
   const { user } = useAuth();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [accessKey, setAccessKey] = useState("");

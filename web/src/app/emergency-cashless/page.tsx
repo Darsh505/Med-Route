@@ -4,8 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { useTranslations } from "next-intl";
 
 export default function EmergencyCashlessPage() {
+  const t = useTranslations();
   // Pre-Auth Checker State
   const [policyId, setPolicyId] = useState("STAR-2024-8849-BLR");
   const [selectedHospital, setSelectedHospital] = useState("sakra");
@@ -44,7 +46,7 @@ export default function EmergencyCashlessPage() {
                   Home
                 </Link>
                 <span className="material-symbols-outlined text-[14px]">chevron_right</span>
-                <span className="text-secondary font-bold">Emergency &amp; Cashless Admission</span>
+                <span className="text-secondary font-bold">{t("emergencyCashless.title")}</span>
               </div>
               <div className="flex items-center gap-space-xs text-badge-cashless font-label-sm text-label-sm bg-surface-ice px-space-sm py-0.5 rounded-full border border-border-subtle">
                 <span className="w-2 h-2 rounded-full bg-badge-cashless animate-pulse"></span>
