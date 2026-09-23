@@ -355,11 +355,27 @@ export default function ChatScreen({ navigation }: any) {
         <View style={styles.headerTitleRow}>
           <MedRouteLogo size="sm" showBadge={false} />
           <View style={{ flex: 1, marginLeft: 8 }}>
-            <Text style={styles.headerTitle}>{t("brand.name")} AI</Text>
-            <View style={styles.headerStatusRow}>
-              <View style={styles.liveDot} />
-              <Text style={styles.headerSubtitle}>{currentLang === "hi" ? "24/7 सत्यापित स्वास्थ्य सेवा मार्गदर्शक" : currentLang === "pa" ? "24/7 ਤਸਦੀਕਸ਼ੁਦਾ ਸਿਹਤ ਸੰਭਾਲ ਗਾਈਡ" : "24/7 Verified Healthcare Guide"}</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <Text style={styles.headerTitle}>{t("brand.name")} AI</Text>
+              <View
+                style={[
+                  styles.liveDot,
+                  {
+                    backgroundColor: isGeminiActive ? "#22C55E" : "#EF4444",
+                    width: 7,
+                    height: 7,
+                    borderRadius: 3.5,
+                  },
+                ]}
+              />
             </View>
+            <Text style={styles.headerSubtitle}>
+              {currentLang === "hi"
+                ? "24/7 सत्यापित स्वास्थ्य सेवा मार्गदर्शक"
+                : currentLang === "pa"
+                ? "24/7 ਤਸਦੀਕਸ਼ੁਦਾ ਸਿਹਤ ਸੰਭਾਲ ਗਾਈਡ"
+                : "24/7 Verified Healthcare Guide"}
+            </Text>
           </View>
         </View>
       </View>

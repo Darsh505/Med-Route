@@ -309,14 +309,14 @@ export default function ChatbotWidget() {
                 <span className="material-symbols-outlined text-[22px]">stethoscope</span>
               </div>
               <div>
-                <div className="text-sm font-bold flex items-center gap-1.5 tracking-tight font-heading">
+                <div className="text-sm font-bold flex items-center gap-2 tracking-tight font-heading">
                   <span>Med Route Clinical AI</span>
+                  <span
+                    className={`w-2 h-2 rounded-full shrink-0 ${isGeminiActive ? "bg-emerald-400 animate-pulse" : "bg-red-500"}`}
+                  />
                 </div>
-                <div className="text-[11px] flex items-center gap-1.5 mt-0.5">
-                  <span className={`w-2 h-2 rounded-full ${isGeminiActive ? "bg-emerald-400 animate-pulse" : "bg-red-500"}`} />
-                  <span className={isGeminiActive ? "text-emerald-300" : "text-red-300"}>
-                    {isGeminiActive ? "Gemini AI Active" : "Gemini Offline (Clinical Rules Active)"}
-                  </span>
+                <div className="text-[11px] text-surface-container mt-0.5">
+                  24/7 Verified Healthcare Guide
                 </div>
               </div>
             </div>
