@@ -35,8 +35,6 @@ backend/
 │   ├── config.py           # Pydantic-settings configuration
 │   ├── database.py         # Async SQLAlchemy session engine with fallback
 │   └── main.py             # FastAPI entrypoint with CORS, healthchecks, and lifespans
-├── scripts/
-│   └── generate_pan_india_dataset.py  # 1000+ hospital Pan-India dataset generator
 ├── tests/                  # Pytest unit and integration test suite
 ├── Dockerfile              # Multi-stage production container build
 ├── gunicorn.conf.py        # Production Gunicorn worker configuration

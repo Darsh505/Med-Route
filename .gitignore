@@ -142,3 +142,8 @@ stitch/
 bin/
 kul/
 
+# ── Preparation Scripts & Data Generators ────
+backend/scripts/
+scripts/
+*.prep.py
+
