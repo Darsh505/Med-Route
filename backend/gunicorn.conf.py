@@ -14,8 +14,11 @@ worker_class = "uvicorn.workers.UvicornWorker"
 workers = int(multiprocessing.cpu_count() * 2 + 1)
 workers = min(workers, 4)  # Cap at 4 for Railway free tier
 
+import os
+
 # ── Networking ────────────────────────────────────────────────────
-bind = "0.0.0.0:8000"
+port = os.getenv("PORT", "8000")
+bind = f"0.0.0.0:{port}"
 timeout = 120           # Request timeout (120s for large file uploads)
 keepalive = 5           # Keep connections alive for 5s
 max_requests = 1000     # Restart worker after 1000 requests (memory leak prevention)

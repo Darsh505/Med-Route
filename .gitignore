@@ -10,6 +10,7 @@
 *.env
 
 # ── Python / Backend ──────────────────────────
+backend/app/data_pipeline/admin_overrides.json
 __pycache__/
 *.py[cod]
 *$py.class
