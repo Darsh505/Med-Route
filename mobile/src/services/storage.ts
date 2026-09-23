@@ -20,6 +20,12 @@ export const storage = {
     }
   },
 
+  async setCompareIds(ids: string[]): Promise<void> {
+    try {
+      await AsyncStorage.setItem(KEYS.COMPARE_IDS, JSON.stringify(ids));
+    } catch {}
+  },
+
   async toggleCompare(id: string): Promise<string[]> {
     try {
       let ids = await this.getCompareIds();

@@ -3,6 +3,24 @@ import rawAllHospitals from "../data/allHospitals.json";
 
 const BASE_URL = Platform.OS === "android" ? "http://10.0.2.2:8000" : "http://localhost:8000";
 
+export interface DiseaseProcedureItem {
+  name: string;
+  disease: string;
+  category: string;
+  cost_avg: number;
+  cost_min: number;
+  cost_max: number;
+  cost_formatted: string;
+  success_rate: number;
+  success_ratio: string;
+  patients_treated: number;
+  volume_per_year: number;
+  pmjay_covered: boolean;
+  pmjay_package_rate: number;
+  average_stay_days: number;
+  wait_time_days: number;
+}
+
 export interface MobileHospital {
   id: string;
   name: string;
@@ -35,6 +53,11 @@ export interface MobileHospital {
   specialties?: string[];
   latitude: number;
   longitude: number;
+  procedures?: DiseaseProcedureItem[];
+  top_disease_treated?: string;
+  total_patients_treated?: number;
+  avg_treatment_cost?: number;
+  overall_success_ratio?: string;
 }
 
 export const MOCK_HOSPITALS: MobileHospital[] = (rawAllHospitals as any[]).map((h: any) => ({
@@ -69,6 +92,11 @@ export const MOCK_HOSPITALS: MobileHospital[] = (rawAllHospitals as any[]).map((
   specialties: h.specialties || ["Heart Care", "Bone & Joint", "Emergency", "General Surgery"],
   latitude: h.latitude || 30.7333,
   longitude: h.longitude || 76.7794,
+  procedures: h.procedures || [],
+  top_disease_treated: h.top_disease_treated,
+  total_patients_treated: h.total_patients_treated,
+  avg_treatment_cost: h.avg_treatment_cost,
+  overall_success_ratio: h.overall_success_ratio,
 }));
 
 export const api = {
@@ -156,10 +184,18 @@ export const api = {
       const matchSpecialty = h.specialties?.some((s) => s.toLowerCase().includes(q));
       const matchTrauma = q.includes("trauma") && h.is_trauma_center;
       const matchPmjay = (q.includes("pmjay") || q.includes("ayushman")) && h.is_pmjay_empanelled;
-      const matchCardiac = (q.includes("cardiac") || q.includes("heart") || q.includes("stent")) &&
-        h.specialties?.some((s) => s.toLowerCase().includes("card") || s.toLowerCase().includes("heart"));
-      const matchOrtho = (q.includes("ortho") || q.includes("knee") || q.includes("joint")) &&
-        h.specialties?.some((s) => s.toLowerCase().includes("ortho") || s.toLowerCase().includes("joint"));
+      const matchTopDisease = h.top_disease_treated?.toLowerCase().includes(q);
+      const matchProcedures = (h.procedures || []).some(
+        (p) => p.name.toLowerCase().includes(q) || p.disease.toLowerCase().includes(q)
+      );
+      const matchCardiac = (q.includes("cardiac") || q.includes("heart") || q.includes("stent") || q.includes("angioplasty") || q.includes("cabg")) &&
+        (h.specialties?.some((s) => s.toLowerCase().includes("card") || s.toLowerCase().includes("heart")) ||
+         h.top_disease_treated?.toLowerCase().includes("heart") ||
+         (h.procedures || []).some((p) => p.disease.toLowerCase().includes("heart") || p.name.toLowerCase().includes("heart")));
+      const matchOrtho = (q.includes("ortho") || q.includes("knee") || q.includes("joint") || q.includes("hip")) &&
+        (h.specialties?.some((s) => s.toLowerCase().includes("ortho") || s.toLowerCase().includes("joint")) ||
+         h.top_disease_treated?.toLowerCase().includes("knee") ||
+         (h.procedures || []).some((p) => p.disease.toLowerCase().includes("osteoarthritis") || p.name.toLowerCase().includes("knee")));
 
       return (
         matchName ||
@@ -167,6 +203,8 @@ export const api = {
         matchType ||
         matchAccr ||
         matchSpecialty ||
+        matchTopDisease ||
+        matchProcedures ||
         matchTrauma ||
         matchPmjay ||
         matchCardiac ||

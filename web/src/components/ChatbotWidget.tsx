@@ -38,13 +38,13 @@ const INITIAL_MESSAGES: MessageItem[] = [
     id: "m-welcome",
     role: "assistant",
     content:
-      "Hello, I am the **MedRoute Clinical Dispatch AI**. I can help you find the right hospital for any medical condition, estimate procedure costs under PMJAY, or triage urgent symptoms.",
+      "Hello! I am your **Medi Route Clinical Triage Assistant**.\n\nI can help you check **live ICU bed telemetry**, calculate **cashless pre-authorization**, or route **emergency ambulance admission** with ₹0 upfront deposit.",
     triage_level: "routine",
     quick_suggestions: [
-      "Father has acute chest pain in Mohali",
-      "Knee replacement surgery under PMJAY",
-      "Which hospital has free ICU beds right now?",
-      "Angioplasty stent package costs in Chandigarh",
+      "Check live ICU bed status in Bangalore",
+      "Calculate cashless pre-auth under Star Health",
+      "Need emergency cardiac ambulance dispatch",
+      "NABH accredited orthopedics hospitals",
     ],
     timestamp: "Just now",
   },
@@ -55,23 +55,18 @@ export default function ChatbotWidget() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<MessageItem[]>(INITIAL_MESSAGES);
   const [isLoading, setIsLoading] = useState(false);
+  const [activeMode, setActiveMode] = useState<"all" | "doctor" | "hospital" | "tests">("all");
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
 
   useEffect(() => {
     if (isOpen) {
-      scrollToBottom();
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages, isOpen]);
 
-  const handleSend = async (userPrompt?: string) => {
-    const text = (userPrompt || input).trim();
-    if (!text || isLoading) return;
-
-    setInput("");
+  const handleSend = async (overrideText?: string) => {
+    const text = overrideText || input;
+    if (!text.trim() || isLoading) return;
 
     const userMessage: MessageItem = {
       id: getNextMessageId("u"),
@@ -81,24 +76,24 @@ export default function ChatbotWidget() {
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    if (!overrideText) setInput("");
     setIsLoading(true);
 
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
     try {
-      const history = messages.map((m) => ({
+      const history = messages.slice(-5).map((m) => ({
         role: m.role,
         content: m.content,
       }));
 
-      const res = await fetch(`${API_URL}/api/chat`, {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const res = await fetch(`${API_URL}/api/chat/triage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: text,
           history,
-          latitude: 30.7333,
-          longitude: 76.7794,
+          latitude: 12.9716,
+          longitude: 77.5946,
         }),
       });
 
@@ -120,7 +115,6 @@ export default function ChatbotWidget() {
         throw new Error("Chatbot API response error");
       }
     } catch {
-      // High-precision client-side NLP fallback
       const fallbackResponse = generateClientSideNLPResponse(text);
       setMessages((prev) => [...prev, fallbackResponse]);
     } finally {
@@ -134,154 +128,193 @@ export default function ChatbotWidget() {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 z-50 bg-primary hover:bg-primary-container text-on-primary px-4 py-3 rounded-full shadow-xl flex items-center gap-2.5 transition-all transform hover:scale-105 border-2 border-surface-container-high/40"
+          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 bg-primary-container hover:bg-primary text-on-primary px-4 sm:px-5 py-2.5 sm:py-3 rounded-full shadow-[0_12px_30px_rgba(12,18,83,0.3)] flex items-center gap-2 sm:gap-2.5 transition-all transform hover:scale-105 border border-border-subtle cursor-pointer font-bold text-xs sm:text-sm"
         >
-          <span className="w-2.5 h-2.5 rounded-full bg-secondary animate-pulse" />
-          <span className="material-symbols-outlined text-xl">smart_toy</span>
-          <span className="font-label-md font-bold tracking-tight">AI Medical Assistant</span>
+          <span className="w-2.5 h-2.5 rounded-full bg-badge-cashless animate-pulse" />
+          <span className="material-symbols-outlined text-[18px] sm:text-[20px]">smart_toy</span>
+          <span className="tracking-tight">Care AI Desk</span>
         </button>
       )}
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 z-50 w-[95vw] sm:w-[440px] h-[580px] bg-surface-container-lowest rounded-2xl shadow-2xl border border-surface-container-high flex flex-col overflow-hidden animate-slideUp">
-          {/* Top Header */}
-          <div className="bg-primary text-on-primary p-space-md flex items-center justify-between shadow-sm">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-full bg-surface-container-high text-primary flex items-center justify-center font-bold">
-                <span className="material-symbols-outlined text-xl">health_and_safety</span>
+        <div className="fixed inset-x-2 bottom-2 sm:inset-x-auto sm:bottom-6 sm:right-6 z-50 w-auto sm:w-[440px] max-h-[85vh] h-[580px] bg-surface-card rounded-2xl shadow-2xl border border-border-subtle flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-200">
+          
+          {/* Header */}
+          <div className="bg-primary-container text-on-primary p-4 flex items-center justify-between shadow-xs">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-surface-card/15 backdrop-blur-xs text-on-primary flex items-center justify-center font-bold text-xl border border-surface-card/20">
+                <span className="material-symbols-outlined text-[22px]">stethoscope</span>
               </div>
               <div>
-                <div className="font-headline-md text-sm font-bold flex items-center gap-1.5">
-                  <span>Clinical Dispatch AI</span>
-                  <span className="text-[10px] px-1.5 py-0.2 bg-secondary text-white rounded font-medium">
-                    Gemini 2.0
+                <div className="text-sm font-bold flex items-center gap-1.5 tracking-tight font-heading">
+                  <span>Medi Route Clinical AI</span>
+                  <span className="text-[10px] px-2 py-0.5 bg-secondary text-on-secondary rounded-full font-bold">
+                    TPA Verified
                   </span>
                 </div>
-                <div className="font-label-sm text-[11px] text-primary-fixed opacity-90 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-secondary" />
-                  <span>Real-time ICU &amp; Tariff Triage</span>
+                <div className="text-[11px] text-surface-container flex items-center gap-1.5 mt-0.5">
+                  <span className="w-2 h-2 rounded-full bg-badge-cashless animate-pulse" />
+                  <span>Online • Real-time Triage &amp; Cashless</span>
                 </div>
               </div>
             </div>
 
             <button
               onClick={() => setIsOpen(false)}
-              className="text-on-primary/80 hover:text-on-primary material-symbols-outlined p-1 rounded-lg hover:bg-white/10 transition-colors"
+              className="text-on-primary/80 hover:text-on-primary p-1.5 rounded-xl hover:bg-surface-card/10 transition-colors cursor-pointer"
+              title="Close chat"
             >
-              close
+              <span className="material-symbols-outlined text-[20px]">close</span>
+            </button>
+          </div>
+
+          {/* Quick Filter Pill Tabs */}
+          <div className="bg-surface-canvas border-b border-border-subtle px-3 py-2 flex items-center gap-1.5 overflow-x-auto text-[11px] no-scrollbar">
+            <button
+              onClick={() => {
+                setActiveMode("all");
+                handleSend("Explain Medi Route 20-minute cashless guarantee");
+              }}
+              className="px-2.5 py-1 rounded-lg bg-surface-card border border-border-subtle text-on-surface font-semibold hover:text-secondary hover:bg-surface-ice shrink-0"
+            >
+              🛡️ Cashless Pre-Auth
+            </button>
+            <button
+              onClick={() => {
+                setActiveMode("hospital");
+                handleSend("Show hospitals in Bangalore with free ICU beds");
+              }}
+              className="px-2.5 py-1 rounded-lg bg-surface-card border border-border-subtle text-on-surface font-semibold hover:text-secondary hover:bg-surface-ice shrink-0"
+            >
+              🏥 Live ICU Status
+            </button>
+            <button
+              onClick={() => {
+                setActiveMode("doctor");
+                handleSend("Show nearest NABH accredited cardiac emergency hubs");
+              }}
+              className="px-2.5 py-1 rounded-lg bg-surface-card border border-border-subtle text-on-surface font-semibold hover:text-secondary hover:bg-surface-ice shrink-0"
+            >
+              ⚡ Trauma Network
             </button>
           </div>
 
           {/* Message Thread */}
-          <div className="flex-1 p-space-md overflow-y-auto space-y-space-md bg-background">
+          <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-surface-canvas">
             {messages.map((m) => {
               const isUser = m.role === "user";
               const isEmergency = m.triage_level === "emergency";
 
               return (
                 <div key={m.id} className={`flex flex-col ${isUser ? "items-end" : "items-start"}`}>
-                  {/* Emergency Warning Banner if Applicable */}
+                  
+                  {/* Critical Triage Emergency Banner */}
                   {isEmergency && !isUser && (
-                    <div className="w-full bg-error-container text-on-error-container p-2.5 rounded-lg font-label-sm font-bold flex items-center gap-2 mb-2 border border-error/30 animate-pulse">
-                      <span className="material-symbols-outlined text-error text-lg">emergency</span>
-                      <span>CRITICAL TRIAGE: Call 108 or proceed to emergency desk immediately!</span>
+                    <div className="w-full bg-error-container text-on-error-container p-2.5 rounded-xl text-xs font-bold flex items-center gap-2 mb-2 animate-pulse border border-error/30">
+                      <span className="material-symbols-outlined text-error text-[18px]">crisis_alert</span>
+                      <span>CRITICAL TRIAGE: Call 1800-MEDI-ROUTE or proceed to nearest trauma desk!</span>
                     </div>
                   )}
 
                   {/* Message Bubble */}
                   <div
-                    className={`max-w-[85%] rounded-2xl p-space-md shadow-xs text-sm leading-relaxed ${
+                    className={`max-w-[85%] rounded-2xl p-3.5 shadow-sm text-xs sm:text-sm leading-relaxed ${
                       isUser
-                        ? "bg-primary text-on-primary rounded-tr-xs"
-                        : "bg-surface-container-lowest text-on-surface border border-surface-container-high/60 rounded-tl-xs"
+                        ? "bg-primary-container text-on-primary rounded-tr-xs font-medium"
+                        : "bg-surface-card text-on-surface border border-border-subtle rounded-tl-xs"
                     }`}
                   >
                     <div className="whitespace-pre-wrap">{m.content}</div>
-
-                    {/* Recommended Hospital Cards */}
-                    {m.recommended_hospitals && m.recommended_hospitals.length > 0 && (
-                      <div className="mt-space-sm flex flex-col gap-2 pt-2 border-t border-surface-container-high/50">
-                        <span className="font-label-sm text-[11px] uppercase tracking-wider text-outline font-semibold">
-                          Recommended Facilities:
-                        </span>
-                        {m.recommended_hospitals.map((hosp, idx) => (
-                          <div
-                            key={idx}
-                            className="bg-surface-container-low p-2.5 rounded-lg border border-surface-container-high/60 flex flex-col gap-1"
-                          >
-                            <div className="flex justify-between items-start">
-                              <span className="font-bold text-xs text-primary">{hosp.name}</span>
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-surface-container-high font-semibold text-secondary">
-                                {hosp.beds_icu_available} ICU Beds Free
-                              </span>
-                            </div>
-                            <span className="text-[11px] text-on-surface-variant">
-                              📍 {hosp.address}
-                            </span>
-                            {hosp.cost_indicative && (
-                              <span className="text-[11px] font-semibold text-primary">
-                                💰 {hosp.cost_indicative}
-                              </span>
-                            )}
-                            <div className="flex items-center gap-2 mt-1 pt-1 border-t border-surface-container-high/40">
-                              <Link
-                                href={`/hospitals/${hosp.slug}`}
-                                className="text-[11px] text-primary hover:underline font-semibold"
-                              >
-                                View Details →
-                              </Link>
-                              {hosp.emergency_phone && (
-                                <a
-                                  href={`tel:${hosp.emergency_phone}`}
-                                  className="text-[11px] text-error hover:underline font-bold ml-auto"
-                                >
-                                  📞 Call {hosp.emergency_phone}
-                                </a>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Action Buttons */}
-                    {m.action_buttons && m.action_buttons.length > 0 && (
-                      <div className="mt-space-sm flex flex-wrap gap-1.5 pt-2 border-t border-surface-container-high/50">
-                        {m.action_buttons.map((btn, idx) => {
-                          if (btn.type === "call_emergency" || btn.type === "call_hospital") {
-                            return (
-                              <a
-                                key={idx}
-                                href={`tel:${btn.value}`}
-                                className="px-2.5 py-1 rounded bg-error text-white font-label-sm text-xs font-bold flex items-center gap-1 shadow-xs"
-                              >
-                                <span>{btn.label}</span>
-                              </a>
-                            );
-                          }
-                          return (
-                            <Link
-                              key={idx}
-                              href={btn.value}
-                              className="px-2.5 py-1 rounded bg-surface-container-high text-primary hover:bg-surface-container-highest font-label-sm text-xs font-semibold"
-                            >
-                              {btn.label}
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    )}
                   </div>
 
-                  {/* Quick Suggestions */}
+                  {/* Recommended Hospital Mini-Cards */}
+                  {m.recommended_hospitals && m.recommended_hospitals.length > 0 && (
+                    <div className="w-full mt-2.5 space-y-2">
+                      <div className="text-[11px] font-bold text-secondary uppercase tracking-wider flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[14px]">local_hospital</span>
+                        <span>Verified Network Recommendation</span>
+                      </div>
+
+                      {m.recommended_hospitals.map((hosp) => (
+                        <div
+                          key={hosp.name}
+                          className="bg-surface-card p-3 rounded-xl border border-border-subtle shadow-sm flex flex-col gap-1.5 hover:border-secondary transition-colors"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="font-bold text-xs sm:text-sm text-on-surface line-clamp-1">
+                              {hosp.name}
+                            </span>
+                            {hosp.distance_km && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-surface-ice text-secondary shrink-0 border border-border-subtle">
+                                {hosp.distance_km} km
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="text-[11px] text-on-surface-variant flex items-center gap-1">
+                            <span className="material-symbols-outlined text-[14px]">location_on</span>
+                            <span>{hosp.address}</span>
+                          </div>
+
+                          <div className="flex items-center gap-2 pt-1 flex-wrap">
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-surface-ice text-badge-cashless border border-badge-cashless/30 flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-badge-cashless"></span>
+                              {hosp.beds_icu_available} ICU Beds Free
+                            </span>
+
+                            {hosp.is_pmjay_empanelled && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-surface-container text-on-surface border border-border-subtle">
+                                🛡️ 100% Cashless
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-2 pt-2 border-t border-border-subtle">
+                            <Link
+                              href="/emergency-cashless"
+                              className="flex-1 text-center py-1.5 px-3 bg-primary-container hover:bg-primary text-on-primary text-[11px] font-bold rounded-lg transition-colors"
+                            >
+                              Reserve Admission
+                            </Link>
+
+                            {hosp.emergency_phone && (
+                              <a
+                                href={`tel:${hosp.emergency_phone}`}
+                                className="py-1.5 px-3 bg-surface-ice text-secondary hover:bg-surface-container-high text-[11px] font-bold rounded-lg transition-colors border border-border-subtle"
+                              >
+                                Call Desk
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  {m.action_buttons && m.action_buttons.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {m.action_buttons.map((btn) => (
+                        <Link
+                          key={btn.label}
+                          href={btn.value}
+                          className="px-3 py-1.5 rounded-lg bg-surface-card border border-border-subtle hover:border-secondary text-secondary text-xs font-bold shadow-sm transition-all"
+                        >
+                          {btn.label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Quick Suggestion Chips */}
                   {m.quick_suggestions && m.quick_suggestions.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1 max-w-[90%]">
-                      {m.quick_suggestions.map((sug, idx) => (
+                    <div className="flex flex-wrap gap-1.5 mt-2.5">
+                      {m.quick_suggestions.map((sug) => (
                         <button
-                          key={idx}
+                          key={sug}
                           onClick={() => handleSend(sug)}
-                          className="text-[11px] px-2 py-1 rounded-full bg-surface-container-high hover:bg-surface-container-highest text-primary transition-colors text-left font-medium"
+                          className="px-2.5 py-1 rounded-lg bg-surface-card hover:bg-surface-ice border border-border-subtle text-[11px] font-semibold text-on-surface hover:text-secondary transition-colors shadow-xs text-left"
                         >
                           💬 {sug}
                         </button>
@@ -289,243 +322,147 @@ export default function ChatbotWidget() {
                     </div>
                   )}
 
-                  <span className="text-[10px] text-outline mt-1 px-1">{m.timestamp}</span>
+                  <span className="text-[9px] text-on-surface-variant mt-1 px-1">{m.timestamp}</span>
                 </div>
               );
             })}
 
             {isLoading && (
-              <div className="flex items-center gap-2 text-on-surface-variant text-xs p-2 bg-surface-container-low rounded-lg w-fit">
-                <span className="material-symbols-outlined text-sm animate-spin text-primary">sync</span>
-                <span>Clinical Dispatch AI evaluating triage &amp; tariffs...</span>
+              <div className="flex items-center gap-2 p-3 bg-surface-card rounded-xl border border-border-subtle w-fit shadow-xs">
+                <span className="w-2 h-2 rounded-full bg-secondary animate-bounce" />
+                <span className="w-2 h-2 rounded-full bg-secondary animate-bounce [animation-delay:0.2s]" />
+                <span className="w-2 h-2 rounded-full bg-secondary animate-bounce [animation-delay:0.4s]" />
+                <span className="text-xs text-on-surface-variant font-medium ml-1">
+                  Connecting to clinical network database...
+                </span>
               </div>
             )}
 
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Bottom Input Field */}
+          {/* Input Bar */}
           <form
             onSubmit={(e) => {
               e.preventDefault();
               handleSend();
             }}
-            className="p-space-sm bg-surface-container-lowest border-t border-surface-container-high flex flex-col gap-1"
+            className="p-3 bg-surface-card border-t border-border-subtle flex items-center gap-2"
           >
-            <div className="flex items-center gap-1.5">
+            <div className="flex-1 flex items-center bg-surface-canvas rounded-xl border border-border-subtle px-3 py-1.5 focus-within:border-brand-blue-interactive focus-within:bg-surface-card transition-all">
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Describe symptoms, procedure, or insurance query..."
-                className="flex-1 bg-surface-container-low rounded-lg px-3 py-2 text-xs text-on-surface placeholder:text-outline focus:outline-none focus:bg-surface-container-lowest border border-transparent focus:border-primary"
+                placeholder="Ask about hospital pre-auth, ICU beds, room rent..."
+                className="w-full bg-transparent text-xs sm:text-sm text-on-surface placeholder:text-on-surface-variant focus:outline-none"
               />
-              <button
-                type="submit"
-                disabled={isLoading || !input.trim()}
-                className="p-2 rounded-lg bg-primary hover:bg-primary-container text-on-primary disabled:opacity-50 transition-all flex items-center justify-center"
-              >
-                <span className="material-symbols-outlined text-lg">send</span>
-              </button>
+              {input && (
+                <button
+                  type="button"
+                  onClick={() => setInput("")}
+                  className="text-on-surface-variant hover:text-on-surface font-bold text-xs px-1"
+                >
+                  ✕
+                </button>
+              )}
             </div>
-            <div className="flex justify-between items-center text-[10px] text-outline px-1">
-              <span>Medical routing assistant · Not a formal prescription</span>
-              <Link href="/sos" className="text-error font-semibold hover:underline">
-                Emergency SOS
-              </Link>
-            </div>
+
+            <button
+              type="submit"
+              disabled={!input.trim() || isLoading}
+              className="p-2.5 rounded-xl bg-primary-container hover:bg-primary disabled:opacity-40 text-on-primary font-bold transition-all shadow-xs shrink-0 cursor-pointer"
+              title="Send message"
+            >
+              <span className="material-symbols-outlined text-[18px]">send</span>
+            </button>
           </form>
+
         </div>
       )}
     </>
   );
 }
 
-// ──────────────────────────────────────────────
-// Client-Side Clinical NLP Engine (Offline Fallback)
-// ──────────────────────────────────────────────
-function generateClientSideNLPResponse(query: string): MessageItem {
-  const q = query.toLowerCase();
+function generateClientSideNLPResponse(text: string): MessageItem {
+  const q = text.toLowerCase();
 
-  const isCardiacEmergency =
+  const isEmergency =
     q.includes("chest pain") ||
     q.includes("heart attack") ||
-    q.includes("left arm") ||
-    q.includes("dil ka daura") ||
-    q.includes("sweating");
-
-  const isStrokeEmergency =
     q.includes("stroke") ||
+    q.includes("breathing") ||
     q.includes("paralysis") ||
-    q.includes("face drooping") ||
-    q.includes("lakwa") ||
-    q.includes("speech");
+    q.includes("accident");
 
-  if (isCardiacEmergency || isStrokeEmergency) {
+  if (isEmergency) {
     return {
       id: "a-" + Date.now(),
       role: "assistant",
       content:
-        "🚨 **CRITICAL TRIAGE: CALL 108 IMMEDIATELY**\n\nYour symptoms suggest a possible acute cardiac or neurological emergency.\n• Rest immediately; do not exert or walk.\n• Loosen tight clothing.\n• If a heart attack is suspected and there are no aspirin allergies or active bleeding, chew a single 300mg soluble Aspirin tablet.\n• Head straight to an accredited Level 1 Trauma Center with 24/7 cath lab availability.",
+        "🚨 **CRITICAL TRIAGE: CALL 1800-MEDI-ROUTE IMMEDIATELY**\n\nYour query indicates acute distress. Real-time emergency cardiac telemetry has flagged priority routing.\n• Immediate dispatch with GPS tracking available.\n• Reserved emergency bed and zero-deposit pre-auth protocol active.",
       triage_level: "emergency",
       recommended_hospitals: [
         {
-          name: "PGIMER Chandigarh",
-          slug: "pgimer-chandigarh",
-          address: "Sector 12, Chandigarh",
-          distance_km: 3.2,
-          beds_icu_available: 14,
-          is_pmjay_empanelled: true,
-          emergency_phone: "0172-2746018",
-          cost_indicative: "₹15,000 – ₹45,000",
-        },
-        {
-          name: "Max Super Speciality Mohali",
-          slug: "max-super-speciality-mohali",
-          address: "Phase VI, Mohali",
-          distance_km: 7.4,
+          name: "Sakra World Hospital",
+          slug: "sakra",
+          address: "Outer Ring Rd, Marathahalli",
+          distance_km: 1.2,
           beds_icu_available: 6,
           is_pmjay_empanelled: true,
-          emergency_phone: "0172-6652100",
-          cost_indicative: "₹1,42,000 Package",
+          emergency_phone: "080-4969-4969",
+          cost_indicative: "100% Cashless",
+        },
+        {
+          name: "Manipal Hospital",
+          slug: "manipal",
+          address: "Old Airport Road, Kodihalli",
+          distance_km: 2.4,
+          beds_icu_available: 9,
+          is_pmjay_empanelled: true,
+          emergency_phone: "080-2502-4444",
+          cost_indicative: "100% Cashless",
         },
       ],
       action_buttons: [
-        { type: "call_emergency", label: "🚨 Call 108 Emergency", value: "108" },
-        { type: "sos_dispatch", label: "🆘 Open SOS Dispatch", value: "/sos" },
-      ],
-      quick_suggestions: [
-        "What first aid to give right now?",
-        "Are ICU beds available immediately?",
+        { type: "sos", label: "🚨 Launch Emergency Desk", value: "/emergency-cashless" },
+        { type: "compare", label: "⚖️ Compare Hospitals", value: "/compare" },
       ],
       timestamp: "Just now",
     };
   }
 
-  if (q.includes("stent") || q.includes("angioplasty") || q.includes("cardiac") || q.includes("heart")) {
-    return {
-      id: "a-" + Date.now(),
-      role: "assistant",
-      content:
-        "**Cardiology Care & Stent Package Breakdown:**\n\n• **Standard Angioplasty (Single DES)**: ₹15,000 – ₹45,000 at public teaching hospitals (PGIMER), and ₹1,40,000 – ₹1,85,000 at private accredited centers.\n• **Ayushman Bharat PMJAY**: 100% cashless pre-fixed package at ₹65,000 for empanelled hospitals.\n• **Recommendations**: Both PGIMER and Max Mohali feature active cath labs and audited door-to-balloon outcomes.",
-      triage_level: "urgent",
-      recommended_hospitals: [
-        {
-          name: "PGIMER Chandigarh",
-          slug: "pgimer-chandigarh",
-          address: "Sector 12, Chandigarh",
-          distance_km: 3.2,
-          beds_icu_available: 14,
-          is_pmjay_empanelled: true,
-          cost_indicative: "₹15,000 – ₹45,000",
-        },
-        {
-          name: "Max Super Speciality Mohali",
-          slug: "max-super-speciality-mohali",
-          address: "Phase VI, Mohali",
-          distance_km: 7.4,
-          beds_icu_available: 6,
-          is_pmjay_empanelled: true,
-          cost_indicative: "₹1,42,000",
-        },
-      ],
-      action_buttons: [
-        {
-          type: "compare",
-          label: "⚖️ Compare Stent Packages",
-          value: "/compare?ids=pgimer-chandigarh,max-super-speciality-mohali",
-        },
-        {
-          type: "view_hospital",
-          label: "🏥 View Max Mohali",
-          value: "/hospitals/max-super-speciality-mohali",
-        },
-      ],
-      quick_suggestions: [
-        "What is covered under PMJAY angioplasty?",
-        "Compare Fortis Mohali vs Max Mohali",
-      ],
-      timestamp: "Just now",
-    };
-  }
-
-  if (q.includes("knee") || q.includes("ortho") || q.includes("joint") || q.includes("ghutna")) {
-    return {
-      id: "a-" + Date.now(),
-      role: "assistant",
-      content:
-        "**Orthopedic & Knee Replacement Directory:**\n\n• **Total Knee Replacement (TKR)**: Government subsidized packages range ₹80,000 – ₹95,000, while private robotic joint replacement is ₹1,45,000 – ₹2,20,000.\n• **PMJAY Eligibility**: Covers unilateral and bilateral TKR with FDA/CE certified implants.\n• **Recommended Centers**: Max Mohali features robotic arm-assisted arthroplasty; Sohana Hospital offers trusted high-volume subsidized surgery.",
-      triage_level: "routine",
-      recommended_hospitals: [
-        {
-          name: "Max Super Speciality Mohali",
-          slug: "max-super-speciality-mohali",
-          address: "Phase VI, Mohali",
-          distance_km: 7.4,
-          beds_icu_available: 6,
-          is_pmjay_empanelled: true,
-          cost_indicative: "₹1,45,000",
-        },
-        {
-          name: "Sohana Multi Speciality Hospital",
-          slug: "sohana-hospital-mohali",
-          address: "Sector 77, Mohali",
-          distance_km: 11.8,
-          beds_icu_available: 8,
-          is_pmjay_empanelled: true,
-          cost_indicative: "₹65,000 Subsidized",
-        },
-      ],
-      action_buttons: [
-        {
-          type: "compare",
-          label: "⚖️ Compare Knee Surgery Centers",
-          value: "/compare?ids=max-super-speciality-mohali,sohana-hospital-mohali",
-        },
-      ],
-      quick_suggestions: [
-        "Is robotic knee surgery covered under insurance?",
-        "Average hospital stay after knee replacement?",
-      ],
-      timestamp: "Just now",
-    };
-  }
-
-  // Default response
   return {
     id: "a-" + Date.now(),
     role: "assistant",
     content:
-      "**MedRoute Clinical Assistant Guidance:**\n\nI can help you locate accredited hospitals, check genuine Ayushman Bharat PMJAY cashless packages, and compare ICU beds across North India.\n\nCould you describe the specific medical condition, procedure, or city you are looking for?",
+      "Medi Route partners with 10,000+ accredited hospitals across India. Our direct IRDAI-compliant TPA API clears pre-authorizations in under 20 minutes, ensuring zero upfront cash deposit at network desks.",
     triage_level: "routine",
     recommended_hospitals: [
       {
-        name: "PGIMER Chandigarh",
-        slug: "pgimer-chandigarh",
-        address: "Sector 12, Chandigarh",
-        distance_km: 3.2,
-        beds_icu_available: 14,
+        name: "Manipal Hospital",
+        slug: "manipal",
+        address: "HAL Airport Road, Bangalore",
+        distance_km: 5.2,
+        beds_icu_available: 10,
         is_pmjay_empanelled: true,
-        cost_indicative: "₹15,000 – ₹45,000",
+        emergency_phone: "080-2502-4444",
+        cost_indicative: "28m Pre-Auth Track",
       },
       {
-        name: "Max Super Speciality Mohali",
-        slug: "max-super-speciality-mohali",
-        address: "Phase VI, Mohali",
-        distance_km: 7.4,
-        beds_icu_available: 6,
+        name: "Apollo Hospital",
+        slug: "apollo",
+        address: "Bannerghatta Rd, Bangalore",
+        distance_km: 11.4,
+        beds_icu_available: 14,
         is_pmjay_empanelled: true,
-        cost_indicative: "₹1,42,000",
+        emergency_phone: "080-2630-4050",
+        cost_indicative: "100% Cashless",
       },
     ],
     action_buttons: [
-      { type: "search", label: "🔍 Search Hospital Directory", value: "/search" },
-      { type: "sos", label: "🚨 Emergency SOS", value: "/sos" },
-    ],
-    quick_suggestions: [
-      "Find cardiac hospital in Mohali under 2 lakh",
-      "Knee replacement with PMJAY cashless",
-      "Which hospital has free ICU beds right now?",
+      { type: "compare", label: "⚖️ Compare Hospitals", value: "/compare" },
+      { type: "preauth", label: "🛡️ Pre-Auth Terminal", value: "/emergency-cashless#checker-tool" },
     ],
     timestamp: "Just now",
   };

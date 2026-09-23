@@ -1,402 +1,808 @@
 /**
- * SOSScreen.tsx — Mobile SOS Emergency Modal Screen
- * Follows Prompt 5 from Stitch Prompt:
- * - Full-screen high-contrast emergency view
- * - Header: "EMERGENCY DISPATCH" with alert icon
- * - Big message: "Connecting to Nearest Trauma Center..." with radar pulse animation
- * - Hospital card with phone number in very large text: "📞 0172-274-6018"
- * - Large white button with red text: "📞 CALL NOW"
- * - "🗺️ Get Directions" link
- * - "Hospital has been notified of your emergency" with green checkmark
- * - Fallback: "Can't connect? Call 108 for National Ambulance"
+ * SOSScreen.tsx — Mobile Emergency & Cashless Admission (Clinical Architecture Health)
+ * Strictly matches stitch/stitch_healthcare_finder_and_comparison_platform (1)/code.html
  */
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
+  ScrollView,
   TouchableOpacity,
-  Linking,
-  Animated,
   StatusBar,
-  Platform,
+  TextInput,
+  Linking,
+  Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../theme/colors";
-import { spacing, borderRadius, shadows } from "../theme/spacing";
-import { locationService } from "../services/location";
-import { api } from "../services/api";
 
 export default function SOSScreen({ navigation }: any) {
-  const [status, setStatus] = useState<"locating" | "resolved">("locating");
-  const [nearestHospital, setNearestHospital] = useState<any>(null);
+  // Pre-Auth Checker State
+  const [policyId, setPolicyId] = useState("STAR-2024-8849-BLR");
+  const [selectedHospital, setSelectedHospital] = useState("Sakra World Hospital");
+  const [tokenGenerated, setTokenGenerated] = useState(false);
 
-  // Radar pulse animation
-  const radarScale = useRef(new Animated.Value(0.8)).current;
-  const radarOpacity = useRef(new Animated.Value(1)).current;
+  // Emergency Telemetry Modal
+  const [sosModalOpen, setSosModalOpen] = useState(false);
+  const [targetHospital, setTargetHospital] = useState("Sakra World Hospital");
 
-  useEffect(() => {
-    // Pulse animation
-    Animated.loop(
-      Animated.parallel([
-        Animated.timing(radarScale, {
-          toValue: 2.2,
-          duration: 1500,
-          useNativeDriver: true,
-        }),
-        Animated.timing(radarOpacity, {
-          toValue: 0,
-          duration: 1500,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-
-    // Trigger SOS dispatch
-    dispatchEmergency();
-  }, []);
-
-  const dispatchEmergency = async () => {
-    const coords = await locationService.getCurrentLocation();
-    const result = await api.triggerSOS(coords.latitude, coords.longitude);
-    setNearestHospital(result);
-    setStatus("resolved");
-  };
-
-  const handleCallHospital = () => {
-    const phone = nearestHospital?.hospital_emergency_phone || "01722746018";
-    Linking.openURL(`tel:${phone}`);
-  };
-
-  const handleCall108 = () => {
-    Linking.openURL("tel:108");
-  };
-
-  const handleDirections = () => {
-    Linking.openURL("https://maps.google.com/?q=PGIMER+Chandigarh+Emergency");
+  const triggerSOS = (hosp: string) => {
+    setTargetHospital(hosp);
+    setSosModalOpen(true);
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
-      <StatusBar barStyle="light-content" backgroundColor="#B91C1C" />
+    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
 
-      {/* Top Header */}
+      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.closeButton}
-        >
-          <Text style={styles.closeText}>✕ Close</Text>
-        </TouchableOpacity>
-        <View style={styles.titleBadge}>
-          <Text style={styles.alertIcon}>🚨</Text>
-          <Text style={styles.titleText}>EMERGENCY DISPATCH</Text>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+            <Text style={styles.backBtnText}>←</Text>
+          </TouchableOpacity>
+          <View>
+            <Text style={styles.headerTitle}>Emergency &amp; Cashless</Text>
+            <Text style={styles.headerSub}>Live Telemetry &amp; 20-Min Admission</Text>
+          </View>
         </View>
-        <View style={{ width: 60 }} />
+
+        <View style={styles.statusPill}>
+          <View style={styles.livePulse} />
+          <Text style={styles.statusPillText}>Live Grid</Text>
+        </View>
       </View>
 
-      <View style={styles.content}>
-        {status === "locating" ? (
-          <View style={styles.locatingContainer}>
-            <View style={styles.radarWrapper}>
-              <Animated.View
-                style={[
-                  styles.radarRing,
-                  {
-                    transform: [{ scale: radarScale }],
-                    opacity: radarOpacity,
-                  },
-                ]}
-              />
-              <View style={styles.radarCenter}>
-                <Text style={{ fontSize: 36 }}>📡</Text>
-              </View>
-            </View>
-
-            <Text style={styles.locatingTitle}>
-              Locating Nearest Trauma Center...
-            </Text>
-            <Text style={styles.locatingSubtitle}>
-              Acquiring GPS coordinates & matching Level-1 critical care units
-            </Text>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        
+        {/* 1. IMMEDIATE MEDICAL RESPONSE MASTER CARD */}
+        <View style={styles.masterCard}>
+          <View style={styles.masterBadgeRow}>
+            <Text style={styles.masterSuper}>IMMEDIATE MEDICAL RESPONSE</Text>
           </View>
-        ) : (
-          <View style={styles.resolvedContainer}>
-            <Text style={styles.traumaAlertBadge}>
-              🚨 NEAREST LEVEL 1 TRAUMA CENTER
-            </Text>
 
-            {/* Hospital Card */}
-            <View style={styles.hospitalCard}>
-              <Text style={styles.hospitalName}>
-                {nearestHospital?.hospital_name || "PGIMER Chandigarh"}
-              </Text>
-              <Text style={styles.hospitalDetails}>
-                📍 {nearestHospital?.distance_km || 3.2} km away • ~{nearestHospital?.estimated_arrival_minutes || 8} mins transit
-              </Text>
-
-              <View style={styles.icuBadge}>
-                <Text style={styles.icuText}>
-                  🟢 {nearestHospital?.beds_icu_available || 14} ICU Beds Immediately Available
-                </Text>
-              </View>
-
-              {/* Very Large Phone Display */}
-              <View style={styles.phoneDisplay}>
-                <Text style={styles.phoneLabel}>Direct Emergency Desk:</Text>
-                <Text style={styles.phoneValue}>
-                  📞 {nearestHospital?.hospital_emergency_phone || "0172-274-6018"}
-                </Text>
-              </View>
-
-              {/* CALL NOW Big Button */}
-              <TouchableOpacity
-                style={styles.callNowButton}
-                activeOpacity={0.88}
-                onPress={handleCallHospital}
-              >
-                <Text style={styles.callNowText}>📞 CALL EMERGENCY NOW</Text>
-              </TouchableOpacity>
-
-              {/* Get Directions Link */}
-              <TouchableOpacity
-                onPress={handleDirections}
-                style={styles.directionsLink}
-              >
-                <Text style={styles.directionsText}>🗺️ Open Turn-by-Turn GPS Directions ↗</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Acknowledged Status Box */}
-            <View style={styles.statusBox}>
-              <Text style={styles.statusCheck}>✅</Text>
-              <Text style={styles.statusText}>
-                Hospital ER and triage staff have been alerted to incoming emergency dispatch
-              </Text>
-            </View>
-          </View>
-        )}
-      </View>
-
-      {/* National Ambulance Fallback Banner */}
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={styles.fallbackButton}
-          onPress={handleCall108}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.fallbackText}>
-            Can&apos;t connect? Tap here to call <Text style={{ fontWeight: "900" }}>108 (National Ambulance)</Text>
+          <Text style={styles.masterTitle}>Need an Emergency Ambulance &amp; Bed?</Text>
+          <Text style={styles.masterDesc}>
+            ALS/BLS cardiac ambulances routed immediately with real-time GPS telemetry and reserved emergency bed admission.
           </Text>
-        </TouchableOpacity>
-      </View>
+
+          <View style={styles.statsStrip}>
+            <View style={styles.statCol}>
+              <Text style={styles.statLabel}>Live ICU Beds</Text>
+              <Text style={styles.statVal}>118 Open</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statCol}>
+              <Text style={styles.statLabel}>Avg. Dispatch</Text>
+              <Text style={[styles.statVal, { color: colors.secondaryContainer }]}>12 Mins</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statCol}>
+              <Text style={styles.statLabel}>Deposit</Text>
+              <Text style={styles.statVal}>₹0 Upfront</Text>
+            </View>
+          </View>
+
+          <View style={styles.masterActions}>
+            <TouchableOpacity
+              style={styles.masterCallBtn}
+              onPress={() => Linking.openURL("tel:18006334768")}
+            >
+              <Text style={styles.masterCallText}>📞 Call 1800-MEDI-ROUTE</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.masterSosBtn}
+              onPress={() => triggerSOS("Apollo Hospitals, Bannerghatta")}
+            >
+              <Text style={styles.masterSosText}>🚨 Request Ambulance</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* 2. PRE-AUTH SELF-SERVICE TERMINAL */}
+        <View style={styles.terminalCard}>
+          <View style={styles.terminalHeader}>
+            <View>
+              <Text style={styles.terminalSuper}>SELF-SERVICE TERMINAL</Text>
+              <Text style={styles.terminalTitle}>Pre-Auth Simulator</Text>
+            </View>
+            <View style={styles.tpaLockBadge}>
+              <Text style={styles.tpaLockText}>🔒 TPA Encrypted</Text>
+            </View>
+          </View>
+
+          {/* Step 1 */}
+          <View style={styles.stepBox}>
+            <Text style={styles.stepNum}>STEP 01</Text>
+            <Text style={styles.stepLabel}>Policy or ABHA ID</Text>
+            <TextInput
+              style={styles.stepInput}
+              value={policyId}
+              onChangeText={setPolicyId}
+              placeholder="e.g. 14-digit ABHA / Policy ID"
+              placeholderTextColor={colors.textTertiary}
+            />
+            <Text style={styles.stepVerify}>✓ Verified with IRDAI Registry</Text>
+          </View>
+
+          {/* Step 2 */}
+          <View style={styles.stepBox}>
+            <Text style={styles.stepNum}>STEP 02</Text>
+            <Text style={styles.stepLabel}>Network Hospital</Text>
+            <View style={styles.stepInputMock}>
+              <Text style={styles.stepInputMockText}>{selectedHospital}</Text>
+            </View>
+            <Text style={styles.stepVerify}>✓ Medi Route Care Desk Active</Text>
+          </View>
+
+          {/* Step 3 */}
+          <View style={styles.stepBox}>
+            <Text style={styles.stepNum}>STEP 03</Text>
+            <Text style={styles.stepLabel}>Instant Pre-Auth Limit</Text>
+            <Text style={styles.stepSumText}>₹10,00,000</Text>
+
+            <View style={styles.stepMetaRow}>
+              <Text style={styles.stepMetaKey}>Room Category:</Text>
+              <Text style={styles.stepMetaVal}>Single Private Deluxe</Text>
+            </View>
+            <View style={styles.stepMetaRow}>
+              <Text style={styles.stepMetaKey}>Upfront Deposit:</Text>
+              <Text style={[styles.stepMetaVal, { color: colors.secondary }]}>Waived (₹0)</Text>
+            </View>
+
+            <TouchableOpacity
+              style={styles.tokenGenBtn}
+              onPress={() => setTokenGenerated(true)}
+            >
+              <Text style={styles.tokenGenBtnText}>Generate Admission Token</Text>
+            </TouchableOpacity>
+
+            {tokenGenerated && (
+              <View style={styles.tokenSuccessBox}>
+                <Text style={styles.tokenSuccessTitle}>Token #MR-8829-BLR Generated!</Text>
+                <Text style={styles.tokenSuccessSub}>
+                  Present at Reception Desk 4 for instant cashless admission without deposit.
+                </Text>
+              </View>
+            )}
+          </View>
+        </View>
+
+        {/* 3. 20-MINUTE WORKFLOW TIMELINE */}
+        <View style={styles.timelineCard}>
+          <Text style={styles.timelineSuper}>SURGICAL-GRADE PRECISION</Text>
+          <Text style={styles.timelineTitle}>How We Secure Cashless in 20 Mins</Text>
+
+          <View style={styles.timelineList}>
+            {[
+              { num: "1", time: "0 - 3 min", title: "Digital Intake & ABHA Link", desc: "OCR parses policy credentials without paperwork." },
+              { num: "2", time: "3 - 8 min", title: "TPA Gateway Sync", desc: "Automated pre-underwriting validates active coverage." },
+              { num: "3", time: "8 - 15 min", title: "Zero-Deposit Guarantee", desc: "Medi Route issues direct cashless guarantee to billing." },
+              { num: "4", time: "15 - 20 min", title: "Express Room Allotment", desc: "Proceed straight to inpatient room with Care Buddy." },
+            ].map((step) => (
+              <View key={step.num} style={styles.timelineItem}>
+                <View style={styles.timelineCircle}>
+                  <Text style={styles.timelineCircleText}>{step.num}</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                    <Text style={styles.timelineStepTitle}>{step.title}</Text>
+                    <Text style={styles.timelineStepTime}>{step.time}</Text>
+                  </View>
+                  <Text style={styles.timelineStepDesc}>{step.desc}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* 4. EMERGENCY TRAUMA CENTERS ROSTER */}
+        <View style={styles.rosterCard}>
+          <Text style={styles.rosterSuper}>LIVE HOSPITAL ROSTER</Text>
+          <Text style={styles.rosterTitle}>Bangalore Trauma Hubs &amp; Bed Grid</Text>
+
+          {[
+            { name: "Manipal Hospital", loc: "Old Airport Road, Kodihalli", dist: "2.4 km", icu: "9 Open", phone: "08025024444" },
+            { name: "Apollo Hospitals", loc: "Bannerghatta Main Rd", dist: "5.1 km", icu: "14 Open", phone: "08026304050" },
+            { name: "Sakra World Hospital", loc: "Outer Ring Rd, Marathahalli", dist: "1.2 km", icu: "6 Open", phone: "08049694969" },
+          ].map((center) => (
+            <View key={center.name} style={styles.centerItem}>
+              <View style={styles.centerTop}>
+                <View>
+                  <Text style={styles.centerName}>{center.name}</Text>
+                  <Text style={styles.centerLoc}>{center.loc}</Text>
+                </View>
+                <View style={styles.centerDistBadge}>
+                  <Text style={styles.centerDistText}>{center.dist}</Text>
+                </View>
+              </View>
+
+              <View style={styles.centerIcuBox}>
+                <Text style={styles.centerIcuLabel}>Live ICU Status</Text>
+                <Text style={styles.centerIcuVal}>● {center.icu} ICU Beds</Text>
+              </View>
+
+              <View style={styles.centerActions}>
+                <TouchableOpacity
+                  style={styles.centerCallBtn}
+                  onPress={() => Linking.openURL(`tel:${center.phone}`)}
+                >
+                  <Text style={styles.centerCallText}>📞 Call Desk</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.centerSosBtn}
+                  onPress={() => triggerSOS(center.name)}
+                >
+                  <Text style={styles.centerSosText}>Route SOS</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))}
+        </View>
+
+        <View style={{ height: 60 }} />
+      </ScrollView>
+
+      {/* SOS TELEMETRY MODAL */}
+      {sosModalOpen && (
+        <Modal visible={sosModalOpen} transparent animationType="fade">
+          <View style={styles.modalOverlay}>
+            <View style={styles.sosModalBox}>
+              <View style={styles.sosModalTop}>
+                <Text style={styles.sosModalHeading}>🚨 Ambulance Dispatched!</Text>
+                <TouchableOpacity onPress={() => setSosModalOpen(false)}>
+                  <Text style={{ fontSize: 18, color: colors.textSecondary }}>✕</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.sosTelemetryData}>
+                <View style={styles.sosDataRow}>
+                  <Text style={styles.sosDataKey}>Assigned Vehicle:</Text>
+                  <Text style={styles.sosDataVal}>KA-01-MJ-9921 (Cardiac ALS)</Text>
+                </View>
+                <View style={styles.sosDataRow}>
+                  <Text style={styles.sosDataKey}>Driver &amp; Paramedic:</Text>
+                  <Text style={styles.sosDataVal}>Suraj P. (+91 98450-XXXXX)</Text>
+                </View>
+                <View style={styles.sosDataRow}>
+                  <Text style={styles.sosDataKey}>Reserved Facility:</Text>
+                  <Text style={styles.sosDataVal}>{targetHospital}</Text>
+                </View>
+                <View style={styles.sosDataRow}>
+                  <Text style={styles.sosDataKey}>Live ETA:</Text>
+                  <Text style={[styles.sosDataVal, { color: colors.secondary }]}>8 Mins (GPS Tracked)</Text>
+                </View>
+                <View style={styles.sosDataRow}>
+                  <Text style={styles.sosDataKey}>Deposit Status:</Text>
+                  <Text style={[styles.sosDataVal, { color: colors.badgeCashless }]}>Waived (₹0)</Text>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={styles.sosHotlineBtn}
+                onPress={() => Linking.openURL("tel:18006334768")}
+              >
+                <Text style={styles.sosHotlineText}>📞 Call Dispatch Desk</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      )}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    backgroundColor: "#B91C1C", // High contrast emergency red
-    paddingTop: Platform.OS === "android" ? (StatusBar.currentHeight || 0) : 0,
+    backgroundColor: colors.primary,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(255, 255, 255, 0.2)",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: colors.primary,
   },
-  closeButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    backgroundColor: "rgba(0, 0, 0, 0.2)",
-    borderRadius: borderRadius.pill,
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
   },
-  closeText: {
-    color: colors.textInverse,
-    fontWeight: "700",
-    fontSize: 12,
+  backBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: "rgba(255,255,255,0.15)",
+    alignItems: "center",
+    justifyContent: "center",
   },
-  titleBadge: {
+  backBtnText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+  },
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#FFFFFF",
+  },
+  headerSub: {
+    fontSize: 11,
+    color: colors.primaryLight,
+  },
+  statusPill: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+    backgroundColor: "rgba(13, 148, 136, 0.25)",
   },
-  alertIcon: {
-    fontSize: 16,
+  livePulse: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.badgeCashless,
   },
-  titleText: {
-    color: colors.textInverse,
-    fontWeight: "900",
-    fontSize: 14,
-    letterSpacing: 1,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: spacing.lg,
-    justifyContent: "center",
-  },
-  locatingContainer: {
-    alignItems: "center",
-    paddingVertical: spacing.huge,
-  },
-  radarWrapper: {
-    width: 140,
-    height: 140,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: spacing.xxl,
-  },
-  radarRing: {
-    position: "absolute",
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: "rgba(255, 255, 255, 0.4)",
-  },
-  radarCenter: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: colors.card,
-    alignItems: "center",
-    justifyContent: "center",
-    ...shadows.floatingButton,
-  },
-  locatingTitle: {
-    color: colors.textInverse,
-    fontSize: 20,
-    fontWeight: "900",
-    textAlign: "center",
-    marginBottom: spacing.xs,
-  },
-  locatingSubtitle: {
-    color: "rgba(255, 255, 255, 0.8)",
-    fontSize: 13,
-    textAlign: "center",
-    paddingHorizontal: spacing.xl,
-  },
-  resolvedContainer: {
-    gap: spacing.md,
-  },
-  traumaAlertBadge: {
-    color: colors.textInverse,
-    fontSize: 12,
-    fontWeight: "900",
-    letterSpacing: 1,
-    textAlign: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.25)",
-    paddingVertical: 6,
-    borderRadius: borderRadius.pill,
-  },
-  hospitalCard: {
-    backgroundColor: colors.card,
-    borderRadius: borderRadius.card, // 16px
-    padding: spacing.xl,
-    alignItems: "center",
-    ...shadows.cardHover,
-  },
-  hospitalName: {
-    fontSize: 20,
-    fontWeight: "900",
-    color: colors.primaryDark,
-    textAlign: "center",
-    marginBottom: 4,
-  },
-  hospitalDetails: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    marginBottom: spacing.md,
-    textAlign: "center",
-  },
-  icuBadge: {
-    backgroundColor: colors.successLight,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: borderRadius.pill,
-    marginBottom: spacing.lg,
-  },
-  icuText: {
-    color: colors.success,
-    fontSize: 12,
+  statusPillText: {
+    fontSize: 10,
     fontWeight: "800",
+    color: "#FFFFFF",
   },
-  phoneDisplay: {
-    alignItems: "center",
-    marginBottom: spacing.lg,
+  scrollView: {
+    flex: 1,
+    backgroundColor: colors.canvas,
   },
-  phoneLabel: {
-    fontSize: 11,
-    color: colors.textTertiary,
-    fontWeight: "700",
-    textTransform: "uppercase",
+  scrollContent: {
+    padding: 16,
   },
-  phoneValue: {
-    fontSize: 26, // Very large phone number
-    fontWeight: "900",
-    color: colors.emergency,
-    marginTop: 2,
+  masterCard: {
+    backgroundColor: colors.primary,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
   },
-  callNowButton: {
-    width: "100%",
-    backgroundColor: colors.emergency,
-    paddingVertical: 16,
-    borderRadius: borderRadius.card,
-    alignItems: "center",
-    justifyContent: "center",
-    ...shadows.floatingButton,
+  masterBadgeRow: {
+    marginBottom: 6,
   },
-  callNowText: {
-    color: colors.textInverse,
-    fontWeight: "900",
-    fontSize: 16,
+  masterSuper: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: colors.secondaryContainer,
     letterSpacing: 0.5,
   },
-  directionsLink: {
-    marginTop: spacing.md,
-    paddingVertical: 6,
+  masterTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#FFFFFF",
+    lineHeight: 26,
+    marginBottom: 6,
   },
-  directionsText: {
-    color: colors.primary,
-    fontWeight: "700",
-    fontSize: 13,
+  masterDesc: {
+    fontSize: 12,
+    color: colors.primaryLight,
+    lineHeight: 18,
+    marginBottom: 14,
   },
-  statusBox: {
+  statsStrip: {
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.25)",
-    padding: spacing.md,
-    borderRadius: borderRadius.card,
-    gap: spacing.sm,
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "rgba(255,255,255,0.15)",
+    marginBottom: 14,
   },
-  statusCheck: {
-    fontSize: 18,
+  statCol: {
+    alignItems: "center",
   },
-  statusText: {
+  statLabel: {
+    fontSize: 10,
+    color: colors.primaryLight,
+  },
+  statVal: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#FFFFFF",
+    marginTop: 2,
+  },
+  statDivider: {
+    width: 1,
+    height: 24,
+    backgroundColor: "rgba(255,255,255,0.15)",
+  },
+  masterActions: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  masterCallBtn: {
     flex: 1,
-    color: colors.textInverse,
-    fontSize: 12,
-    fontWeight: "600",
-    lineHeight: 16,
-  },
-  footer: {
-    padding: spacing.lg,
-    paddingBottom: Platform.OS === "android" ? 24 : spacing.lg,
-  },
-  fallbackButton: {
-    backgroundColor: "rgba(0, 0, 0, 0.35)",
+    backgroundColor: colors.error,
+    borderRadius: 10,
     paddingVertical: 12,
-    paddingHorizontal: spacing.md,
-    borderRadius: borderRadius.card,
     alignItems: "center",
   },
-  fallbackText: {
-    color: colors.textInverse,
+  masterCallText: {
     fontSize: 12,
-    textAlign: "center",
+    fontWeight: "800",
+    color: "#FFFFFF",
+  },
+  masterSosBtn: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  masterSosText: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: colors.primary,
+  },
+  terminalCard: {
+    backgroundColor: colors.card,
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+    marginBottom: 16,
+  },
+  terminalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  terminalSuper: {
+    fontSize: 9,
+    fontWeight: "800",
+    color: colors.secondary,
+    letterSpacing: 0.5,
+  },
+  terminalTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: colors.primary,
+  },
+  tpaLockBadge: {
+    backgroundColor: colors.surfaceIce,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+  },
+  tpaLockText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: colors.secondary,
+  },
+  stepBox: {
+    backgroundColor: colors.canvas,
+    borderRadius: 10,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+    marginBottom: 10,
+  },
+  stepNum: {
+    fontSize: 9,
+    fontWeight: "800",
+    color: colors.secondary,
+  },
+  stepLabel: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: colors.onSurface,
+    marginTop: 2,
+    marginBottom: 6,
+  },
+  stepInput: {
+    backgroundColor: colors.card,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    fontSize: 13,
+    fontWeight: "700",
+    color: colors.onSurface,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+  },
+  stepInputMock: {
+    backgroundColor: colors.card,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+  },
+  stepInputMockText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: colors.onSurface,
+  },
+  stepVerify: {
+    fontSize: 10,
+    fontWeight: "600",
+    color: colors.badgeCashless,
+    marginTop: 6,
+  },
+  stepSumText: {
+    fontSize: 22,
+    fontWeight: "800",
+    color: colors.primary,
+    marginBottom: 8,
+  },
+  stepMetaRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 4,
+  },
+  stepMetaKey: {
+    fontSize: 11,
+    color: colors.textSecondary,
+  },
+  stepMetaVal: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: colors.onSurface,
+  },
+  tokenGenBtn: {
+    backgroundColor: colors.primary,
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  tokenGenBtnText: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#FFFFFF",
+  },
+  tokenSuccessBox: {
+    backgroundColor: colors.surfaceIce,
+    borderRadius: 8,
+    padding: 10,
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+  },
+  tokenSuccessTitle: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: colors.primary,
+  },
+  tokenSuccessSub: {
+    fontSize: 10,
+    color: colors.textSecondary,
+    marginTop: 2,
+    lineHeight: 14,
+  },
+  timelineCard: {
+    backgroundColor: colors.card,
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+    marginBottom: 16,
+  },
+  timelineSuper: {
+    fontSize: 9,
+    fontWeight: "800",
+    color: colors.secondary,
+    letterSpacing: 0.5,
+  },
+  timelineTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: colors.primary,
+    marginBottom: 12,
+  },
+  timelineList: {
+    gap: 12,
+  },
+  timelineItem: {
+    flexDirection: "row",
+    gap: 10,
+    alignItems: "flex-start",
+  },
+  timelineCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: colors.surfaceIce,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  timelineCircleText: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: colors.secondary,
+  },
+  timelineStepTitle: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: colors.onSurface,
+  },
+  timelineStepTime: {
+    fontSize: 10,
+    fontWeight: "600",
+    color: colors.textSecondary,
+  },
+  timelineStepDesc: {
+    fontSize: 10,
+    color: colors.textSecondary,
+    marginTop: 2,
+    lineHeight: 14,
+  },
+  rosterCard: {
+    backgroundColor: colors.card,
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+    marginBottom: 16,
+  },
+  rosterSuper: {
+    fontSize: 9,
+    fontWeight: "800",
+    color: colors.error,
+    letterSpacing: 0.5,
+  },
+  rosterTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: colors.primary,
+    marginBottom: 12,
+  },
+  centerItem: {
+    backgroundColor: colors.canvas,
+    borderRadius: 10,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+    marginBottom: 10,
+  },
+  centerTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
+  centerName: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: colors.onSurface,
+  },
+  centerLoc: {
+    fontSize: 10,
+    color: colors.textSecondary,
+    marginTop: 1,
+  },
+  centerDistBadge: {
+    backgroundColor: colors.surfaceIce,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  centerDistText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: colors.secondary,
+  },
+  centerIcuBox: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    backgroundColor: colors.card,
+    borderRadius: 6,
+    padding: 8,
+    marginVertical: 8,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+  },
+  centerIcuLabel: {
+    fontSize: 10,
+    color: colors.textSecondary,
+  },
+  centerIcuVal: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: colors.badgeCashless,
+  },
+  centerActions: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  centerCallBtn: {
+    flex: 1,
+    backgroundColor: colors.surfaceIce,
+    borderRadius: 8,
+    paddingVertical: 8,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+  },
+  centerCallText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: colors.secondary,
+  },
+  centerSosBtn: {
+    flex: 1,
+    backgroundColor: colors.primary,
+    borderRadius: 8,
+    paddingVertical: 8,
+    alignItems: "center",
+  },
+  centerSosText: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#FFFFFF",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(19, 27, 46, 0.7)",
+    justifyContent: "center",
+    padding: 20,
+  },
+  sosModalBox: {
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+  },
+  sosModalTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderSubtle,
+  },
+  sosModalHeading: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: colors.error,
+  },
+  sosTelemetryData: {
+    backgroundColor: colors.canvas,
+    borderRadius: 10,
+    padding: 12,
+    marginVertical: 12,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+  },
+  sosDataRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  sosDataKey: {
+    fontSize: 11,
+    color: colors.textSecondary,
+  },
+  sosDataVal: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: colors.onSurface,
+  },
+  sosHotlineBtn: {
+    backgroundColor: colors.error,
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  sosHotlineText: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#FFFFFF",
   },
 });

@@ -1,6 +1,6 @@
 /**
  * HospitalCard.tsx — Mobile Hospital Card
- * Shows transparent package pricing, real patient reviews, live ICU telemetry, and 1-tap ambulance calling.
+ * Clean, modern, de-cluttered healthcare card with essential signals.
  */
 
 import React from "react";
@@ -21,197 +21,114 @@ export default function HospitalCard({
   hospital,
   onPress,
   onCompare,
-  onViewReviews,
   isInCompare = false,
 }: HospitalCardProps) {
-  const isGovt = hospital.type === "Government";
+  const isGovt = hospital.type?.toLowerCase() === "government";
 
   const handleCallAmbulance = () => {
     const phone = hospital.ambulance_phone || hospital.emergency_phone || "108";
     Linking.openURL(`tel:${phone}`);
   };
 
-  const firstReview = hospital.reviews && hospital.reviews.length > 0 ? hospital.reviews[0] : null;
-
   return (
     <TouchableOpacity
-      activeOpacity={0.92}
+      activeOpacity={0.88}
       onPress={onPress}
       style={styles.card}
     >
-      {/* Top Header Row */}
+      {/* Header Row: Name & Govt/Pvt Badge */}
       <View style={styles.headerRow}>
         <View style={{ flex: 1, paddingRight: spacing.sm }}>
           <Text style={styles.name} numberOfLines={1}>
             {hospital.name}
           </Text>
           <Text style={styles.location}>
-            📍 {hospital.city}, {hospital.state} • {hospital.distance_km} km
+            📍 {hospital.city}, {hospital.state} • {hospital.distance_km || 3.2} km
           </Text>
         </View>
 
-        <TouchableOpacity
-          style={styles.ratingBadge}
-          onPress={onViewReviews}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.star}>⭐</Text>
+        <View style={styles.ratingBadge}>
+          <Text style={styles.star}>★</Text>
           <Text style={styles.ratingText}>
-            {typeof hospital.overall_rating === "number" ? hospital.overall_rating.toFixed(1) : "4.7"}
+            {typeof hospital.overall_rating === "number"
+              ? hospital.overall_rating.toFixed(1)
+              : "4.6"}
           </Text>
           <Text style={styles.reviewCount}>({hospital.total_reviews})</Text>
-        </TouchableOpacity>
+        </View>
       </View>
 
-      {/* Badges Row */}
-      <View style={styles.badgesRow}>
-        <View style={[styles.badge, isGovt ? styles.badgeGovt : styles.badgePvt]}>
-          <Text style={[styles.badgeText, isGovt ? styles.badgeGovtText : styles.badgePvtText]}>
+      {/* Clinical Telemetry & Key Signals */}
+      <View style={styles.signalsRow}>
+        {/* ICU Signal */}
+        <View style={[styles.signalPill, styles.icuPill]}>
+          <View style={[styles.dot, { backgroundColor: hospital.beds_icu_available > 0 ? colors.success : colors.emergency }]} />
+          <Text style={styles.icuText}>
+            {hospital.beds_icu_available} ICU Beds Free
+          </Text>
+        </View>
+
+        {/* PMJAY Signal */}
+        {hospital.is_pmjay_empanelled ? (
+          <View style={[styles.signalPill, styles.pmjayPill]}>
+            <Text style={styles.pmjayText}>🛡️ PM-JAY Cashless</Text>
+          </View>
+        ) : null}
+
+        {/* Type Pill */}
+        <View style={[styles.signalPill, isGovt ? styles.govtPill : styles.pvtPill]}>
+          <Text style={[styles.typeText, isGovt ? styles.govtText : styles.pvtText]}>
             {hospital.type}
           </Text>
         </View>
-
-        {hospital.accreditation ? (
-          <View style={[styles.badge, styles.badgeAccr]}>
-            <Text style={styles.badgeAccrText}>{hospital.accreditation}</Text>
-          </View>
-        ) : null}
-
-        {hospital.is_pmjay_empanelled ? (
-          <View style={[styles.badge, styles.badgePmjay]}>
-            <Text style={styles.badgePmjayText}>PMJAY 100% Cashless ✓</Text>
-          </View>
-        ) : null}
-
-        {hospital.is_trauma_center ? (
-          <View style={[styles.badge, styles.badgeTrauma]}>
-            <Text style={styles.badgeTraumaText}>🚨 {hospital.trauma_level || "Trauma"}</Text>
-          </View>
-        ) : null}
       </View>
 
-      {/* Verified Indicative Tariff Row */}
+      {/* Clinical Track Record (Mock Data) */}
+      {hospital.top_disease_treated ? (
+        <View style={styles.clinicalRow}>
+          <Text style={styles.clinicalIcon}>🩺</Text>
+          <Text style={styles.clinicalText} numberOfLines={1}>
+            <Text style={styles.clinicalHighlight}>{hospital.top_disease_treated}</Text>
+            {hospital.total_patients_treated ? ` • ${Number(hospital.total_patients_treated).toLocaleString()} treated` : ""}
+            {hospital.overall_success_ratio ? ` (✓ ${hospital.overall_success_ratio})` : ""}
+          </Text>
+        </View>
+      ) : null}
+
+      {/* Indicative Tariff */}
       <View style={styles.tariffRow}>
-        <View>
-          <Text style={styles.tariffLabel}>Indicative Procedure Tariff</Text>
-          <Text style={styles.tariffValue}>{hospital.cost_indicative || "₹75,000 – ₹1,80,000"}</Text>
-        </View>
-        <View style={{ alignItems: "flex-end" }}>
-          <Text style={styles.tariffLabel}>Patient Billing</Text>
-          <Text style={[styles.tariffScheme, hospital.is_pmjay_empanelled ? styles.pmjayActive : styles.pmjayInactive]}>
-            {hospital.is_pmjay_empanelled ? "🛡️ Empanelled Cashless" : "Self-Pay / Insurance"}
-          </Text>
-        </View>
+        <Text style={styles.tariffLabel}>Indicative Tariff:</Text>
+        <Text style={styles.tariffValue} numberOfLines={1}>
+          {hospital.cost_indicative || (isGovt ? "100% Free / Subsidized" : "₹75,000 – ₹1,80,000")}
+        </Text>
       </View>
 
-      {/* Clinical Strengths / Pros Badges */}
-      {hospital.pros && hospital.pros.length > 0 && (
-        <View style={styles.prosContainer}>
-          {hospital.pros.slice(0, 2).map((pro, idx) => (
-            <View key={idx} style={styles.proChip}>
-              <Text style={styles.proChipText} numberOfLines={1}>
-                ✓ {pro}
-              </Text>
-            </View>
-          ))}
-        </View>
-      )}
-
-      {/* Authentic Patient Review Snippet */}
-      {firstReview && (
-        <TouchableOpacity
-          style={styles.reviewSnippet}
-          onPress={onViewReviews}
-          activeOpacity={0.8}
-        >
-          <View style={styles.reviewHeader}>
-            <Text style={styles.reviewAuthor} numberOfLines={1}>
-              💬 Patient: {firstReview.author_name} ({firstReview.treatment_category})
-            </Text>
-            <Text style={styles.reviewStars}>⭐ {firstReview.rating_overall}/5</Text>
-          </View>
-          <Text style={styles.reviewComment} numberOfLines={2}>
-            "{firstReview.comment}"
-          </Text>
-          <Text style={styles.viewMoreReviews}>
-            View all {hospital.reviews?.length || hospital.total_reviews} verified reviews →
-          </Text>
-        </TouchableOpacity>
-      )}
-
-      {/* ICU Telemetry Row */}
-      <View style={styles.telemetryRow}>
-        <View style={styles.telemetryItem}>
-          <Text
-            style={[
-              styles.telemetryValue,
-              { color: hospital.beds_icu_available > 0 ? colors.success : colors.emergency },
-            ]}
-          >
-            {hospital.beds_icu_available}
-          </Text>
-          <Text style={styles.telemetryLabel}>ICU Available</Text>
-        </View>
-
-        <View style={styles.telemetryDivider} />
-
-        <View style={styles.telemetryItem}>
-          <Text style={styles.telemetryValue}>{hospital.beds_icu}</Text>
-          <Text style={styles.telemetryLabel}>Total ICU</Text>
-        </View>
-
-        <View style={styles.telemetryDivider} />
-
-        <View style={styles.telemetryItem}>
-          <Text style={styles.telemetryValue}>{hospital.beds_total}</Text>
-          <Text style={styles.telemetryLabel}>Total Beds</Text>
-        </View>
-      </View>
-
-      {/* Action Buttons Row */}
+      {/* Action Row */}
       <View style={styles.actionsRow}>
         <TouchableOpacity
-          style={styles.ambulanceButton}
+          style={styles.callButton}
           onPress={handleCallAmbulance}
-          activeOpacity={0.85}
+          activeOpacity={0.8}
         >
-          <Text style={styles.ambulanceButtonText}>🚑 Ambulance</Text>
-        </TouchableOpacity>
-
-        {onViewReviews && (
-          <TouchableOpacity
-            style={styles.reviewsButton}
-            onPress={onViewReviews}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.reviewsButtonText}>💬 Reviews</Text>
-          </TouchableOpacity>
-        )}
-
-        <TouchableOpacity
-          style={styles.primaryButton}
-          onPress={onPress}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.primaryButtonText}>Details →</Text>
+          <Text style={styles.callIcon}>📞</Text>
+          <Text style={styles.callText}>Emergency Call</Text>
         </TouchableOpacity>
 
         {onCompare && (
           <TouchableOpacity
-            style={[styles.compareButton, isInCompare && styles.compareButtonActive]}
+            style={[styles.compareButton, isInCompare && styles.compareActive]}
             onPress={onCompare}
-            activeOpacity={0.85}
+            activeOpacity={0.8}
           >
-            <Text
-              style={[
-                styles.compareButtonText,
-                isInCompare && styles.compareButtonTextActive,
-              ]}
-            >
+            <Text style={[styles.compareText, isInCompare && styles.compareActiveText]}>
               {isInCompare ? "✓ Added" : "+ Compare"}
             </Text>
           </TouchableOpacity>
         )}
+
+        <View style={styles.viewDetailsButton}>
+          <Text style={styles.viewDetailsText}>View Details →</Text>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -220,8 +137,8 @@ export default function HospitalCard({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.card,
-    borderRadius: borderRadius.card, // 16px
-    padding: spacing.lg,
+    borderRadius: borderRadius.card,
+    padding: spacing.md,
     marginBottom: spacing.md,
     borderWidth: 1,
     borderColor: colors.borderLight,
@@ -229,283 +146,191 @@ const styles = StyleSheet.create({
   },
   headerRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: spacing.sm,
+    justifyContent: "space-between",
   },
   name: {
     fontSize: 16,
-    fontWeight: "800",
-    color: colors.primaryDark,
-    marginBottom: 2,
+    fontWeight: "700",
+    color: colors.textPrimary,
   },
   location: {
     fontSize: 12,
     color: colors.textSecondary,
+    marginTop: 2,
   },
   ratingBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FEF3C7",
+    backgroundColor: "rgba(245, 158, 11, 0.1)",
     paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: borderRadius.pill,
+    paddingVertical: 3,
+    borderRadius: 8,
     gap: 3,
   },
   star: {
+    color: "#D97706",
     fontSize: 12,
-    color: colors.warning,
   },
   ratingText: {
-    fontSize: 13,
-    fontWeight: "800",
-    color: "#92400E",
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#B45309",
   },
   reviewCount: {
     fontSize: 11,
-    color: "#B45309",
+    color: colors.textTertiary,
   },
-  badgesRow: {
+  signalsRow: {
     flexDirection: "row",
+    alignItems: "center",
     flexWrap: "wrap",
     gap: 6,
-    marginBottom: spacing.sm,
+    marginTop: spacing.sm,
   },
-  badge: {
+  signalPill: {
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: borderRadius.pill,
+    borderRadius: 6,
   },
-  badgeText: {
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 5,
+  },
+  icuPill: {
+    backgroundColor: "rgba(22, 163, 74, 0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(22, 163, 74, 0.25)",
+  },
+  icuText: {
     fontSize: 11,
-    fontWeight: "700",
-  },
-  badgeGovt: {
-    backgroundColor: colors.primaryLight,
-  },
-  badgeGovtText: {
-    color: colors.primary,
-    fontSize: 11,
-    fontWeight: "700",
-  },
-  badgePvt: {
-    backgroundColor: colors.accentLight,
-  },
-  badgePvtText: {
-    color: colors.accentDark,
-    fontSize: 11,
-    fontWeight: "700",
-  },
-  badgeAccr: {
-    backgroundColor: colors.successLight,
-  },
-  badgeAccrText: {
+    fontWeight: "800",
     color: colors.success,
+  },
+  pmjayPill: {
+    backgroundColor: colors.thistleLight,
+    borderWidth: 1,
+    borderColor: colors.thistleBorder,
+  },
+  pmjayText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: colors.primary,
+  },
+  govtPill: {
+    backgroundColor: "#F4ECF6",
+    borderWidth: 1,
+    borderColor: colors.thistleBorder,
+  },
+  pvtPill: {
+    backgroundColor: colors.cardElevated,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+  },
+  typeText: {
     fontSize: 11,
     fontWeight: "700",
   },
-  badgePmjay: {
-    backgroundColor: "#FDF4FF",
+  govtText: {
+    color: colors.primary,
   },
-  badgePmjayText: {
-    color: "#A21CAF",
+  pvtText: {
+    color: colors.textSecondary,
+  },
+  clinicalRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(13, 148, 136, 0.08)",
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 6,
+    marginTop: spacing.xs,
+    gap: 4,
+  },
+  clinicalIcon: {
     fontSize: 11,
-    fontWeight: "700",
   },
-  badgeTrauma: {
-    backgroundColor: colors.emergencyLight,
-  },
-  badgeTraumaText: {
-    color: colors.emergency,
+  clinicalText: {
     fontSize: 11,
+    color: "#0f766e",
+    flex: 1,
+  },
+  clinicalHighlight: {
     fontWeight: "700",
   },
   tariffRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "#F8FAFC",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: borderRadius.sm,
-    marginBottom: spacing.sm,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
+    gap: 6,
+    marginTop: spacing.sm,
+    paddingTop: spacing.xs,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderLight,
   },
   tariffLabel: {
-    fontSize: 10,
+    fontSize: 11,
     color: colors.textTertiary,
-    fontWeight: "600",
   },
   tariffValue: {
-    fontSize: 13,
-    fontWeight: "800",
-    color: colors.primaryDark,
-  },
-  tariffScheme: {
-    fontSize: 11,
-    fontWeight: "700",
-  },
-  pmjayActive: {
-    color: colors.success,
-  },
-  pmjayInactive: {
-    color: colors.textSecondary,
-  },
-  prosContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 6,
-    marginBottom: spacing.sm,
-  },
-  proChip: {
-    backgroundColor: "#F0FDF4",
-    borderColor: "#BBF7D0",
-    borderWidth: 1,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: borderRadius.sm,
-    maxWidth: "100%",
-  },
-  proChipText: {
-    color: "#166534",
-    fontSize: 11,
-    fontWeight: "600",
-  },
-  reviewSnippet: {
-    backgroundColor: "#F8FAFC",
-    borderRadius: borderRadius.sm,
-    padding: 8,
-    marginBottom: spacing.sm,
-    borderLeftWidth: 3,
-    borderLeftColor: colors.primary,
-  },
-  reviewHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 2,
-  },
-  reviewAuthor: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "700",
     color: colors.textPrimary,
     flex: 1,
-    marginRight: 4,
-  },
-  reviewStars: {
-    fontSize: 11,
-    fontWeight: "800",
-    color: "#D97706",
-  },
-  reviewComment: {
-    fontSize: 11,
-    fontStyle: "italic",
-    color: colors.textSecondary,
-    lineHeight: 15,
-  },
-  viewMoreReviews: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: colors.primary,
-    marginTop: 4,
-  },
-  telemetryRow: {
-    flexDirection: "row",
-    backgroundColor: colors.background,
-    borderRadius: borderRadius.md,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    alignItems: "center",
-    justifyContent: "space-around",
-    marginBottom: spacing.md,
-  },
-  telemetryItem: {
-    alignItems: "center",
-  },
-  telemetryValue: {
-    fontSize: 16,
-    fontWeight: "900",
-    color: colors.textPrimary,
-  },
-  telemetryLabel: {
-    fontSize: 10,
-    color: colors.textTertiary,
-    marginTop: 1,
-  },
-  telemetryDivider: {
-    width: 1,
-    height: 24,
-    backgroundColor: colors.border,
   },
   actionsRow: {
     flexDirection: "row",
-    gap: 6,
     alignItems: "center",
+    gap: 8,
+    marginTop: spacing.sm,
   },
-  ambulanceButton: {
-    backgroundColor: colors.emergencyLight,
-    borderWidth: 1,
-    borderColor: colors.emergencyBorder,
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-    borderRadius: borderRadius.md,
+  callButton: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: "rgba(239, 68, 68, 0.08)",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    gap: 4,
   },
-  ambulanceButtonText: {
-    color: colors.emergency,
-    fontWeight: "700",
-    fontSize: 11,
-  },
-  reviewsButton: {
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-    borderRadius: borderRadius.md,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  reviewsButtonText: {
-    color: colors.primaryDark,
-    fontWeight: "700",
-    fontSize: 11,
-  },
-  primaryButton: {
-    flex: 1,
-    backgroundColor: colors.primary,
-    paddingVertical: 8,
-    borderRadius: borderRadius.md,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  primaryButtonText: {
-    color: colors.textInverse,
-    fontWeight: "700",
+  callIcon: {
     fontSize: 12,
   },
-  compareButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  compareButtonActive: {
-    borderColor: colors.accent,
-    backgroundColor: colors.accentLight,
-  },
-  compareButtonText: {
-    color: colors.textSecondary,
-    fontWeight: "700",
+  callText: {
     fontSize: 11,
+    fontWeight: "700",
+    color: colors.emergency,
   },
-  compareButtonTextActive: {
-    color: colors.accentDark,
+  compareButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+  },
+  compareActive: {
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
+  },
+  compareText: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: colors.textSecondary,
+  },
+  compareActiveText: {
+    color: colors.textInverse,
+  },
+  viewDetailsButton: {
+    marginLeft: "auto",
+    paddingVertical: 6,
+  },
+  viewDetailsText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: colors.accent,
   },
 });

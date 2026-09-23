@@ -134,3 +134,7 @@ htmlcov/
 
 # ── Uploads (local dev only) ──────────────────
 backend/uploads/
+
+# ── Design Reference Assets ───────────────────
+stitch/
+

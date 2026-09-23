@@ -15,14 +15,19 @@ from typing import Optional
 
 logger = structlog.get_logger()
 
-# --------------------------------------------------
-# 60+ Hospitals Dataset
-# --------------------------------------------------
-HOSPITALS_DATA = [
-    # ── Chandigarh Tricity: Chandigarh ──
-    {
-        "name": "PGIMER Chandigarh",
-        "type": "government",
+import json
+from pathlib import Path
+
+_all_hospitals_file = Path(__file__).resolve().parent / "allHospitals.json"
+if _all_hospitals_file.exists():
+    with open(_all_hospitals_file, "r", encoding="utf-8") as _f:
+        HOSPITALS_DATA = json.load(_f)
+else:
+    HOSPITALS_DATA = [
+        # ── Chandigarh Tricity: Chandigarh ──
+        {
+            "name": "PGIMER Chandigarh",
+            "type": "government",
         "address": "Sector 12, Chandigarh",
         "city": "Chandigarh",
         "state": "Chandigarh",

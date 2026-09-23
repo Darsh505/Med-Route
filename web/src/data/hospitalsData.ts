@@ -20,6 +20,7 @@ export interface HospitalOption {
   city: string;
   state: string;
   address: string;
+  pincode?: string;
   type: string;
   accreditation: string;
   is_pmjay_empanelled: boolean;
@@ -47,6 +48,29 @@ export interface HospitalOption {
   description: string;
   is_trauma_center: boolean;
   trauma_level: string;
+  procedures?: DiseaseProcedureItem[];
+  top_disease_treated?: string;
+  total_patients_treated?: number;
+  avg_treatment_cost?: number;
+  overall_success_ratio?: string;
+}
+
+export interface DiseaseProcedureItem {
+  name: string;
+  disease: string;
+  category: string;
+  cost_avg: number;
+  cost_min: number;
+  cost_max: number;
+  cost_formatted: string;
+  success_rate: number;
+  success_ratio: string;
+  patients_treated: number;
+  volume_per_year: number;
+  pmjay_covered: boolean;
+  pmjay_package_rate: number;
+  average_stay_days: number;
+  wait_time_days: number;
 }
 
 export const ALL_HOSPITALS: HospitalOption[] = (rawHospitals as unknown as HospitalOption[]).map((h) => ({
@@ -74,6 +98,11 @@ export const ALL_HOSPITALS: HospitalOption[] = (rawHospitals as unknown as Hospi
   description: h.description || "",
   is_trauma_center: h.is_trauma_center ?? true,
   trauma_level: h.trauma_level || (h.type?.toLowerCase() === "government" ? "Level 1" : "Level 2"),
+  procedures: h.procedures || [],
+  top_disease_treated: h.top_disease_treated || "General Surgery",
+  total_patients_treated: h.total_patients_treated || 5000,
+  avg_treatment_cost: h.avg_treatment_cost || 45000,
+  overall_success_ratio: h.overall_success_ratio || "97.5%",
 }));
 
 export interface HospitalRegionGroup {

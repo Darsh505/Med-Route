@@ -1,958 +1,725 @@
 "use client";
 
-import { useState, useEffect, useMemo, Suspense } from "react";
+import { useState, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { ALL_HOSPITALS, getGroupedHospitals, getHospitalBySlug, ReviewItem } from "@/data/hospitalsData";
-
-interface ProcedureDef {
-  slug: string;
-  name: string;
-  specialty: string;
-  pmjay_code: string;
-  pmjay_rate: number;
-}
-
-const PROCEDURES_LIST: ProcedureDef[] = [
-  {
-    slug: "angioplasty",
-    name: "Heart Stent / Angioplasty",
-    specialty: "Heart Care",
-    pmjay_code: "MC004",
-    pmjay_rate: 65000,
-  },
-  {
-    slug: "knee-replacement",
-    name: "Knee Replacement",
-    specialty: "Bone & Joint",
-    pmjay_code: "OR002",
-    pmjay_rate: 80000,
-  },
-  {
-    slug: "cabg",
-    name: "Heart Bypass Surgery (CABG)",
-    specialty: "Heart Surgery",
-    pmjay_code: "MC001",
-    pmjay_rate: 130000,
-  },
-  {
-    slug: "c-section",
-    name: "C-Section (Cesarean Delivery)",
-    specialty: "Pregnancy & Maternity",
-    pmjay_code: "OG002",
-    pmjay_rate: 14000,
-  },
-  {
-    slug: "normal-delivery",
-    name: "Normal Delivery",
-    specialty: "Pregnancy & Maternity",
-    pmjay_code: "OG001",
-    pmjay_rate: 9000,
-  },
-  {
-    slug: "dialysis",
-    name: "Kidney Dialysis",
-    specialty: "Kidney Care",
-    pmjay_code: "NP001",
-    pmjay_rate: 1800,
-  },
-  {
-    slug: "cholecystectomy",
-    name: "Gallbladder Stone Removal",
-    specialty: "General Surgery",
-    pmjay_code: "GS003",
-    pmjay_rate: 22000,
-  },
-  {
-    slug: "cataract",
-    name: "Cataract Eye Surgery",
-    specialty: "Eye Care",
-    pmjay_code: "OP001",
-    pmjay_rate: 10000,
-  },
-  {
-    slug: "hip-replacement",
-    name: "Hip Replacement",
-    specialty: "Bone & Joint",
-    pmjay_code: "OR005",
-    pmjay_rate: 90000,
-  },
-  {
-    slug: "kidney-transplant",
-    name: "Kidney Transplant",
-    specialty: "Kidney Care",
-    pmjay_code: "SU001",
-    pmjay_rate: 250000,
-  },
-  {
-    slug: "valve-replacement",
-    name: "Heart Valve Replacement",
-    specialty: "Heart Surgery",
-    pmjay_code: "MC002",
-    pmjay_rate: 150000,
-  },
-  {
-    slug: "spine-surgery",
-    name: "Spine Surgery",
-    specialty: "Spine & Brain",
-    pmjay_code: "NE003",
-    pmjay_rate: 75000,
-  },
-  {
-    slug: "hernia-repair",
-    name: "Hernia Surgery",
-    specialty: "General Surgery",
-    pmjay_code: "GS001",
-    pmjay_rate: 25000,
-  },
-  {
-    slug: "chemotherapy",
-    name: "Chemotherapy Cycle",
-    specialty: "Cancer Care",
-    pmjay_code: "MO001",
-    pmjay_rate: 18000,
-  },
-];
 
 interface HospitalComparisonData {
   id: string;
   name: string;
-  slug: string;
-  type: string;
-  city: string;
-  state: string;
-  address: string;
-  overall_rating: number;
-  total_reviews: number;
-  accreditation: string;
-  is_pmjay_empanelled: boolean;
-  is_trauma_center: boolean;
-  trauma_level: string;
-  beds_total: number;
-  beds_icu: number;
-  beds_icu_available: number;
-  beds_ventilator: number;
-  phone: string;
-  emergency_phone: string;
-  ambulance_phone: string;
-  procedure_tariff_display: string;
-  private_cash_tariff: string;
-  estimated_out_of_pocket_inr: number;
-  pmjay_tariff_display: string;
-  implant_included: string;
-  icu_days_included: string;
-  pre_post_op_included: string;
-  inclusions: string[];
-  exclusions: string[];
-  pros?: string[];
-  cons?: string[];
-  reviews?: ReviewItem[];
+  shortName: string;
+  location: string;
+  distance: string;
+  eta: string;
+  rating: number;
+  imageUrl: string;
+  cashlessEligibility: string;
+  approvalTurnaround: string;
+  turnaroundNote: string;
+  turnaroundMinutes: number;
+  upfrontDeposit: string;
+  icuBeds: string;
+  openIcus: string;
+  deluxeTariff: string;
+  tariffCoverage: string;
+  accreditations: string[];
+  nps: string;
 }
 
-function buildHospitalComparisonData(slug: string, procSlug: string): HospitalComparisonData {
-  const h = getHospitalBySlug(slug) || ALL_HOSPITALS[0];
-  const proc = PROCEDURES_LIST.find((p) => p.slug === procSlug) || PROCEDURES_LIST[0];
-  const typeLower = (h.type || "").toLowerCase();
-  const isGovt = typeLower.includes("govt") || typeLower.includes("public");
+const DEFAULT_COMPARISON_HOSPITALS: HospitalComparisonData[] = [
+  {
+    id: "manipal",
+    name: "Manipal Hospital",
+    shortName: "Manipal",
+    location: "HAL Airport Rd",
+    distance: "5.2 km",
+    eta: "14m ETA",
+    rating: 4.8,
+    imageUrl: "https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?w=600&q=80",
+    cashlessEligibility: "100% Cashless",
+    approvalTurnaround: "28 mins",
+    turnaroundNote: "Fastest in corridor",
+    turnaroundMinutes: 28,
+    upfrontDeposit: "₹0 Deposit",
+    icuBeds: "45 Beds",
+    openIcus: "10 open ICUs",
+    deluxeTariff: "₹4,500",
+    tariffCoverage: "100% covered",
+    accreditations: ["NABH", "JCI"],
+    nps: "94%",
+  },
+  {
+    id: "apollo",
+    name: "Apollo Hospital",
+    shortName: "Apollo",
+    location: "Bannerghatta Rd",
+    distance: "11.4 km",
+    eta: "16m ETA",
+    rating: 4.7,
+    imageUrl: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=600&q=80",
+    cashlessEligibility: "100% Cashless",
+    approvalTurnaround: "45 mins",
+    turnaroundNote: "Standard corridor",
+    turnaroundMinutes: 45,
+    upfrontDeposit: "₹0 Deposit",
+    icuBeds: "60 Beds",
+    openIcus: "14 open ICUs",
+    deluxeTariff: "₹5,200",
+    tariffCoverage: "100% covered",
+    accreditations: ["NABH", "JCI Global"],
+    nps: "91%",
+  },
+  {
+    id: "fortis",
+    name: "Fortis Healthcare",
+    shortName: "Fortis",
+    location: "Cunningham Rd",
+    distance: "7.1 km",
+    eta: "19m ETA",
+    rating: 4.6,
+    imageUrl: "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=600&q=80",
+    cashlessEligibility: "100% Cashless",
+    approvalTurnaround: "38 mins",
+    turnaroundNote: "Priority corridor",
+    turnaroundMinutes: 38,
+    upfrontDeposit: "₹0 Deposit",
+    icuBeds: "38 Beds",
+    openIcus: "12 open ICUs",
+    deluxeTariff: "₹4,800",
+    tariffCoverage: "100% covered",
+    accreditations: ["NABH", "NABL"],
+    nps: "89%",
+  },
+];
 
-  const privateEst = Math.round(proc.pmjay_rate * 2.2);
-  const govtEst = Math.round(proc.pmjay_rate * 0.4);
-
-  let tariffDisplay = "";
-  if (isGovt) {
-    tariffDisplay = h.pmjay ? "100% Free (PMJAY Cashless)" : `₹${govtEst.toLocaleString("en-IN")} (Subsidized)`;
-  } else {
-    tariffDisplay = `₹${privateEst.toLocaleString("en-IN")} (Private Package)`;
-  }
-
-  let implantText = "Standard clinical consumable kit included";
-  if (proc.slug.includes("angioplasty")) {
-    implantText = "1 US-FDA Approved Drug-Eluting Stent (DES) included";
-  } else if (proc.slug.includes("knee")) {
-    implantText = "High-Flex Cobalt-Chromium Knee Prosthesis included";
-  } else if (proc.slug.includes("hip")) {
-    implantText = "Cementless Titanium/Ceramic Hip Joint Prosthesis";
-  } else if (proc.slug.includes("cataract")) {
-    implantText = "Foldable Hydrophobic Acrylic Intraocular Lens (IOL)";
-  } else if (proc.slug.includes("valve")) {
-    implantText = "1 Mechanical or Bovine Tissue Valve Prosthesis";
-  } else if (proc.slug.includes("spine")) {
-    implantText = "4 Titanium Pedicle Screws & 1 PEEK Interbody Cage";
-  } else if (proc.slug.includes("hernia")) {
-    implantText = "3D Anatomical Polypropylene Hernia Mesh included";
-  }
-
-  return {
-    id: h.id || `hosp-${h.slug}`,
-    name: h.name,
-    slug: h.slug,
-    type: h.type,
-    city: h.city,
-    state: h.state,
-    address: h.address || `${h.city}, ${h.state}`,
-    overall_rating: h.overall_rating || (isGovt ? 4.7 : 4.6),
-    total_reviews: h.total_reviews || (isGovt ? 340 : 185),
-    accreditation: h.accreditation || "NABH Accredited",
-    is_pmjay_empanelled: h.pmjay,
-    is_trauma_center: h.is_trauma_center ?? true,
-    trauma_level: h.trauma_level || (isGovt ? "Level 1 Apex Center" : "Level 2 Comprehensive Care"),
-    beds_total: h.beds_total || 250,
-    beds_icu: h.beds_icu || 30,
-    beds_icu_available: h.beds_icu_available ?? (h.icu || 5),
-    beds_ventilator: h.beds_ventilator || 8,
-    phone: h.ambulance_phone || h.emergency_phone || h.ambulance || "108",
-    emergency_phone: h.emergency_phone || "108",
-    ambulance_phone: h.ambulance_phone || h.emergency_phone || h.ambulance || "108",
-    procedure_tariff_display: tariffDisplay,
-    private_cash_tariff: `₹${(isGovt ? govtEst : privateEst).toLocaleString("en-IN")}`,
-    estimated_out_of_pocket_inr: isGovt ? (h.pmjay ? 0 : govtEst) : privateEst,
-    pmjay_tariff_display: h.pmjay
-      ? `₹${proc.pmjay_rate.toLocaleString("en-IN")} Cashless (${proc.pmjay_code})`
-      : "Non-Empanelled (Private Pay)",
-    implant_included: implantText,
-    icu_days_included: proc.slug.includes("cabg") || proc.slug.includes("valve") ? "3 Days CTVS ICU Included" : proc.slug.includes("transplant") ? "7 Days Sterile ICU Included" : "2 Days ICU Stay Included",
-    pre_post_op_included: "Pre-procedure diagnostics, imaging & 5-day post-op recovery kit",
-    inclusions: [
-      `1 Standard Approved Implant (${implantText})`,
-      "Chief Operating Surgeon, Anesthetist & OT charges",
-      "Dedicated Intensive Care Unit (ICU/HDU) observation",
-      "Pre-operative cross-match, ECG, 2D-ECHO & blood chemistry",
-      "Standard in-hospital sterile nursing & recovery care",
-    ],
-    exclusions: [
-      "Additional implants or secondary devices beyond base package",
-      "Advanced intravascular robotic assistance if opted",
-      "Unplanned extended HDU/ICU stays beyond standard protocol",
-    ],
-    pros: h.pros && h.pros.length > 0 ? h.pros : [
-      `Accredited ${h.accreditation} clinical quality benchmark in ${h.city}`,
-      `Dedicated 24/7 critical care & ambulance unit with live telemetry`,
-      h.pmjay ? "Empanelled under Ayushman Bharat AB-PMJAY with cashless kiosk" : "Fast-track insurance pre-authorization desk",
-    ],
-    cons: h.cons && h.cons.length > 0 ? h.cons : [
-      isGovt ? "High patient footfall during peak morning OPD hours" : "Higher baseline room rent surcharges without cashless cover",
-    ],
-    reviews: h.reviews || [],
-  };
-}
+const AVAILABLE_TO_ADD: HospitalComparisonData[] = [
+  {
+    id: "sakra",
+    name: "Sakra World Hospital",
+    shortName: "Sakra",
+    location: "Outer Ring Rd, Marathahalli",
+    distance: "4.2 km",
+    eta: "12m ETA",
+    rating: 4.9,
+    imageUrl: "https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=600&q=80",
+    cashlessEligibility: "100% Cashless",
+    approvalTurnaround: "14 mins",
+    turnaroundNote: "Ultra-fast track",
+    turnaroundMinutes: 14,
+    upfrontDeposit: "₹0 Deposit",
+    icuBeds: "50 Beds",
+    openIcus: "12 open ICUs",
+    deluxeTariff: "₹4,900",
+    tariffCoverage: "100% covered",
+    accreditations: ["NABH", "JCI Gold"],
+    nps: "96%",
+  },
+  {
+    id: "aster",
+    name: "Aster CMI Hospital",
+    shortName: "Aster CMI",
+    location: "Hebbal, Bangalore",
+    distance: "8.1 km",
+    eta: "18m ETA",
+    rating: 4.8,
+    imageUrl: "https://images.unsplash.com/photo-1586773860418-d37222d8fce3?w=600&q=80",
+    cashlessEligibility: "100% Cashless",
+    approvalTurnaround: "20 mins",
+    turnaroundNote: "Medi Route Desk",
+    turnaroundMinutes: 20,
+    upfrontDeposit: "₹0 Deposit",
+    icuBeds: "42 Beds",
+    openIcus: "9 open ICUs",
+    deluxeTariff: "₹4,700",
+    tariffCoverage: "100% covered",
+    accreditations: ["NABH", "NABL"],
+    nps: "93%",
+  },
+];
 
 function CompareContent() {
   const searchParams = useSearchParams();
-  const ids = useMemo(() => searchParams.get("ids")?.split(",") || [], [searchParams]);
-  const procParam = searchParams.get("procedure") || searchParams.get("proc");
-  const budgetParam = searchParams.get("budget");
+  const [selectedHospitals, setSelectedHospitals] = useState<HospitalComparisonData[]>(DEFAULT_COMPARISON_HOSPITALS);
+  const [diffOnly, setDiffOnly] = useState(false);
+  const [addDropdownOpen, setAddDropdownOpen] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+  const [bookedHospital, setBookedHospital] = useState<string | null>(null);
 
-  const [selectedProc, setSelectedProc] = useState<string>(() =>
-    procParam ? procParam.toLowerCase() : "angioplasty"
-  );
-  const [hosp1Slug, setHosp1Slug] = useState<string>(() => ids[0] || "pgimer-chandigarh");
-  const [hosp2Slug, setHosp2Slug] = useState<string>(() => ids[1] || "max-super-speciality-hospital-mohali");
-  const [hospitalSearch, setHospitalSearch] = useState<string>("");
-  const [hospitalsData, setHospitalsData] = useState<HospitalComparisonData[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [payerMode, setPayerMode] = useState<"private" | "pmjay">("private");
-  const [targetBudget, setTargetBudget] = useState<number | null>(() =>
-    budgetParam && !isNaN(Number(budgetParam)) ? Number(budgetParam) : 200000
-  );
+  const gridColStyle = {
+    display: "grid",
+    gridTemplateColumns: `220px repeat(${selectedHospitals.length}, minmax(180px, 1fr))`,
+  };
 
-  // Grouped hospitals list covering all 156 facilities
-  const rawGrouped = useMemo(() => getGroupedHospitals(), []);
-
-  // Filtered grouped hospitals based on search input
-  const filteredGrouped = useMemo(() => {
-    if (!hospitalSearch.trim()) return rawGrouped;
-    const q = hospitalSearch.toLowerCase().trim();
-    return rawGrouped
-      .map((g) => ({
-        region: g.region,
-        hospitals: g.hospitals.filter(
-          (h) => h.name.toLowerCase().includes(q) || h.city.toLowerCase().includes(q) || h.state.toLowerCase().includes(q)
-        ),
-      }))
-      .filter((g) => g.hospitals.length > 0);
-  }, [rawGrouped, hospitalSearch]);
-
-  // Fetch comparison from backend or dynamic fallback
-  useEffect(() => {
-    let isMounted = true;
-    async function fetchComparison() {
-      setLoading(true);
-      try {
-        const budgetQuery = targetBudget ? `&user_budget=${targetBudget}` : "";
-        const res = await fetch(
-          `http://localhost:8000/api/compare?ids=${encodeURIComponent(hosp1Slug)},${encodeURIComponent(
-            hosp2Slug
-          )}&procedure=${encodeURIComponent(selectedProc)}${budgetQuery}`
-        );
-        if (res.ok) {
-          const json = await res.json();
-          if (json.data && json.data.hospitals && json.data.hospitals.length >= 2) {
-            if (isMounted) {
-              setHospitalsData(json.data.hospitals);
-              setLoading(false);
-              return;
-            }
-          }
-        }
-      } catch {
-        // Fallback to dynamic rich dataset
-      }
-
-      // Dynamic fallback ensuring ANY hospital in India works with full metadata
-      if (isMounted) {
-        const h1 = buildHospitalComparisonData(hosp1Slug, selectedProc);
-        const h2 = buildHospitalComparisonData(hosp2Slug, selectedProc);
-        setHospitalsData([h1, h2]);
-        setLoading(false);
-      }
+  const removeHospital = (id: string) => {
+    if (selectedHospitals.length <= 1) {
+      alert("At least 1 hospital must remain in comparison.");
+      return;
     }
+    setSelectedHospitals((prev) => prev.filter((h) => h.id !== id));
+  };
 
-    fetchComparison();
-    return () => {
-      isMounted = false;
-    };
-  }, [hosp1Slug, hosp2Slug, selectedProc, targetBudget]);
+  const addHospital = (h: HospitalComparisonData) => {
+    if (selectedHospitals.find((item) => item.id === h.id)) return;
+    if (selectedHospitals.length >= 4) {
+      alert("Maximum 4 hospitals can be compared.");
+      return;
+    }
+    setSelectedHospitals((prev) => [...prev, h]);
+    setAddDropdownOpen(false);
+  };
 
-  const activeProcObj = PROCEDURES_LIST.find((p) => p.slug === selectedProc) || PROCEDURES_LIST[0];
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: "Medi Route Hospital Comparison",
+        text: "Compare hospitals side-by-side for cashless admission.",
+        url: window.location.href,
+      }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    }
+  };
 
   return (
-    <>
-      <Navbar />
-
-      <main className="w-full pt-16 bg-slate-50 min-h-[calc(100vh-4rem)] pb-16">
-        {/* Hero Section */}
-        <section className="w-full bg-white border-b border-slate-200 py-8 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto flex flex-col gap-4">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <Link
-                href="/search"
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors"
-              >
-                <span className="material-symbols-outlined text-sm">arrow_back</span>
-                <span>Return to Search Matrix</span>
+    <main className="w-full pt-20 lg:pt-28 bg-surface-canvas min-h-screen">
+      <div className="flex flex-col w-full">
+        <div className="max-w-[1280px] mx-auto w-full px-margin lg:px-margin-lg py-space-md flex flex-col gap-space-lg">
+          
+          {/* Breadcrumb Strip */}
+          <div className="flex flex-wrap items-center justify-between gap-space-sm pt-space-xs">
+            <nav className="flex items-center gap-space-xs font-label-sm text-label-sm text-on-surface-variant">
+              <Link className="hover:text-primary-container transition-colors" href="/">
+                Home
               </Link>
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">
-                  Official NHA PMJAY HBP 2.2 Compliant
-                </span>
-                <span className="px-2.5 py-0.5 rounded-full bg-cyan-100 text-cyan-800 text-[11px] font-bold">
-                  {ALL_HOSPITALS.length} Accredited Facilities Across India
-                </span>
-              </div>
-            </div>
+              <span className="material-symbols-outlined text-[14px]">chevron_right</span>
+              <span className="text-secondary font-bold">Compare Hospitals</span>
+            </nav>
+          </div>
 
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-                Procedure &amp; Tariff Comparison Engine
+          {/* Page Hero Header */}
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-space-md">
+            <div className="flex flex-col gap-space-xs max-w-3xl">
+              <h1 className="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-primary-container tracking-tight font-bold">
+                Hospital Comparison
               </h1>
-              <p className="text-sm text-slate-600 mt-1 max-w-3xl">
-                Compare genuine hospital tariffs against your private budget and official AB-PMJAY cashless ceilings, itemized inclusions, hidden surcharge warnings, and live ICU telemetry.
+              <p className="font-body-lg text-body-lg text-on-surface-variant">
+                Side-by-side benchmarking across cashless clearance speed, live bed status, room tariffs, and clinical pedigree.
               </p>
             </div>
+            
+            <div className="flex items-center gap-space-xs shrink-0">
+              <button
+                className="flex items-center gap-space-xs px-space-md py-2 bg-surface-card hover:bg-surface-container border border-subtle transition-colors rounded-lg shadow-sm text-on-surface font-label-md text-label-md font-semibold cursor-pointer"
+                id="btn-share"
+                type="button"
+                onClick={handleShare}
+              >
+                <span className="material-symbols-outlined text-[18px] text-secondary">
+                  {shareCopied ? "check" : "share"}
+                </span>
+                <span>{shareCopied ? "Link Copied!" : "Share"}</span>
+              </button>
+              
+              <button
+                className="flex items-center gap-space-xs px-space-md py-2 bg-surface-card hover:bg-surface-container border border-subtle transition-colors rounded-lg shadow-sm text-on-surface font-label-md text-label-md font-semibold cursor-pointer"
+                id="btn-pdf"
+                type="button"
+                onClick={() => window.print()}
+              >
+                <span className="material-symbols-outlined text-[18px] text-secondary">download</span>
+                <span>PDF Export</span>
+              </button>
+            </div>
+          </div>
 
-            {/* Procedure Selector Chips */}
-            <div className="pt-2">
-              <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-2">
-                Step 1: Select Treatment / Procedure to Compare:
-              </span>
-              <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
-                {PROCEDURES_LIST.map((proc) => {
-                  const isSelected = selectedProc === proc.slug;
-                  return (
-                    <button
-                      key={proc.slug}
-                      onClick={() => setSelectedProc(proc.slug)}
-                      className={`px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2 shrink-0 border cursor-pointer ${
-                        isSelected
-                          ? "bg-slate-900 text-white border-slate-900 shadow-md scale-102"
-                          : "bg-white text-slate-700 border-slate-200 hover:border-slate-400 hover:bg-slate-50"
-                      }`}
-                    >
-                      <span>{proc.name}</span>
-                      <span
-                        className={`text-[10px] px-1.5 py-0.2 rounded font-mono font-bold ${
-                          isSelected ? "bg-slate-800 text-cyan-300" : "bg-slate-100 text-slate-600"
-                        }`}
-                      >
-                        {proc.pmjay_code}
+          {/* Hospital Selection Dock & Control Strip */}
+          <div className="bg-surface-card rounded-xl p-space-md shadow-sm border border-subtle flex flex-col gap-space-md">
+            <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-space-md">
+              
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-space-sm flex-1">
+                {selectedHospitals.map((hospital, idx) => (
+                  <div
+                    key={hospital.id}
+                    className="flex items-center justify-between p-space-xs px-space-sm bg-surface-canvas rounded-lg border border-subtle hover:bg-surface-ice transition-colors"
+                  >
+                    <div className="flex items-center gap-space-xs truncate">
+                      <span className="w-5 h-5 rounded-full bg-primary-container text-on-primary text-[10px] font-bold flex items-center justify-center shrink-0">
+                        {idx + 1}
                       </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Target Budget & Payer Mode Control Bar */}
-            <div className="p-4 bg-white border border-slate-200 rounded-xl shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-              {/* Payer Mode Switcher */}
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                  Select Payer / Tariff Mode:
-                </span>
-                <div className="inline-flex p-1 bg-slate-100 rounded-xl border border-slate-200 w-fit">
-                  <button
-                    onClick={() => setPayerMode("private")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      payerMode === "private"
-                        ? "bg-white text-slate-900 shadow-xs"
-                        : "text-slate-600 hover:text-slate-900"
-                    }`}
-                  >
-                    💰 Out-of-Pocket / Private Package
-                  </button>
-                  <button
-                    onClick={() => setPayerMode("pmjay")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      payerMode === "pmjay"
-                        ? "bg-emerald-600 text-white shadow-xs"
-                        : "text-slate-600 hover:text-slate-900"
-                    }`}
-                  >
-                    🛡️ Ayushman Bharat (PMJAY Cashless)
-                  </button>
-                </div>
-              </div>
-
-              {/* Max Budget Filter */}
-              <div className="flex flex-col gap-1.5">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                    Your Target Budget:
-                  </span>
-                  {targetBudget ? (
-                    <span className="text-xs font-extrabold text-emerald-700">
-                      Cap: ₹{targetBudget.toLocaleString("en-IN")}
-                    </span>
-                  ) : (
-                    <span className="text-xs text-slate-500 font-medium">No Budget Cap</span>
-                  )}
-                </div>
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  {[50000, 100000, 200000, 500000].map((b) => (
+                      <div className="truncate">
+                        <p className="font-label-md text-label-md text-on-surface font-semibold truncate">
+                          {hospital.name}
+                        </p>
+                        <p className="text-[10px] text-on-surface-variant truncate">{hospital.location}</p>
+                      </div>
+                    </div>
                     <button
-                      key={b}
-                      onClick={() => setTargetBudget(b)}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
-                        targetBudget === b
-                          ? "bg-slate-900 text-white border-slate-900"
-                          : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
-                      }`}
+                      className="text-outline hover:text-error transition-colors p-0.5 ml-1 cursor-pointer"
+                      title="Remove"
+                      type="button"
+                      onClick={() => removeHospital(hospital.id)}
                     >
-                      {b === 50000 ? "< ₹50k" : b === 100000 ? "< ₹1 Lakh" : b === 200000 ? "< ₹2 Lakhs" : "< ₹5 Lakhs"}
+                      <span className="material-symbols-outlined text-[14px]">close</span>
                     </button>
-                  ))}
-                  <button
-                    onClick={() => setTargetBudget(null)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
-                      targetBudget === null
-                        ? "bg-slate-900 text-white border-slate-900"
-                        : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
-                    }`}
+                  </div>
+                ))}
+
+                {/* Add Hospital Button & Dropdown */}
+                {selectedHospitals.length < 4 && (
+                  <div className="relative">
+                    <button
+                      className="w-full h-full min-h-[44px] flex items-center justify-center gap-space-xs px-space-sm bg-surface-ice hover:bg-surface-container rounded-lg text-secondary transition-colors font-label-md text-label-md font-semibold border border-subtle cursor-pointer"
+                      id="add-hospital-trigger"
+                      type="button"
+                      onClick={() => setAddDropdownOpen(!addDropdownOpen)}
+                    >
+                      <span className="material-symbols-outlined text-[18px]">add_circle</span>
+                      <span>+ Add Hospital</span>
+                    </button>
+
+                    {addDropdownOpen && (
+                      <div className="absolute top-full left-0 right-0 mt-2 bg-surface-card rounded-xl shadow-xl border border-subtle p-space-sm z-30 min-w-[240px]">
+                        <input
+                          className="w-full bg-surface-canvas rounded-lg px-space-sm py-space-xs text-body-sm font-body-sm text-on-surface focus:outline-none mb-space-xs border border-subtle"
+                          placeholder="Search network..."
+                          type="text"
+                        />
+                        <div className="flex flex-col gap-1 max-h-48 overflow-y-auto">
+                          {AVAILABLE_TO_ADD.filter(
+                            (a) => !selectedHospitals.some((s) => s.id === a.id)
+                          ).map((avail) => (
+                            <div
+                              key={avail.id}
+                              className="px-space-sm py-1.5 rounded-lg hover:bg-surface-ice cursor-pointer font-body-sm text-body-sm flex justify-between items-center"
+                              onClick={() => addHospital(avail)}
+                            >
+                              <span className="font-semibold text-on-surface truncate">{avail.name}</span>
+                              <span className="font-label-sm text-label-sm text-badge-cashless font-semibold shrink-0">
+                                100% Cashless
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Toggles & Insurance Pill */}
+              <div className="flex items-center gap-space-sm shrink-0">
+                <label className="flex items-center gap-space-xs cursor-pointer select-none px-space-sm py-space-xs rounded-lg hover:bg-surface-container-low transition-colors text-label-sm text-on-surface-variant">
+                  <input
+                    checked={diffOnly}
+                    onChange={(e) => setDiffOnly(e.target.checked)}
+                    className="accent-brand-blue-interactive rounded cursor-pointer"
+                    id="toggle-diff"
+                    type="checkbox"
+                  />
+                  <span className="text-on-surface font-medium">Show differences only</span>
+                </label>
+
+                <div className="flex items-center gap-space-xs px-space-sm py-space-xs bg-surface-ice rounded-lg text-secondary text-label-sm font-semibold border border-subtle">
+                  <span className="material-symbols-outlined text-[16px]">verified</span>
+                  <span>Star Health Comprehensive</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* Mobile Swipe Guidance Banner */}
+          <div className="md:hidden flex items-center justify-between px-3 py-2 bg-surface-ice rounded-lg text-secondary text-xs font-semibold mb-2 border border-border-subtle">
+            <span className="flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-[16px]">swap_horiz</span>
+              Swipe horizontally to compare side-by-side
+            </span>
+            <span className="font-bold">{selectedHospitals.length} Selected</span>
+          </div>
+
+          {/* Benchmark Matrix Table Container */}
+          <div className="overflow-x-auto w-full pb-2 no-scrollbar">
+            <div className="min-w-[700px] bg-surface-card rounded-xl shadow-sm border border-subtle overflow-hidden flex flex-col">
+              
+              {/* Table Header: Hospital Overview */}
+              <div style={gridColStyle} className="bg-surface-card sticky top-20 z-20 shadow-[0_1px_4px_rgba(0,0,0,0.04)] border-b border-subtle">
+                <div className="flex flex-col justify-end p-space-md bg-surface-card border-r border-subtle">
+                  <span className="font-label-sm text-label-sm uppercase tracking-wider text-outline font-bold">Metrics</span>
+                  <span className="font-title-md text-title-md text-on-surface font-bold">Hospital Overview</span>
+                </div>
+
+                {selectedHospitals.map((hospital) => (
+                  <div
+                    key={hospital.id}
+                    className="p-space-md flex flex-col gap-space-xs bg-surface-card relative group border-r border-subtle last:border-r-0"
                   >
-                    Any Budget
-                  </button>
+                    <div className="h-28 w-full rounded-lg overflow-hidden relative mb-space-xs bg-surface-container">
+                      <img className="w-full h-full object-cover" src={hospital.imageUrl} alt={hospital.name} />
+                      <span className="absolute bottom-2 right-2 px-space-xs py-0.5 rounded bg-surface-card/95 font-label-sm text-label-sm text-on-surface font-semibold shadow-sm">
+                        {hospital.distance}
+                      </span>
+                    </div>
 
-                  <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-lg px-2 py-0.5 ml-1">
-                    <span className="text-xs text-slate-400 font-bold">₹</span>
-                    <input
-                      type="number"
-                      step="10000"
-                      placeholder="Custom"
-                      value={targetBudget || ""}
-                      onChange={(e) => setTargetBudget(e.target.value ? Number(e.target.value) : null)}
-                      className="text-xs font-bold text-slate-900 w-20 bg-transparent focus:outline-none"
-                    />
+                    <div className="flex items-start justify-between gap-space-xs">
+                      <div>
+                        <h2 className="font-title-md text-title-md text-on-surface font-bold leading-tight">
+                          {hospital.name}
+                        </h2>
+                        <p className="font-body-sm text-body-sm text-on-surface-variant">{hospital.location}</p>
+                      </div>
+                      <div className="flex items-center gap-0.5 bg-badge-rating/10 px-1.5 py-0.5 rounded text-badge-rating font-bold text-label-sm shrink-0">
+                        <span className="material-symbols-outlined text-[14px] text-badge-rating" style={{ fontVariationSettings: "'FILL' 1" }}>
+                          star
+                        </span>
+                        <span>{hospital.rating}</span>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            </div>
-
-            {/* PMJAY Official Package Ceiling Banner */}
-            <div className="p-3.5 bg-gradient-to-r from-emerald-50 to-cyan-50 border border-emerald-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-xl font-bold shadow-sm shrink-0">
-                  ₹
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-emerald-950 uppercase">
-                      AB-PMJAY HBP 2.2 National Standard Ceiling ({activeProcObj.specialty})
-                    </span>
-                    <span className="text-[10px] bg-emerald-200 text-emerald-900 px-1.5 py-0.5 rounded font-mono font-bold">
-                      {activeProcObj.pmjay_code}
-                    </span>
-                  </div>
-                  <p className="text-xs text-emerald-800 mt-0.5">
-                    Ayushman Bharat beneficiaries receive 100% cashless coverage up to{" "}
-                    <strong>₹{activeProcObj.pmjay_rate.toLocaleString("en-IN")}</strong> with zero out-of-pocket top-ups at empanelled centers.
-                  </p>
-                </div>
+                ))}
               </div>
 
-              <div className="text-right shrink-0">
-                <span className="text-xs text-slate-500 block">Cashless Package Limit</span>
-                <span className="text-lg font-black text-emerald-700">
-                  ₹{activeProcObj.pmjay_rate.toLocaleString("en-IN")}
+              {/* Section 1: Cashless & Insurance Pre-Auth */}
+              <div className="bg-surface-canvas px-space-md py-space-xs flex items-center justify-between border-b border-subtle">
+                <span className="font-label-md text-label-md text-on-surface font-bold uppercase tracking-wider text-[11px]">
+                  Cashless &amp; Insurance Pre-Auth
                 </span>
               </div>
-            </div>
-          </div>
-        </section>
 
-        {/* Comparison Matrix Table */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-          {/* Hospital Filter & Search Bar */}
-          <div className="bg-white p-3.5 rounded-xl border border-slate-200 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-slate-400 text-lg">search</span>
-              <input
-                type="text"
-                placeholder="Filter hospitals by city, state, or name (e.g., Hoshiarpur, PGI, Fortis, Apollo, AIIMS)..."
-                value={hospitalSearch}
-                onChange={(e) => setHospitalSearch(e.target.value)}
-                className="text-xs text-slate-800 placeholder-slate-400 w-full sm:w-96 focus:outline-none"
-              />
-              {hospitalSearch && (
-                <button
-                  onClick={() => setHospitalSearch("")}
-                  className="text-xs text-slate-400 hover:text-slate-600 font-bold"
-                >
-                  ✕
-                </button>
+              {/* Row 1: Cashless Eligibility (Skip if diffOnly) */}
+              {!diffOnly && (
+                <div style={gridColStyle} className="p-space-md items-center bg-surface-card hover:bg-surface-container-low/30 transition-colors border-b border-subtle">
+                  <div className="font-label-md text-label-md text-on-surface font-medium border-r border-subtle pr-space-xs">
+                    Cashless Eligibility
+                    <span className="block font-body-sm text-body-sm text-outline">Star Health Network</span>
+                  </div>
+                  {selectedHospitals.map((h) => (
+                    <div key={h.id} className="text-badge-cashless font-semibold font-label-md text-label-md flex items-center gap-space-xs px-2">
+                      <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                      <span>{h.cashlessEligibility}</span>
+                    </div>
+                  ))}
+                </div>
               )}
-            </div>
 
-            <div className="flex items-center gap-2 text-xs text-slate-500">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-              <span>Real-time ICU Telemetry Active</span>
+              {/* Row 2: Approval Turnaround */}
+              <div style={gridColStyle} className="p-space-md items-center bg-surface-canvas/50 hover:bg-surface-container-low/30 transition-colors border-b border-subtle">
+                <div className="font-label-md text-label-md text-on-surface font-medium border-r border-subtle pr-space-xs">
+                  Approval Turnaround
+                  <span className="block font-body-sm text-body-sm text-outline">Median admission clearance</span>
+                </div>
+                {selectedHospitals.map((h) => (
+                  <div key={h.id} className="px-2">
+                    <span className={`font-headline-md text-headline-md font-bold ${h.turnaroundMinutes <= 30 ? "text-secondary" : "text-on-surface"}`}>
+                      {h.approvalTurnaround}
+                    </span>
+                    <span className="block font-body-sm text-body-sm text-on-surface-variant font-medium">
+                      {h.turnaroundNote}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Row 3: Upfront Deposit */}
+              {!diffOnly && (
+                <div style={gridColStyle} className="p-space-md items-center bg-surface-card hover:bg-surface-container-low/30 transition-colors border-b border-subtle">
+                  <div className="font-label-md text-label-md text-on-surface font-medium border-r border-subtle pr-space-xs">
+                    Upfront Deposit
+                    <span className="block font-body-sm text-body-sm text-outline">Under pre-auth guarantee</span>
+                  </div>
+                  {selectedHospitals.map((h) => (
+                    <div key={h.id} className="font-title-md text-title-md font-bold text-badge-cashless px-2">
+                      {h.upfrontDeposit}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Section 2: Ward & Bed Capacity */}
+              <div className="bg-surface-canvas px-space-md py-space-xs flex items-center justify-between border-b border-subtle">
+                <span className="font-label-md text-label-md text-on-surface font-bold uppercase tracking-wider text-[11px]">
+                  Ward &amp; Bed Capacity
+                </span>
+              </div>
+
+              {/* Row 4: Live ICU Bed Capacity */}
+              <div style={gridColStyle} className="p-space-md items-center bg-surface-card hover:bg-surface-container-low/30 transition-colors border-b border-subtle">
+                <div className="font-label-md text-label-md text-on-surface font-medium border-r border-subtle pr-space-xs">
+                  Live ICU Bed Capacity
+                  <span className="block font-body-sm text-body-sm text-outline">Real-time verified status</span>
+                </div>
+                {selectedHospitals.map((h) => (
+                  <div key={h.id} className="px-2">
+                    <span className="font-title-md text-title-md text-on-surface font-bold">{h.icuBeds}</span>
+                    <span className="block font-body-sm text-body-sm text-badge-cashless font-semibold">{h.openIcus}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Row 5: Single Deluxe Tariff */}
+              <div style={gridColStyle} className="p-space-md items-center bg-surface-canvas/50 hover:bg-surface-container-low/30 transition-colors border-b border-subtle">
+                <div className="font-label-md text-label-md text-on-surface font-medium border-r border-subtle pr-space-xs">
+                  Single Deluxe Tariff
+                  <span className="block font-body-sm text-body-sm text-outline">Cap: ₹6,000/day</span>
+                </div>
+                {selectedHospitals.map((h) => (
+                  <div key={h.id} className="px-2">
+                    <span className="font-title-md text-title-md text-on-surface font-bold">{h.deluxeTariff}</span>
+                    <span className="block text-badge-cashless font-body-sm text-body-sm font-semibold">{h.tariffCoverage}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Section 3: Clinical Quality & Ratings */}
+              <div className="bg-surface-canvas px-space-md py-space-xs flex items-center justify-between border-b border-subtle">
+                <span className="font-label-md text-label-md text-on-surface font-bold uppercase tracking-wider text-[11px]">
+                  Clinical Quality &amp; Ratings
+                </span>
+              </div>
+
+              {/* Row 6: Accreditations */}
+              <div style={gridColStyle} className="p-space-md items-center bg-surface-card hover:bg-surface-container-low/30 transition-colors border-b border-subtle">
+                <div className="font-label-md text-label-md text-on-surface font-medium border-r border-subtle pr-space-xs">
+                  Accreditations
+                  <span className="block font-body-sm text-body-sm text-outline">Quality standards</span>
+                </div>
+                {selectedHospitals.map((h) => (
+                  <div key={h.id} className="flex flex-wrap gap-1 px-2">
+                    {h.accreditations.map((acc) => (
+                      <span key={acc} className="px-2 py-0.5 bg-surface-container rounded text-label-sm text-on-surface font-semibold">
+                        {acc}
+                      </span>
+                    ))}
+                  </div>
+                ))}
+              </div>
+
+              {/* Row 7: Net Promoter Score */}
+              <div style={gridColStyle} className="p-space-md items-center bg-surface-canvas/50 hover:bg-surface-container-low/30 transition-colors border-b border-subtle">
+                <div className="font-label-md text-label-md text-on-surface font-medium border-r border-subtle pr-space-xs">
+                  Net Promoter Score
+                  <span className="block font-body-sm text-body-sm text-outline">Patient feedback</span>
+                </div>
+                {selectedHospitals.map((h) => (
+                  <div key={h.id} className="px-2">
+                    <span className="font-headline-md text-headline-md font-bold text-secondary">{h.nps}</span>
+                    <span className="block font-body-sm text-body-sm text-on-surface-variant font-medium">Recommended</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Section 4: Direct Admission Action Row */}
+              <div style={gridColStyle} className="p-space-md bg-surface-card gap-space-md items-center">
+                <div className="flex flex-col border-r border-subtle pr-space-xs">
+                  <span className="font-label-md text-label-md font-bold text-on-surface">Direct Admission</span>
+                  <p className="font-body-sm text-body-sm text-on-surface-variant">Lock verified tariff and pre-notify helpdesk.</p>
+                </div>
+                {selectedHospitals.map((h) => (
+                  <div key={h.id} className="flex flex-col gap-space-xs px-2">
+                    <button
+                      className={`w-full py-2.5 px-space-md rounded-lg font-label-md text-label-md font-semibold text-center shadow-sm transition-colors cursor-pointer ${
+                        bookedHospital === h.id
+                          ? "bg-badge-cashless text-on-primary"
+                          : "bg-primary-container hover:bg-primary text-on-primary"
+                      }`}
+                      type="button"
+                      onClick={() => {
+                        setBookedHospital(h.id);
+                        setTimeout(() => setBookedHospital(null), 3000);
+                      }}
+                    >
+                      {bookedHospital === h.id ? "Admission Reserved!" : "Book Cashless Admission"}
+                    </button>
+                  </div>
+                ))}
+              </div>
+
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            {/* Header: Facility Selectors */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 p-5 bg-slate-50 border-b border-slate-200 items-start">
-              <div className="md:col-span-4 flex flex-col justify-center">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                  Comparison Dimension
+          {/* Comparative Visual Infographic Bento */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter mt-space-sm">
+            
+            {/* Bento Card 1: Speed Benchmark */}
+            <div className="bg-surface-card rounded-xl p-space-lg shadow-sm border border-subtle flex flex-col justify-between gap-space-md">
+              <div className="flex flex-col gap-1">
+                <span className="font-label-sm text-label-sm uppercase tracking-wider text-secondary font-bold">
+                  Speed Benchmark
                 </span>
-                <h3 className="text-base font-extrabold text-slate-900 mt-1">
-                  Side-by-Side Analysis
+                <h3 className="font-headline-md text-headline-md text-primary-container font-bold">
+                  Median Approval Time
                 </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Select any 2 accredited centers to compare package pricing, inclusions, and ICU availability.
+                <p className="font-body-sm text-body-sm text-on-surface-variant">
+                  Pre-auth clearance benchmarked across Bangalore network.
                 </p>
               </div>
 
-              {/* Hospital 1 Picker */}
-              <div className="md:col-span-4 flex flex-col gap-2">
-                <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-blue-600" />
-                  <span>Hospital 1:</span>
-                </label>
-                <select
-                  value={hosp1Slug}
-                  onChange={(e) => setHosp1Slug(e.target.value)}
-                  className="w-full text-xs font-semibold bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 focus:ring-2 focus:ring-slate-900 focus:outline-none shadow-2xs"
-                >
-                  {filteredGrouped.map((grp) => (
-                    <optgroup key={grp.region} label={grp.region}>
-                      {grp.hospitals.map((h) => (
-                        <option key={h.slug} value={h.slug}>
-                          {h.name} — {h.city} ({h.type})
-                        </option>
-                      ))}
-                    </optgroup>
-                  ))}
-                </select>
+              <div className="flex flex-col gap-space-xs py-space-xs">
+                {selectedHospitals.map((h) => (
+                  <div key={h.id} className="mb-2">
+                    <div className="flex items-center justify-between font-body-sm">
+                      <span className="font-medium text-on-surface">{h.name}</span>
+                      <span className="font-bold text-secondary">{h.approvalTurnaround}</span>
+                    </div>
+                    <div className="w-full bg-surface-container rounded-full h-2 mt-1">
+                      <div
+                        className="bg-secondary h-2 rounded-full"
+                        style={{ width: `${Math.min(100, (h.turnaroundMinutes / 60) * 100)}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                ))}
               </div>
-
-              {/* Hospital 2 Picker */}
-              <div className="md:col-span-4 flex flex-col gap-2">
-                <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-indigo-600" />
-                  <span>Hospital 2:</span>
-                </label>
-                <select
-                  value={hosp2Slug}
-                  onChange={(e) => setHosp2Slug(e.target.value)}
-                  className="w-full text-xs font-semibold bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 focus:ring-2 focus:ring-slate-900 focus:outline-none shadow-2xs"
-                >
-                  {filteredGrouped.map((grp) => (
-                    <optgroup key={grp.region} label={grp.region}>
-                      {grp.hospitals.map((h) => (
-                        <option key={h.slug} value={h.slug}>
-                          {h.name} — {h.city} ({h.type})
-                        </option>
-                      ))}
-                    </optgroup>
-                  ))}
-                </select>
-              </div>
+              <p className="font-body-sm text-body-sm text-on-surface-variant">
+                Average regional non-network turnaround is 58 minutes.
+              </p>
             </div>
 
-            {loading ? (
-              <div className="p-16 flex flex-col items-center justify-center gap-3">
-                <div className="w-8 h-8 border-3 border-slate-200 border-t-slate-800 rounded-full animate-spin" />
-                <span className="text-xs font-bold text-slate-500">
-                  Retrieving audited hospital tariffs and telemetry...
+            {/* Bento Card 2: Geo Proximity */}
+            <div className="bg-surface-card rounded-xl p-space-lg shadow-sm border border-subtle flex flex-col justify-between gap-space-md">
+              <div className="flex flex-col gap-1">
+                <span className="font-label-sm text-label-sm uppercase tracking-wider text-secondary font-bold">
+                  Geo Proximity
                 </span>
+                <h3 className="font-headline-md text-headline-md text-primary-container font-bold">
+                  Ambulance &amp; Distance
+                </h3>
+                <p className="font-body-sm text-body-sm text-on-surface-variant">
+                  Active GPS trajectory from your location.
+                </p>
               </div>
-            ) : (
-              <div className="divide-y divide-slate-100">
-                {/* Row 1: Hospital Overview */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 p-5 items-start">
-                  <div className="md:col-span-4">
-                    <div className="text-sm font-bold text-slate-900">Hospital Overview</div>
-                    <p className="text-xs text-slate-500 mt-0.5">Accreditation, rating, and city location</p>
+
+              <div
+                style={{ display: "grid", gridTemplateColumns: `repeat(${selectedHospitals.length}, minmax(0, 1fr))` }}
+                className="gap-space-xs text-center py-space-xs"
+              >
+                {selectedHospitals.map((h) => (
+                  <div key={h.id} className="p-space-xs bg-surface-canvas rounded-lg border border-subtle">
+                    <p className="font-label-sm text-label-sm text-on-surface-variant font-medium truncate">{h.shortName}</p>
+                    <p className="font-title-md text-title-md text-on-surface font-bold">{h.distance}</p>
+                    <span className="font-label-sm text-label-sm text-secondary font-bold">{h.eta}</span>
                   </div>
+                ))}
+              </div>
+              <p className="font-body-sm text-body-sm text-on-surface-variant">
+                Traffic calibrated dynamically via city telemetry sensors.
+              </p>
+            </div>
 
-                  {hospitalsData.map((h, idx) => (
-                    <div key={idx} className="md:col-span-4 flex flex-col gap-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <Link
-                            href={`/hospitals/${h.slug}`}
-                            className="text-base font-extrabold text-slate-900 hover:text-blue-600 transition-colors"
-                          >
-                            {h.name}
-                          </Link>
-                          <p className="text-xs text-slate-500 mt-0.5">
-                            📍 {h.city}, {h.state}
-                          </p>
-                        </div>
-                        <span
-                          className={`text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
-                            h.type?.toLowerCase() === "government"
-                              ? "bg-emerald-100 text-emerald-800"
-                              : "bg-blue-100 text-blue-800"
-                          }`}
-                        >
-                          {h.type}
-                        </span>
-                      </div>
+            {/* Bento Card 3: Policy Protection */}
+            <div className="bg-surface-card rounded-xl p-space-lg shadow-sm border border-subtle flex flex-col justify-between gap-space-md">
+              <div className="flex flex-col gap-1">
+                <span className="font-label-sm text-label-sm uppercase tracking-wider text-secondary font-bold">
+                  Policy Protection
+                </span>
+                <h3 className="font-headline-md text-headline-md text-primary-container font-bold">
+                  Star Health Room Cap
+                </h3>
+                <p className="font-body-sm text-body-sm text-on-surface-variant">
+                  All compared hospitals qualify under daily ceiling limit.
+                </p>
+              </div>
 
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs font-bold bg-amber-100 text-amber-900 px-2 py-0.5 rounded">
-                          ⭐ {h.overall_rating?.toFixed(1) || "4.6"} ({h.total_reviews} reviews)
-                        </span>
-                        <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
-                          {h.accreditation}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+              <div className="flex items-center justify-around py-space-xs">
+                <div className="flex flex-col items-center">
+                  <span className="font-headline-md text-headline-md font-bold text-badge-cashless">100%</span>
+                  <span className="font-label-sm text-label-sm text-on-surface-variant mt-1 font-medium">Pre-Authorized</span>
                 </div>
-
-                {/* Row 2: Package Tariff & Budget Match */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 p-5 bg-slate-50/50 items-start">
-                  <div className="md:col-span-4">
-                    <div className="text-sm font-bold text-slate-900">Package Tariff &amp; Budget Fit</div>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      Estimated tariff compared with your target budget
-                    </p>
-                  </div>
-
-                  {hospitalsData.map((h, idx) => {
-                    const costVal = h.estimated_out_of_pocket_inr || 0;
-                    const withinBudget = targetBudget ? costVal <= targetBudget : true;
-                    const diff = targetBudget ? costVal - targetBudget : 0;
-
-                    return (
-                      <div key={idx} className="md:col-span-4 flex flex-col gap-2">
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-xl font-black text-slate-900">
-                            {payerMode === "pmjay" ? (
-                              h.is_pmjay_empanelled ? "₹0 Cashless" : h.procedure_tariff_display
-                            ) : (
-                              h.procedure_tariff_display
-                            )}
-                          </span>
-                        </div>
-
-                        {/* Budget indicator pill */}
-                        {targetBudget && (
-                          <div>
-                            {withinBudget ? (
-                              <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-full border border-emerald-200">
-                                <span>✓ Fits within ₹{targetBudget.toLocaleString("en-IN")} Budget</span>
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-800 bg-amber-100 px-2.5 py-1 rounded-full border border-amber-200">
-                                <span>⚠️ Exceeds Budget by ₹{diff.toLocaleString("en-IN")}</span>
-                              </span>
-                            )}
-                          </div>
-                        )}
-
-                        <div className="text-xs text-slate-600">
-                          {h.is_pmjay_empanelled ? (
-                            <span className="text-emerald-700 font-semibold">
-                              🛡️ PM-JAY Empanelled: 100% Cashless cover available
-                            </span>
-                          ) : (
-                            <span className="text-slate-500">
-                              Private Self-Pay / TPA Insurance required
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div className="flex flex-col items-center">
+                  <span className="font-headline-md text-headline-md font-bold text-badge-cashless">₹0</span>
+                  <span className="font-label-sm text-label-sm text-on-surface-variant mt-1 font-medium">Room Co-Pay</span>
                 </div>
-
-                {/* Row 3: Live ICU & Emergency Telemetry */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 p-5 items-start">
-                  <div className="md:col-span-4">
-                    <div className="text-sm font-bold text-slate-900">Live ICU Telemetry</div>
-                    <p className="text-xs text-slate-500 mt-0.5">Real-time bed availability &amp; emergency hotline</p>
-                  </div>
-
-                  {hospitalsData.map((h, idx) => (
-                    <div key={idx} className="md:col-span-4 flex flex-col gap-2">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`w-3 h-3 rounded-full ${
-                            h.beds_icu_available > 0 ? "bg-emerald-500 animate-pulse" : "bg-red-500"
-                          }`}
-                        />
-                        <span className="text-sm font-bold text-slate-900">
-                          {h.beds_icu_available} ICU Beds Free Right Now
-                        </span>
-                      </div>
-
-                      <div className="text-xs text-slate-500">
-                        {h.beds_icu} Total ICU Beds • {h.beds_ventilator} Ventilators • {h.trauma_level}
-                      </div>
-
-                      <a
-                        href={`tel:${h.ambulance_phone || h.emergency_phone || "108"}`}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-lg text-xs font-bold transition-colors w-fit mt-1"
-                      >
-                        <span className="material-symbols-outlined text-sm">ambulance</span>
-                        <span>Call Ambulance ({h.ambulance_phone || "108"})</span>
-                      </a>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Row 4: Included Medical Hardware / Implant */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 p-5 bg-slate-50/50 items-start">
-                  <div className="md:col-span-4">
-                    <div className="text-sm font-bold text-slate-900">Included Implant / Device</div>
-                    <p className="text-xs text-slate-500 mt-0.5">Specified hardware included without hidden fees</p>
-                  </div>
-
-                  {hospitalsData.map((h, idx) => (
-                    <div key={idx} className="md:col-span-4 flex flex-col gap-1">
-                      <span className="text-xs font-bold text-slate-800 flex items-start gap-1.5">
-                        <span className="text-emerald-600 font-bold">✓</span>
-                        <span>{h.implant_included}</span>
-                      </span>
-                      <span className="text-[11px] text-slate-500">
-                        US-FDA / CDSCO certified medical device
-                      </span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Row 5: Included ICU & Inpatient Stay */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 p-5 items-start">
-                  <div className="md:col-span-4">
-                    <div className="text-sm font-bold text-slate-900">Included Inpatient &amp; ICU Stay</div>
-                    <p className="text-xs text-slate-500 mt-0.5">Standard duration covered in package</p>
-                  </div>
-
-                  {hospitalsData.map((h, idx) => (
-                    <div key={idx} className="md:col-span-4 flex flex-col gap-1">
-                      <span className="text-xs font-bold text-slate-800 flex items-start gap-1.5">
-                        <span className="text-emerald-600 font-bold">✓</span>
-                        <span>{h.icu_days_included}</span>
-                      </span>
-                      <span className="text-[11px] text-slate-500">{h.pre_post_op_included}</span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Row 6: Detailed Package Inclusions */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 p-5 bg-slate-50/50 items-start">
-                  <div className="md:col-span-4">
-                    <div className="text-sm font-bold text-slate-900">Package Inclusions</div>
-                    <p className="text-xs text-slate-500 mt-0.5">Components covered in standard package tariff</p>
-                  </div>
-
-                  {hospitalsData.map((h, idx) => (
-                    <div key={idx} className="md:col-span-4">
-                      <ul className="space-y-1.5">
-                        {(h.inclusions || []).map((inc, i) => (
-                          <li key={i} className="text-xs text-slate-700 flex items-start gap-1.5">
-                            <span className="text-emerald-600 font-bold shrink-0">✓</span>
-                            <span>{inc}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Row 7: Exclusions & Extra Charges WARNING */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 p-5 bg-amber-50/40 items-start">
-                  <div className="md:col-span-4">
-                    <div className="text-sm font-bold text-amber-950 flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-amber-600 text-base">warning</span>
-                      <span>Exclusions &amp; Surcharges</span>
-                    </div>
-                    <p className="text-xs text-amber-800 mt-0.5">Potential out-of-pocket items not in base package</p>
-                  </div>
-
-                  {hospitalsData.map((h, idx) => (
-                    <div key={idx} className="md:col-span-4">
-                      <ul className="space-y-1.5">
-                        {(h.exclusions || []).map((exc, i) => (
-                          <li key={i} className="text-xs text-slate-800 flex items-start gap-1.5">
-                            <span className="text-red-500 font-bold shrink-0">✗</span>
-                            <span>{exc}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Row 8: Distinct Pros & Cons */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 p-5 items-start">
-                  <div className="md:col-span-4">
-                    <div className="text-sm font-bold text-slate-900">Clinical Strengths &amp; Bottlenecks</div>
-                    <p className="text-xs text-slate-500 mt-0.5">Distinct clinical feedback from hospital audits</p>
-                  </div>
-
-                  {hospitalsData.map((h, idx) => (
-                    <div key={idx} className="md:col-span-4 flex flex-col gap-3">
-                      {h.pros && h.pros.length > 0 && (
-                        <div>
-                          <span className="text-[11px] font-bold text-emerald-800 uppercase block mb-1">
-                            Key Strengths:
-                          </span>
-                          <div className="flex flex-col gap-1">
-                            {h.pros.map((p, i) => (
-                              <span
-                                key={i}
-                                className="text-xs px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-900 border border-emerald-200 flex items-start gap-1"
-                              >
-                                <span className="font-bold">✓</span> {p}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {h.cons && h.cons.length > 0 && (
-                        <div>
-                          <span className="text-[11px] font-bold text-rose-800 uppercase block mb-1">
-                            Patient Considerations:
-                          </span>
-                          <div className="flex flex-col gap-1">
-                            {h.cons.map((c, i) => (
-                              <span
-                                key={i}
-                                className="text-xs px-2.5 py-1 rounded-md bg-rose-50 text-rose-900 border border-rose-200 flex items-start gap-1"
-                              >
-                                <span className="font-bold">✗</span> {c}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Row 9: Patient Reviews & Real Testimonials */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 p-5 bg-slate-50/50 items-start">
-                  <div className="md:col-span-4">
-                    <div className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-amber-500 text-base">reviews</span>
-                      <span>Patient Reviews &amp; Testimonials</span>
-                    </div>
-                    <p className="text-xs text-slate-500 mt-0.5">Authentic feedback from verified admissions</p>
-                  </div>
-
-                  {hospitalsData.map((h, idx) => (
-                    <div key={idx} className="md:col-span-4 flex flex-col gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded">
-                          ⭐ {h.overall_rating?.toFixed(1) || "4.7"} / 5.0
-                        </span>
-                        <span className="text-xs text-slate-500">
-                          ({h.total_reviews || 120} verified patient reviews)
-                        </span>
-                      </div>
-
-                      {h.reviews && h.reviews.length > 0 ? (
-                        <div className="bg-white p-3 rounded-xl border border-slate-200 text-xs shadow-2xs">
-                          <div className="flex items-center justify-between text-slate-400 text-[11px] mb-1">
-                            <span className="font-semibold text-slate-700">{h.reviews[0].treatment_category}</span>
-                            <span>{h.reviews[0].created_at}</span>
-                          </div>
-                          <p className="italic text-slate-800 line-clamp-3">
-                            &ldquo;{h.reviews[0].comment}&rdquo;
-                          </p>
-                          <div className="mt-2 text-[11px] font-bold text-slate-600 flex items-center justify-between">
-                            <span>— {h.reviews[0].author_name}</span>
-                            <span className="text-emerald-700 font-semibold">✓ Verified Patient</span>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="text-xs text-slate-400 italic">
-                          No written testimonials registered for this procedure yet.
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Row 10: Action Buttons */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 p-5 bg-slate-50 items-center">
-                  <div className="md:col-span-4">
-                    <span className="text-xs text-slate-500 font-medium">Ready to proceed with care?</span>
-                  </div>
-
-                  {hospitalsData.map((h, idx) => (
-                    <div key={idx} className="md:col-span-4 flex gap-2">
-                      <Link
-                        href={`/hospitals/${h.slug}`}
-                        className="w-full text-center py-2.5 px-4 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-colors shadow-xs"
-                      >
-                        View Hospital Profile &amp; Doctors →
-                      </Link>
-                    </div>
-                  ))}
+                <div className="flex flex-col items-center">
+                  <span className="font-headline-md text-headline-md font-bold text-badge-cashless">0hr</span>
+                  <span className="font-label-sm text-label-sm text-on-surface-variant mt-1 font-medium">Wait Period</span>
                 </div>
               </div>
-            )}
+              <p className="font-body-sm text-body-sm text-on-surface-variant">
+                No proportionate deduction penalties on single deluxe rooms.
+              </p>
+            </div>
+
           </div>
-        </section>
-      </main>
 
-      <Footer />
-    </>
+          {/* Frequently Asked Questions Accordion */}
+          <div className="bg-surface-card rounded-xl p-space-lg shadow-sm border border-subtle flex flex-col gap-space-md mt-space-sm">
+            <div className="flex flex-col gap-1">
+              <h2 className="font-headline-lg text-headline-lg text-primary-container font-bold">
+                Frequently Asked Questions
+              </h2>
+              <p className="font-body-sm text-body-sm text-on-surface-variant">
+                How Medi Route coordinates clinical comparisons and cashless admissions.
+              </p>
+            </div>
+
+            <div className="flex flex-col divide-y divide-surface-container">
+              <details className="group py-space-sm cursor-pointer transition-colors" open>
+                <summary className="flex items-center justify-between font-label-md text-label-md text-on-surface list-none font-semibold">
+                  <span>How does Medi Route calculate the cashless approval guarantee?</span>
+                  <span className="material-symbols-outlined text-on-surface-variant group-open:rotate-180 transition-transform text-[18px]">
+                    expand_more
+                  </span>
+                </summary>
+                <p className="font-body-sm text-body-sm text-on-surface-variant mt-space-xs leading-relaxed">
+                  Medi Route interfaces directly via IRDAI-compliant API gateways to the hospital TPA desk. By pre-filling patient ABHA medical records and verified coverage, authorizations are processed through priority queues in under 28 minutes.
+                </p>
+              </details>
+
+              <details className="group py-space-sm cursor-pointer transition-colors">
+                <summary className="flex items-center justify-between font-label-md text-label-md text-on-surface list-none font-semibold">
+                  <span>What happens if a selected room tariff exceeds my insurance policy ceiling?</span>
+                  <span className="material-symbols-outlined text-on-surface-variant group-open:rotate-180 transition-transform text-[18px]">
+                    expand_more
+                  </span>
+                </summary>
+                <p className="font-body-sm text-body-sm text-on-surface-variant mt-space-xs leading-relaxed">
+                  Our tool dynamically checks the room tariff ceiling of your synced health policy and flags potential deductions upfront, avoiding unexpected out-of-pocket bills at discharge.
+                </p>
+              </details>
+
+              <details className="group py-space-sm cursor-pointer transition-colors">
+                <summary className="flex items-center justify-between font-label-md text-label-md text-on-surface list-none font-semibold">
+                  <span>Can I switch hospitals if live bed availability changes unexpectedly?</span>
+                  <span className="material-symbols-outlined text-on-surface-variant group-open:rotate-180 transition-transform text-[18px]">
+                    expand_more
+                  </span>
+                </summary>
+                <p className="font-body-sm text-body-sm text-on-surface-variant mt-space-xs leading-relaxed">
+                  Yes. The on-ground buddy service can instantly re-route your pre-authorization claim package to any other Tier-1 partner hospital without restarting the insurer paperwork.
+                </p>
+              </details>
+
+              <details className="group py-space-sm cursor-pointer transition-colors">
+                <summary className="flex items-center justify-between font-label-md text-label-md text-on-surface list-none font-semibold">
+                  <span>What is the difference between NABH and JCI accreditations?</span>
+                  <span className="material-symbols-outlined text-on-surface-variant group-open:rotate-180 transition-transform text-[18px]">
+                    expand_more
+                  </span>
+                </summary>
+                <p className="font-body-sm text-body-sm text-on-surface-variant mt-space-xs leading-relaxed">
+                  NABH represents India's highest clinical safety standard from the Quality Council of India. JCI represents international clinical protocols. All listed partner hospitals maintain verified active credentials.
+                </p>
+              </details>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </main>
   );
 }
 
 export default function ComparePage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-slate-50">
-          <div className="text-center text-xs text-slate-500 flex items-center gap-2">
-            <span className="material-symbols-outlined animate-spin text-slate-700">sync</span>
-            <span>Loading Clinical Comparison Matrix...</span>
-          </div>
-        </div>
-      }
-    >
-      <CompareContent />
-    </Suspense>
+    <div className="bg-surface-canvas min-h-screen text-on-surface antialiased">
+      <Navbar />
+      <Suspense fallback={<div className="pt-24 text-center">Loading comparison matrix...</div>}>
+        <CompareContent />
+      </Suspense>
+      <Footer />
+    </div>
   );
 }

@@ -25,6 +25,16 @@ import { locationService } from "../services/location";
 import HospitalCard from "../components/HospitalCard";
 import FloatingSOSButton from "../components/FloatingSOSButton";
 
+const SUGGESTED_TREATMENTS = [
+  "Heart Attack / CAD",
+  "Knee Osteoarthritis",
+  "Kidney Stones",
+  "Dialysis",
+  "Gallbladder Stones",
+  "Cataract",
+  "Hernia",
+];
+
 export default function SearchScreen({ route, navigation }: any) {
   const initialQuery = route.params?.query || "";
   const initialCategory = route.params?.category || "";
@@ -95,14 +105,19 @@ export default function SearchScreen({ route, navigation }: any) {
           >
             <Text style={styles.locationButtonText}>📍 {currentCity} ▾</Text>
           </TouchableOpacity>
-          <Text style={styles.resultsBadge}>{filteredHospitals.length} facilities across India</Text>
+          <View style={styles.headerRightBadges}>
+            <View style={styles.demoBadge}>
+              <Text style={styles.demoBadgeText}>🧪 Mock Data</Text>
+            </View>
+            <Text style={styles.resultsBadge}>{filteredHospitals.length} facilities</Text>
+          </View>
         </View>
 
         <View style={styles.searchBar}>
           <Text style={{ fontSize: 16, marginRight: 6 }}>🔍</Text>
           <TextInput
             style={styles.searchInput}
-            placeholder="Search procedure, budget, hospital..."
+            placeholder="Search procedure, condition, hospital..."
             placeholderTextColor={colors.textTertiary}
             value={query}
             onChangeText={setQuery}
@@ -113,6 +128,29 @@ export default function SearchScreen({ route, navigation }: any) {
             </TouchableOpacity>
           )}
         </View>
+
+        {/* Suggested Disease Chips */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.diseaseChipsScroll}
+        >
+          {SUGGESTED_TREATMENTS.map((disease) => {
+            const isSelected = query.toLowerCase() === disease.toLowerCase();
+            return (
+              <TouchableOpacity
+                key={disease}
+                style={[styles.diseaseChip, isSelected && styles.diseaseChipActive]}
+                onPress={() => setQuery(isSelected ? "" : disease)}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.diseaseChipText, isSelected && styles.diseaseChipTextActive]}>
+                  🩺 {disease}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
       </View>
 
       {/* Filter Chips Scroll with Budget & Schemes */}
@@ -157,6 +195,13 @@ export default function SearchScreen({ route, navigation }: any) {
           {filteredHospitals.length} verified hospitals found
         </Text>
         <Text style={[styles.provenanceTag, { color: colors.success }]}>🟢 Real ICU Telemetry</Text>
+      </View>
+
+      {/* Mock Data Disclaimer Strip */}
+      <View style={styles.disclaimerStrip}>
+        <Text style={styles.disclaimerText}>
+          ⚠️ Showing mock data benchmarks: tariffs, patient volumes & success ratios are simulated.
+        </Text>
       </View>
 
       {/* Hospital List */}
@@ -324,6 +369,24 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: colors.accentDark,
   },
+  headerRightBadges: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  demoBadge: {
+    backgroundColor: "rgba(245, 158, 11, 0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(245, 158, 11, 0.3)",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  demoBadgeText: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#B45309",
+  },
   resultsBadge: {
     fontSize: 11,
     fontWeight: "600",
@@ -345,6 +408,31 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textPrimary,
     padding: 0,
+  },
+  diseaseChipsScroll: {
+    paddingTop: 8,
+    gap: 6,
+  },
+  diseaseChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: borderRadius.pill,
+    backgroundColor: "rgba(15, 118, 110, 0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(15, 118, 110, 0.2)",
+  },
+  diseaseChipActive: {
+    backgroundColor: "#0f766e",
+    borderColor: "#0f766e",
+  },
+  diseaseChipText: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#0f766e",
+  },
+  diseaseChipTextActive: {
+    color: "#FFFFFF",
+    fontWeight: "700",
   },
   filterRow: {
     paddingHorizontal: spacing.lg,
@@ -386,6 +474,21 @@ const styles = StyleSheet.create({
   provenanceTag: {
     fontSize: 10,
     color: colors.textTertiary,
+    fontWeight: "600",
+  },
+  disclaimerStrip: {
+    backgroundColor: "rgba(245, 158, 11, 0.08)",
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "rgba(245, 158, 11, 0.2)",
+  },
+  disclaimerText: {
+    fontSize: 10,
+    color: "#92400E",
     fontWeight: "600",
   },
   container: {
