@@ -68,20 +68,47 @@ export const CITY_ALIASES: Record<string, string> = {
 };
 
 
+// Pre-computed lists of all unique cities and states from the actual hospital registry
+const ALL_REGISTRY_CITIES: string[] = Array.from(
+  new Set((rawAllHospitals as any[]).map((h) => (h.city || "").trim()).filter(Boolean))
+).sort((a, b) => b.length - a.length); // Multi-word cities match first (e.g. "Navi Mumbai" before "Mumbai")
+
+const ALL_REGISTRY_STATES: string[] = Array.from(
+  new Set((rawAllHospitals as any[]).map((h) => (h.state || "").trim()).filter(Boolean))
+).sort((a, b) => b.length - a.length);
+
 export function extractCityFromQuery(q: string): string | null {
   if (!q) return null;
   const norm = q.toLowerCase();
-  const priorityCities = [
-    "delhi", "new delhi", "ncr", "gurugram", "noida", "faridabad",
-    "mumbai", "bombay", "bengaluru", "bangalore", "hyderabad", "chennai", "madras",
-    "kolkata", "calcutta", "chandigarh", "mohali", "panchkula", "hoshiarpur",
-    "ludhiana", "amritsar", "jalandhar", "pune", "ahmedabad", "jaipur", "lucknow", "patna"
-  ];
-  for (const c of priorityCities) {
-    if (norm.includes(c)) {
-      return CITY_ALIASES[c] || c;
+
+  // 1. Check known historical aliases (e.g. bombay -> mumbai, ncr -> delhi)
+  for (const alias in CITY_ALIASES) {
+    const reg = new RegExp(`\\b${alias}\\b`, "i");
+    if (reg.test(norm)) {
+      return CITY_ALIASES[alias];
     }
   }
+
+  // 2. Dynamically scan across all 107 cities in the database
+  for (const city of ALL_REGISTRY_CITIES) {
+    if (city.length > 2) {
+      const reg = new RegExp(`\\b${city.toLowerCase()}\\b`, "i");
+      if (reg.test(norm)) {
+        return city;
+      }
+    }
+  }
+
+  // 3. Dynamically scan across all 31 states in the database
+  for (const state of ALL_REGISTRY_STATES) {
+    if (state.length > 2) {
+      const reg = new RegExp(`\\b${state.toLowerCase()}\\b`, "i");
+      if (reg.test(norm)) {
+        return state;
+      }
+    }
+  }
+
   return null;
 }
 

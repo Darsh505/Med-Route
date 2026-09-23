@@ -843,53 +843,80 @@ class ClinicalChatbot:
         results = []
         matched_slugs = set()
 
-        # 1. Check if user specified an Indian city/region in query
+        # 1. Dynamically scan memory store for ANY Indian city or state in query
         target_city = None
         if user_query:
             uq = user_query.lower()
-            city_keywords = [
-                "delhi", "new delhi", "ncr", "mumbai", "bombay", "bangalore", "bengaluru",
-                "chandigarh", "mohali", "panchkula", "pune", "hyderabad", "chennai", "kolkata",
-                "jaipur", "lucknow", "amritsar", "ludhiana", "jalandhar", "hoshiarpur", "patiala",
-                "ahmedabad", "surat", "bhopal", "indore", "kochi", "patna"
-            ]
-            for ck in city_keywords:
-                if ck in uq:
-                    if ck in ["delhi", "new delhi", "ncr"]:
-                        target_city = "Delhi"
-                    elif ck in ["bangalore", "bengaluru"]:
-                        target_city = "Bengaluru"
-                    elif ck in ["mumbai", "bombay"]:
-                        target_city = "Mumbai"
-                    else:
-                        target_city = ck.capitalize()
-                    break
-
-        # If a city was requested, search memory store for real hospitals in that city!
-        if target_city:
             try:
                 from app.services.memory_store import memory_store
                 if not memory_store._loaded:
                     memory_store.load()
-                city_matches = [
-                    h for h in memory_store._hospitals
-                    if target_city.lower() in h.get("city", "").lower() or target_city.lower() in h.get("state", "").lower()
-                ]
-                if city_matches:
-                    if is_emergency:
-                        city_matches.sort(
-                            key=lambda h: (1 if h.get("is_trauma_center") else 0, h.get("beds_icu_available", 0)),
-                            reverse=True,
-                        )
-                    else:
-                        city_matches.sort(key=lambda h: h.get("overall_rating", 4.0), reverse=True)
 
-                    for h in city_matches[:3]:
-                        matched_slugs.add(h.get("slug"))
-                        results.append(self._to_recommendation(h, is_emergency))
-                    return results
+                aliases = {
+                    "bombay": "Mumbai",
+                    "bangalore": "Bengaluru",
+                    "calcutta": "Kolkata",
+                    "madras": "Chennai",
+                    "gurgaon": "Gurugram",
+                    "ncr": "Delhi",
+                    "delhi ncr": "Delhi",
+                    "new delhi": "Delhi",
+                    "banaras": "Varanasi",
+                    "kashi": "Varanasi",
+                    "baroda": "Vadodara",
+                    "cochin": "Kochi",
+                    "trivandrum": "Thiruvananthapuram",
+                }
+                for ak, av in aliases.items():
+                    if re.search(r'\b' + re.escape(ak) + r'\b', uq):
+                        target_city = av
+                        break
+
+                if not target_city:
+                    # Dynamically check against ALL unique cities in the hospital dataset (longest first)
+                    dataset_cities = sorted(
+                        list({h.get("city", "").strip() for h in memory_store._hospitals if h.get("city")}),
+                        key=lambda x: len(x),
+                        reverse=True,
+                    )
+                    for c in dataset_cities:
+                        if len(c) > 2 and re.search(r'\b' + re.escape(c.lower()) + r'\b', uq):
+                            target_city = c
+                            break
+
+                if not target_city:
+                    # Dynamically check against ALL unique states in the hospital dataset
+                    dataset_states = sorted(
+                        list({h.get("state", "").strip() for h in memory_store._hospitals if h.get("state")}),
+                        key=lambda x: len(x),
+                        reverse=True,
+                    )
+                    for s in dataset_states:
+                        if len(s) > 2 and re.search(r'\b' + re.escape(s.lower()) + r'\b', uq):
+                            target_city = s
+                            break
+
+                if target_city:
+                    t_regex = r'\b' + re.escape(target_city.lower()) + r'\b'
+                    city_matches = [
+                        h for h in memory_store._hospitals
+                        if re.search(t_regex, (h.get("city") or "").lower()) or re.search(t_regex, (h.get("state") or "").lower())
+                    ]
+                    if city_matches:
+                        if is_emergency:
+                            city_matches.sort(
+                                key=lambda h: (1 if h.get("is_trauma_center") else 0, h.get("beds_icu_available", 0)),
+                                reverse=True,
+                            )
+                        else:
+                            city_matches.sort(key=lambda h: h.get("overall_rating", 4.0), reverse=True)
+
+                        for h in city_matches[:3]:
+                            matched_slugs.add(h.get("slug"))
+                            results.append(self._to_recommendation(h, is_emergency))
+                        return results
             except Exception as e:
-                logger.warning("City memory store lookup failed", error=str(e))
+                logger.warning("Universal city memory store lookup failed", error=str(e))
 
         # 2. Match by name in reference directory
         for target in names:

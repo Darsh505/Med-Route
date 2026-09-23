@@ -867,11 +867,9 @@ function resolveMobileHospitals(
 
   let pool = MOCK_HOSPITALS;
   if (matchedCity) {
-    const term = matchedCity.toLowerCase();
+    const reg = new RegExp(`\\b${matchedCity.toLowerCase()}\\b`, "i");
     const cityFiltered = pool.filter(
-      (h) =>
-        (h.city && (h.city.toLowerCase() === term || h.city.toLowerCase().includes(term) || term.includes(h.city.toLowerCase()))) ||
-        (h.state && (h.state.toLowerCase() === term || h.state.toLowerCase().includes(term)))
+      (h) => (h.city && reg.test(h.city)) || (h.state && reg.test(h.state))
     );
     if (cityFiltered.length > 0) {
       pool = cityFiltered;
