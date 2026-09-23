@@ -11,8 +11,12 @@
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?style=flat&logo=python)](https://www.python.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat&logo=typescript)](https://www.typescriptlang.org/)
 [![Docker Compose](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat&logo=docker)](https://www.docker.com/)
+[![Database Catalog](https://img.shields.io/badge/Database-Catalog_%26_ER_Diagram-blue?style=flat&logo=postgresql)](DATABASE.md)
 
 ---
+
+> 📖 **Judge Quick-Link**: To view the full Database Schema, ER Diagram, and 1,451 hospital registry metrics, open **[`DATABASE.md`](DATABASE.md)**.
+
 
 ## 📌 Executive Summary
 
