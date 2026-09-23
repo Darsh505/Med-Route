@@ -35,6 +35,8 @@ interface MessageItem {
     is_pmjay_empanelled: boolean;
     emergency_phone?: string;
     cost_indicative?: string;
+    patients_treated?: number;
+    success_ratio?: string;
   }>;
   action_buttons?: Array<{
     type: string;
@@ -216,6 +218,15 @@ export default function ChatScreen({ navigation }: any) {
                     )}
                   </View>
 
+                  {(hosp.patients_treated !== undefined || !!hosp.success_ratio) && (
+                    <View style={styles.miniCardMetricRow}>
+                      <Text style={styles.miniCardMetricText}>
+                        {hosp.success_ratio ? `★ ${hosp.success_ratio} Success` : ""}
+                        {hosp.patients_treated ? ` • ${hosp.patients_treated.toLocaleString()} Treated` : ""}
+                      </Text>
+                    </View>
+                  )}
+
                   <View style={styles.miniCardActions}>
                     <TouchableOpacity
                       style={styles.miniCardViewBtn}
@@ -376,6 +387,428 @@ export default function ChatScreen({ navigation }: any) {
   );
 }
 
+// ─────────────────────────────────────────────────────────────
+// Clinical Disease Knowledge Registry & Mobile NLP Engine
+// ─────────────────────────────────────────────────────────────
+
+interface DiseaseKBItem {
+  id: string;
+  name: string;
+  commonName: string;
+  keywords: string[];
+  specialty: string;
+  procedureName: string;
+  overview: string;
+  govtTariff: string;
+  privateTariff: string;
+  pmjayRate: string;
+  successRatio: string;
+  stayDays: string;
+  procedureKeywords: string[];
+}
+
+const CLINICAL_DISEASES_KB: DiseaseKBItem[] = [
+  {
+    id: "cataract",
+    name: "Senile Cataract & Vision Impairment",
+    commonName: "Cataract (Motiyabind)",
+    keywords: ["cataract", "motiyabind", "phaco", "eye lens", "cloudy vision", "eye surgery", "vision loss", "lens replacement"],
+    specialty: "Ophthalmology / Eye Surgery",
+    procedureName: "Cataract Surgery (Phaco + Foldable IOL)",
+    overview: "Gradual opacification of the crystalline eye lens leading to glare sensitivity, blurred acuity, and progressive visual loss.",
+    govtTariff: "₹8,000 – ₹18,000",
+    privateTariff: "₹28,000 – ₹65,000 (Monofocal / Toric / Multifocal IOL)",
+    pmjayRate: "₹12,500 (100% Cashless including Foldable IOL)",
+    successRatio: "99.2%",
+    stayDays: "Daycare (Discharge in 3–4 hours)",
+    procedureKeywords: ["cataract", "phaco", "eye", "vision"],
+  },
+  {
+    id: "hernia",
+    name: "Inguinal & Abdominal Wall Hernia",
+    commonName: "Hernia (Inguinal / Umbilical / Ventral)",
+    keywords: ["hernia", "inguinal hernia", "umbilical hernia", "ventral hernia", "mesh repair", "herniotomy", "abdominal bulge"],
+    specialty: "General & Laparoscopic Surgery",
+    procedureName: "Laparoscopic Hernia Mesh Repair (TEP / TAPP)",
+    overview: "Protrusion of intra-abdominal contents through a localized abdominal muscular wall defect, presenting as a reducible or tender bulge.",
+    govtTariff: "₹15,000 – ₹28,000",
+    privateTariff: "₹45,000 – ₹95,000 (3D Mesh / Laparoscopic)",
+    pmjayRate: "₹32,000 (100% Cashless including Certified Mesh)",
+    successRatio: "98.5%",
+    stayDays: "1–2 days",
+    procedureKeywords: ["hernia", "mesh repair", "abdominal wall"],
+  },
+  {
+    id: "gallbladder_stone",
+    name: "Cholelithiasis (Gallbladder Stones)",
+    commonName: "Gallbladder Stones (Pitta Ki Pathri)",
+    keywords: ["gallbladder", "gall bladder", "gallstone", "gallstones", "cholelithiasis", "cholecystectomy", "pitta ki pathri", "pitta"],
+    specialty: "Gastroenterology & Laparoscopic Surgery",
+    procedureName: "Laparoscopic Cholecystectomy (Keyhole Removal)",
+    overview: "Biliary calculus concretions inside the gallbladder lumen causing recurrent right hypochondriac colic, dyspepsia, or acute cholecystitis.",
+    govtTariff: "₹18,000 – ₹32,000",
+    privateTariff: "₹55,000 – ₹1,15,000",
+    pmjayRate: "₹38,000 (100% Cashless with 3-day hospitalization)",
+    successRatio: "99.1%",
+    stayDays: "1–2 days",
+    procedureKeywords: ["cholelithiasis", "gallbladder", "cholecystectomy"],
+  },
+  {
+    id: "kidney_stone",
+    name: "Kidney & Ureteric Calculi (Stones)",
+    commonName: "Kidney Stones (Gurde Ki Pathri / Renal Calculi)",
+    keywords: ["kidney stone", "renal calculi", "ureteric stone", "pathri", "gurde ki pathri", "pcnl", "ursl", "lithotripsy", "renal stone", "kidney calculi"],
+    specialty: "Urology & Endourology",
+    procedureName: "PCNL / Holmium Laser Lithotripsy (URSL)",
+    overview: "Crystalline mineral aggregates in the renal calyces or ureter generating acute radiating loin-to-groin colic, hematuria, or obstructive uropathy.",
+    govtTariff: "₹15,000 – ₹30,000",
+    privateTariff: "₹42,000 – ₹95,000 (Holmium Laser)",
+    pmjayRate: "₹35,000 (100% Cashless with DJ Stenting)",
+    successRatio: "98.2%",
+    stayDays: "1–2 days",
+    procedureKeywords: ["calculi", "stone", "pcnl", "renal stone", "lithotripsy"],
+  },
+  {
+    id: "appendicitis",
+    name: "Acute Appendicitis & Cecal Inflammation",
+    commonName: "Appendicitis (Appendix Infection)",
+    keywords: ["appendix", "appendicitis", "appendicectomy", "appendectomy", "right lower abdominal pain", "cecal"],
+    specialty: "Emergency & General Surgery",
+    procedureName: "Laparoscopic Appendectomy",
+    overview: "Acute luminal obstruction and bacterial inflammation of the vermiform appendix requiring urgent surgical resection to prevent rupture.",
+    govtTariff: "₹12,000 – ₹25,000",
+    privateTariff: "₹45,000 – ₹85,000",
+    pmjayRate: "₹28,000 (100% Cashless Emergency Admission)",
+    successRatio: "99.0%",
+    stayDays: "1–2 days",
+    procedureKeywords: ["appendicitis", "appendectomy", "appendix"],
+  },
+  {
+    id: "knee_osteoarthritis",
+    name: "Severe Knee Osteoarthritis & Degeneration",
+    commonName: "Knee Arthritis (Ghutne Ka Dard / TKR)",
+    keywords: ["knee", "tkr", "knee replacement", "ghutna", "knee arthritis", "knee surgery", "joint pain", "knee pain"],
+    specialty: "Orthopedics & Joint Reconstruction",
+    procedureName: "Total Knee Replacement (Unilateral / Robotic)",
+    overview: "End-stage tricompartmental articular cartilage degradation and osteophyte formation resulting in joint space loss, severe pain, and ambulation restriction.",
+    govtTariff: "₹75,000 – ₹95,000",
+    privateTariff: "₹1,45,000 – ₹2,20,000 (Robotic / High-Flex Implants)",
+    pmjayRate: "₹80,000 (100% Cashless including US-FDA certified implants)",
+    successRatio: "97.5%",
+    stayDays: "4–5 days",
+    procedureKeywords: ["knee replacement", "osteoarthritis", "tkr", "knee"],
+  },
+  {
+    id: "hip_arthritis",
+    name: "Avascular Necrosis & Severe Hip Arthritis",
+    commonName: "Hip Arthritis (Hip Replacement / THR)",
+    keywords: ["hip", "thr", "hip replacement", "avascular necrosis", "hip arthritis", "hip fracture", "hip pain"],
+    specialty: "Orthopedics & Joint Reconstruction",
+    procedureName: "Total Hip Replacement (Bipolar / Ceramic)",
+    overview: "Femoral head osteonecrosis or degenerative coxarthrosis resulting in severe groin pain, limb shortening, and mechanical joint restriction.",
+    govtTariff: "₹85,000 – ₹1,10,000",
+    privateTariff: "₹1,60,000 – ₹2,50,000 (Ceramic on Ceramic)",
+    pmjayRate: "₹90,000 (100% Cashless Implants)",
+    successRatio: "96.8%",
+    stayDays: "4–5 days",
+    procedureKeywords: ["hip replacement", "hip arthritis", "thr", "hip"],
+  },
+  {
+    id: "coronary_artery_disease",
+    name: "Coronary Artery Disease (CAD) & Myocardial Infarction",
+    commonName: "Coronary Blockage / Angioplasty",
+    keywords: ["stent", "angioplasty", "cardiac stent", "coronary", "blockage", "heart block", "ptca", "cad"],
+    specialty: "Cardiology & Interventional Cath Lab",
+    procedureName: "Coronary Angioplasty (Single / Double DES Stent)",
+    overview: "Atherosclerotic luminal narrowing of coronary arteries depriving myocardium of oxygen, manifesting as angina or acute myocardial infarction.",
+    govtTariff: "₹15,000 – ₹45,000",
+    privateTariff: "₹1,20,000 – ₹1,85,000 (Drug-Eluting Stent)",
+    pmjayRate: "₹65,000 (100% Cashless pre-fixed tariff)",
+    successRatio: "98.5%",
+    stayDays: "2 days",
+    procedureKeywords: ["angioplasty", "stent", "coronary artery disease", "cad"],
+  },
+  {
+    id: "triple_vessel_disease",
+    name: "Triple Vessel CAD & Complex Ischemia",
+    commonName: "Bypass Surgery (CABG / Open Heart)",
+    keywords: ["bypass", "cabg", "heart bypass", "open heart", "triple vessel"],
+    specialty: "Cardiothoracic & Vascular Surgery (CTVS)",
+    procedureName: "Coronary Artery Bypass Graft (CABG)",
+    overview: "Multivessel critical stenosis of main coronary branches requiring arterial or venous conduit grafting to revascularize ischemic myocardium.",
+    govtTariff: "₹75,000 – ₹1,20,000",
+    privateTariff: "₹2,20,000 – ₹3,50,000 (Beating Heart / Minimally Invasive)",
+    pmjayRate: "₹1,30,000 (100% Cashless surgical package)",
+    successRatio: "96.5%",
+    stayDays: "6–7 days",
+    procedureKeywords: ["cabg", "bypass", "triple vessel"],
+  },
+  {
+    id: "chronic_kidney_disease",
+    name: "Chronic Kidney Disease (Stage 5 / ESRD)",
+    commonName: "Kidney Failure / Dialysis",
+    keywords: ["dialysis", "hemodialysis", "kidney failure", "renal failure", "ckd", "esrd", "creatinine", "dialysis slot"],
+    specialty: "Nephrology & Renal Replacement",
+    procedureName: "Hemodialysis (Maintenance Session & AV Fistula)",
+    overview: "Irreversible decline in glomerular filtration rate (eGFR < 15) leading to uremic toxicity, hyperkalemia, and fluid retention requiring extracorporeal clearance.",
+    govtTariff: "₹800 – ₹1,200 per session",
+    privateTariff: "₹2,000 – ₹3,500 per session",
+    pmjayRate: "100% Free recurring sessions under Ayushman Bharat",
+    successRatio: "97.2%",
+    stayDays: "4 hours per session (Outpatient recurring)",
+    procedureKeywords: ["hemodialysis", "dialysis", "chronic kidney disease", "esrd"],
+  },
+  {
+    id: "acute_stroke",
+    name: "Acute Ischemic Stroke & Cerebrovascular Attack",
+    commonName: "Stroke (Brain Attack / Lakwa)",
+    keywords: ["stroke", "paralysis", "lakwa", "brain stroke", "brain clot", "thrombolysis", "ischemic stroke"],
+    specialty: "Neurology & Neuro-Intervention",
+    procedureName: "Acute Stroke Thrombolysis (IV rtPA) & Neuro-ICU",
+    overview: "Sudden thromboembolic occlusion of cerebral arterial supply causing rapid focal neurological deficits within the critical 4.5-hour golden window.",
+    govtTariff: "₹15,000 – ₹45,000 (Subsidized rtPA)",
+    privateTariff: "₹75,000 – ₹1,80,000 (Thrombolysis + Neuro-ICU)",
+    pmjayRate: "100% Cashless Emergency Neuro Protocol",
+    successRatio: "94.5%",
+    stayDays: "4–6 days",
+    procedureKeywords: ["stroke", "thrombolysis", "ischemic stroke"],
+  },
+  {
+    id: "cancer_tumors",
+    name: "Solid Tumors & Oncological Carcinoma",
+    commonName: "Cancer Care (Chemotherapy / Radiation)",
+    keywords: ["cancer", "tumor", "chemotherapy", "chemo", "oncology", "radiation", "carcinoma", "lymphoma", "leukemia", "biopsy"],
+    specialty: "Medical & Surgical Oncology",
+    procedureName: "Chemotherapy Protocol & Target Radiation",
+    overview: "Uncontrolled malignant cellular proliferation invading surrounding tissues and lymphatic basins, requiring multimodal systemic and targeted interventions.",
+    govtTariff: "₹8,000 – ₹25,000 per cycle",
+    privateTariff: "₹35,000 – ₹85,000 per cycle / ₹1.5L–₹3L Radiation",
+    pmjayRate: "100% Cashless up to ₹5,00,000 per family per year",
+    successRatio: "93.0%",
+    stayDays: "Daycare or 2–3 days per cycle",
+    procedureKeywords: ["carcinoma", "tumor", "chemotherapy", "cancer", "oncology"],
+  },
+  {
+    id: "pregnancy_delivery",
+    name: "High-Risk Pregnancy & Obstetric Delivery",
+    commonName: "Delivery & Maternity (C-Section / Normal)",
+    keywords: ["cesarean", "c-section", "lscs", "delivery", "pregnancy", "maternity", "labor", "normal delivery"],
+    specialty: "Obstetrics & Gynecology",
+    procedureName: "Cesarean Section Delivery (LSCS) / Normal Delivery",
+    overview: "Surgical abdominal hysterotomy or spontaneous vaginal delivery with neonatal resuscitation backup and maternal hemodynamic monitoring.",
+    govtTariff: "₹0 – ₹15,000 (Janani Suraksha Subsidized)",
+    privateTariff: "₹45,000 – ₹1,10,000",
+    pmjayRate: "100% Free under PMJAY Maternity Package",
+    successRatio: "99.4%",
+    stayDays: "2–4 days",
+    procedureKeywords: ["cesarean", "lscs", "pregnancy", "delivery", "maternity"],
+  },
+  {
+    id: "dengue_fever",
+    name: "Dengue Hemorrhagic Fever & Thrombocytopenia",
+    commonName: "Dengue Fever (Platelet Fall)",
+    keywords: ["dengue", "thrombocytopenia", "low platelets", "platelet", "platelets", "mosquito fever"],
+    specialty: "Internal Medicine & Critical Care",
+    procedureName: "Platelet Telemetry & Targeted Inpatient Hydration",
+    overview: "Arboviral illness transmitted by Aedes mosquitoes triggering severe thrombocytopenia, plasma leakage, and potential hemorrhagic complications.",
+    govtTariff: "₹0 – ₹5,000 (Subsidized)",
+    privateTariff: "₹18,000 – ₹45,000 (Ward) / ₹80,000 (ICU)",
+    pmjayRate: "100% Covered under Ayushman Bharat Inpatient Protocol",
+    successRatio: "99.4%",
+    stayDays: "3–5 days",
+    procedureKeywords: ["medicine", "critical care", "icu"],
+  },
+  {
+    id: "pneumonia",
+    name: "Community-Acquired & Bacterial Pneumonia",
+    commonName: "Pneumonia (Lung Infection)",
+    keywords: ["pneumonia", "lung infection", "chest infection", "sputum", "pleural effusion"],
+    specialty: "Pulmonology & Respiratory Medicine",
+    procedureName: "High-Flow Oxygenation & IV Targeted Antibiotic Therapy",
+    overview: "Acute alveolar parenchymal infection leading to exudative consolidation, hypoxia, persistent cough, and dyspnea.",
+    govtTariff: "₹5,000 – ₹15,000",
+    privateTariff: "₹25,000 – ₹65,000 (Ward) / ₹1,20,000 (ICU Ventilator)",
+    pmjayRate: "100% Cashless under PMJAY Respiratory Care Package",
+    successRatio: "97.0%",
+    stayDays: "4–6 days",
+    procedureKeywords: ["pulmonology", "respiratory", "icu"],
+  },
+  {
+    id: "diabetes",
+    name: "Type-2 Diabetes Mellitus & Metabolic Syndromes",
+    commonName: "Diabetes (Sugar / Madhumeh)",
+    keywords: ["diabetes", "sugar", "diabetic", "madhumeh", "insulin", "hba1c", "blood glucose", "hyperglycemia"],
+    specialty: "Endocrinology & Diabetology",
+    procedureName: "Comprehensive Diabetic Staging & Glycemic Control",
+    overview: "Chronic endocrine metabolic dysfunction caused by peripheral insulin resistance, requiring systematic glycemic regulation to prevent organ complications.",
+    govtTariff: "₹0 – ₹1,200 (Diagnostics & Medications)",
+    privateTariff: "₹3,500 – ₹12,000 (Annual Screening & Staging)",
+    pmjayRate: "Covered under PMJAY Non-Communicable Disease OPD & IPD",
+    successRatio: "96.5%",
+    stayDays: "Outpatient (1–3 days if Inpatient Ketoacidosis)",
+    procedureKeywords: ["endocrinology", "medicine"],
+  },
+  {
+    id: "asthma",
+    name: "Bronchial Asthma & Chronic Bronchospasm",
+    commonName: "Asthma (Dama / Wheeze)",
+    keywords: ["asthma", "dama", "bronchial asthma", "wheezing", "inhaler", "bronchospasm", "nebulization"],
+    specialty: "Pulmonology & Allergy Care",
+    procedureName: "Spirometry Pulmonary Function & Nebulization Protocol",
+    overview: "Chronic hyperreactive inflammatory disorder of the bronchial tree causing episodic wheezing, nocturnal dyspnea, and reversible airflow obstruction.",
+    govtTariff: "₹500 – ₹2,500 (Diagnostics & Maintenance)",
+    privateTariff: "₹4,500 – ₹15,000 (Comprehensive Allergy & PFT)",
+    pmjayRate: "Acute asthmatic episodes covered 100% in network emergency",
+    successRatio: "98.0%",
+    stayDays: "Daycare or 1–2 days if severe exacerbation",
+    procedureKeywords: ["pulmonology", "allergy"],
+  },
+  {
+    id: "tuberculosis",
+    name: "Pulmonary & Extrapulmonary Tuberculosis (TB)",
+    commonName: "Tuberculosis (T.B. / Tapdik)",
+    keywords: ["tuberculosis", "tb", "tapdik", "dots", "mycobacterium", "hemoptysis"],
+    specialty: "Pulmonology & Infectious Diseases",
+    procedureName: "CBNAAT / GeneXpert Diagnosis & Daily Anti-TB Regimen (DOTS)",
+    overview: "Mycobacterium tuberculosis airborne infection causing chronic cough, hemoptysis, night fevers, and pulmonary parenchymal cavitations.",
+    govtTariff: "100% Free under National Tuberculosis Elimination Program (NTEP)",
+    privateTariff: "₹15,000 – ₹35,000 (Diagnostic Staging & Second-Line)",
+    pmjayRate: "100% Free with Monthly ₹500 Nikshay Nutrition Support",
+    successRatio: "94.2%",
+    stayDays: "Outpatient DOTS (5–7 days only if severe hemoptysis)",
+    procedureKeywords: ["pulmonology", "infectious"],
+  },
+  {
+    id: "piles",
+    name: "Hemorrhoidal Disease & Anal Fissure / Fistula",
+    commonName: "Piles (Bawaseer / Fissure / Fistula)",
+    keywords: ["piles", "hemorrhoids", "bawaseer", "fissure", "fistula", "kshar sutra", "anal bleeding"],
+    specialty: "Proctology & General Surgery",
+    procedureName: "Laser Hemorrhoidoplasty (LHP) / Fistulectomy",
+    overview: "Pathological vascular dilation of the submucosal hemorrhoidal cushions generating painless rectal bleeding, prolapse, or painful perianal thrombosis.",
+    govtTariff: "₹8,000 – ₹18,000",
+    privateTariff: "₹35,000 – ₹75,000 (Minimally Invasive Laser)",
+    pmjayRate: "₹24,000 (100% Cashless surgical package)",
+    successRatio: "98.5%",
+    stayDays: "Daycare or 1 day",
+    procedureKeywords: ["general surgery", "proctology"],
+  },
+  {
+    id: "jaundice",
+    name: "Hepatic Jaundice & Hepatitis / Liver Dysfunction",
+    commonName: "Jaundice (Piliya / Hepatitis / Liver Cirrhosis)",
+    keywords: ["jaundice", "hepatitis", "liver cirrhosis", "fatty liver", "piliya", "bilirubin", "liver"],
+    specialty: "Hepatology & Gastroenterology",
+    procedureName: "Liver Function Staging & Viral Hepatitis Protocol",
+    overview: "Hyperbilirubinemia caused by hepatocellular dysfunction or biliary stasis, causing scleral icterus, dark urine, and elevated liver transaminases.",
+    govtTariff: "₹2,000 – ₹8,000",
+    privateTariff: "₹25,000 – ₹65,000 (Inpatient Hepatology)",
+    pmjayRate: "100% Covered under Ayushman Bharat Hepato-Biliary Package",
+    successRatio: "96.0%",
+    stayDays: "3–5 days",
+    procedureKeywords: ["gastro", "hepatology", "liver"],
+  },
+  {
+    id: "hypertension",
+    name: "Essential Hypertension & Cardiovascular Risk",
+    commonName: "High Blood Pressure (High BP / Hypertension)",
+    keywords: ["hypertension", "high bp", "blood pressure", "high blood pressure", "systolic"],
+    specialty: "Cardiology & Internal Medicine",
+    procedureName: "Ambulatory BP Monitoring & Cardiac Risk Stratification",
+    overview: "Persistent elevation of systemic arterial blood pressure (> 140/90 mmHg) accelerating vascular end-organ damage across heart, kidneys, and brain.",
+    govtTariff: "₹0 – ₹800 (Diagnostics & ACE/ARB Therapy)",
+    privateTariff: "₹2,500 – ₹8,000 (ECHO, Lipid & 24h Holter Screening)",
+    pmjayRate: "Covered under PMJAY Non-Communicable Disease OPD & IPD",
+    successRatio: "97.5%",
+    stayDays: "Outpatient (1–2 days if Hypertensive Crisis)",
+    procedureKeywords: ["cardiac", "medicine"],
+  },
+];
+
+function matchDiseaseFromQuery(query: string): DiseaseKBItem | null {
+  const q = query.toLowerCase().trim();
+  for (const item of CLINICAL_DISEASES_KB) {
+    if (item.keywords.some((kw) => q.includes(kw))) {
+      return item;
+    }
+  }
+  return null;
+}
+
+function resolveMobileHospitalsForDisease(
+  diseaseId: string,
+  userCity: string = "Hoshiarpur",
+  refLat: number = USER_LAT,
+  refLng: number = USER_LNG,
+  procedureKeywords: string[] = []
+) {
+  const cityTerm = (userCity || "hoshiarpur").toLowerCase().trim();
+
+  let cityHospitals = MOCK_HOSPITALS.filter(
+    (h) =>
+      ((h.city ?? "").toLowerCase().includes(cityTerm) || (h.state ?? "").toLowerCase().includes(cityTerm))
+  );
+
+  if (cityHospitals.length === 0) {
+    cityHospitals = MOCK_HOSPITALS.slice(0, 15);
+  }
+
+  const centerLat = cityHospitals[0]?.latitude ?? refLat;
+  const centerLng = cityHospitals[0]?.longitude ?? refLng;
+
+  const scored = cityHospitals.map((h) => {
+    const dist = parseFloat(haversineKm(centerLat, centerLng, h.latitude, h.longitude).toFixed(1));
+
+    let matchedProc: any = null;
+    if (h.procedures && Array.isArray(h.procedures)) {
+      matchedProc = h.procedures.find((p: any) => {
+        const dName = (p.disease || "").toLowerCase();
+        const pName = (p.name || "").toLowerCase();
+        return procedureKeywords.some((kw) => dName.includes(kw) || pName.includes(kw));
+      });
+    }
+
+    const topDis = (h.top_disease_treated || "").toLowerCase();
+    const isTopDisease = procedureKeywords.some((kw) => topDis.includes(kw));
+
+    const hasSpecialty = (h.specialties || []).some((s: string) => {
+      const sLower = s.toLowerCase();
+      return procedureKeywords.some((kw) => sLower.includes(kw));
+    });
+
+    let score = (h.overall_rating ?? 4.5) * 10;
+    if (matchedProc) score += 60;
+    if (isTopDisease) score += 40;
+    if (hasSpecialty) score += 20;
+
+    const treatedCount = matchedProc?.patients_treated || (isTopDisease ? h.total_patients_treated : undefined);
+    const successRatio = matchedProc?.success_ratio || (isTopDisease ? h.overall_success_ratio : undefined);
+    const procCost = matchedProc?.cost_formatted || (matchedProc?.cost_avg
+      ? `₹${Math.round(matchedProc.cost_avg / 1000)}k Avg`
+      : h.base_package_inr
+      ? `₹${Math.round(h.base_package_inr / 1000)}k Package`
+      : "100% Cashless");
+
+    return {
+      name: h.name,
+      slug: h.slug,
+      address: h.address || `${h.city}, ${h.state}`,
+      distance_km: dist,
+      beds_icu_available: h.beds_icu_available ?? 6,
+      is_pmjay_empanelled: h.is_pmjay_empanelled ?? true,
+      emergency_phone: h.emergency_phone || h.phone || "108",
+      cost_indicative: procCost,
+      score,
+      patients_treated: treatedCount,
+      success_ratio: successRatio,
+    };
+  });
+
+  scored.sort((a, b) => b.score - a.score || (a.distance_km ?? 0) - (b.distance_km ?? 0));
+
+  return scored.slice(0, 2);
+}
+
 function resolveMobileHospitals(
   query: string,
   category: "emergency" | "cardiac" | "orthopedic" | "renal" | "general" = "general"
@@ -419,6 +852,8 @@ function resolveMobileHospitals(
     rating: h.overall_rating,
     specialties: h.specialties || [],
     is_trauma: h.is_trauma_center,
+    patients_treated: h.total_patients_treated,
+    success_ratio: h.overall_success_ratio,
   }));
 
   if (category === "emergency") {
@@ -477,12 +912,12 @@ function generateClientSideNLP(text: string): MessageItem {
       role: "assistant",
       content:
         `👋 **Hello! Welcome to Medi Route Clinical AI.**\n\n` +
-        `I am your real-time medical guide and hospital dispatch assistant. Here is what I can assist you with right now:\n\n` +
-        `• **Emergency Red-Flag Triage**: Immediate clinical guidance for chest pain, stroke symptoms, head injury, and direct 108 ambulance dispatch.\n` +
+        `I am your real-time medical guide and hospital dispatch assistant. You can enter any **disease name, symptom, or treatment**:\n\n` +
+        `• **Direct Disease Search**: Enter e.g. *Cataract, Hernia, Gallbladder stones, Kidney stones, Dengue, Pneumonia, Asthma, Diabetes* to get instant tariffs, success rates & empanelled centers.\n` +
         `• **Live ICU & Ventilator Telemetry**: Check verified vacant ICU beds near you with zero-deposit bed reservations.\n` +
-        `• **Surgical & Treatment Tariffs**: Audited cost benchmarks for Angioplasty (stents), Knee/Hip Replacement, Dialysis, and Maternity under PMJAY Ayushman Bharat.\n` +
+        `• **Emergency Red-Flag Triage**: Immediate clinical guidance for chest pain, stroke symptoms, head injury, and direct 108 ambulance dispatch.\n` +
         `• **20-Minute Cashless Guarantee**: Pre-authorization processing with ₹0 upfront cash deposit at accredited network hospitals.\n\n` +
-        `How can I assist you right now? Tap a suggestion below or type your symptom or question:`,
+        `What condition or hospital would you like to check today?`,
       triage_level: "routine",
       recommended_hospitals: [],
       action_buttons: [
@@ -491,10 +926,10 @@ function generateClientSideNLP(text: string): MessageItem {
         { type: "sos", label: "🛡️ Cashless Pre-Auth", value: "/emergency-cashless" },
       ],
       quick_suggestions: [
+        "Cataract surgery cost & success rate",
+        "Gallbladder stone removal under PMJAY",
         "Show hospitals with free ICU beds",
-        "Cost of angioplasty stent under PMJAY",
-        "Knee replacement surgery package rate",
-        "Chest pain emergency first aid",
+        "Hernia laparoscopic repair tariff",
       ],
       timestamp: "Just now",
     };
@@ -507,6 +942,7 @@ function generateClientSideNLP(text: string): MessageItem {
     q.includes("dil ka daura") ||
     q.includes("stroke") ||
     q.includes("paralysis") ||
+    q.includes("lakwa") ||
     q.includes("breathing") ||
     q.includes("breathless") ||
     q.includes("accident") ||
@@ -514,7 +950,9 @@ function generateClientSideNLP(text: string): MessageItem {
     q.includes("bleeding") ||
     q.includes("unconscious") ||
     q.includes("poison") ||
-    q.includes("ambulance");
+    q.includes("ambulance") ||
+    q === "emergency" ||
+    q === "sos";
 
   if (isEmergency) {
     const isCardiac = q.includes("chest") || q.includes("heart") || q.includes("dil");
@@ -552,113 +990,61 @@ function generateClientSideNLP(text: string): MessageItem {
     };
   }
 
-  // 2. Cardiology & Stents
-  if (
-    q.includes("stent") ||
-    q.includes("angioplasty") ||
-    q.includes("bypass") ||
-    q.includes("cabg") ||
-    q.includes("cardiac") ||
-    q.includes("heart") ||
-    q.includes("cardiologist")
-  ) {
-    const recs = resolveMobileHospitals(q, "cardiac");
+  // 2. Direct Clinical Disease & Procedure KB Matching
+  const matchedDisease = matchDiseaseFromQuery(q);
+  if (matchedDisease) {
+    // Detect city from query or default to Hoshiarpur
+    let queryCity = "Hoshiarpur";
+    const tokens = q.replace(/[^a-z0-9\s]/g, " ").split(/\s+/);
+    for (const token of tokens) {
+      if (token.length < 3) continue;
+      if (CITY_ALIASES[token]) {
+        queryCity = CITY_ALIASES[token];
+        break;
+      }
+    }
+
+    const diseaseHospitals = resolveMobileHospitalsForDisease(
+      matchedDisease.id,
+      queryCity,
+      USER_LAT,
+      USER_LNG,
+      matchedDisease.procedureKeywords
+    );
+
     return {
       id: "a-" + Date.now(),
       role: "assistant",
       content:
-        `**Cardiology Care & Stent Package Guidance:**\n\n` +
-        `• **Angioplasty Tariff**: Standard single Drug-Eluting Stent (DES) ranges from ₹15,000–₹45,000 (Govt) and ₹1,20,000–₹1,85,000 (Private).\n` +
-        `• **Ayushman Bharat PMJAY**: 100% Cashless package is pre-fixed at ₹65,000 (single) and ₹85,000 (double stent) with ₹0 out-of-pocket implant charges.\n` +
-        `• **CABG Bypass Surgery**: ₹75,000–₹1,20,000 (Govt) vs ₹2,20,000–₹3,50,000 (Private).\n` +
-        `• **Pre-Auth Speed**: TPA cashless clearances cleared in under 20 minutes.\n\n` +
-        `Top accredited cardiac catheterization centers:`,
+        `**Clinical Profile: ${matchedDisease.name}**\n\n` +
+        `• **Specialty Department**: ${matchedDisease.specialty}\n` +
+        `• **Standard Procedure**: ${matchedDisease.procedureName}\n` +
+        `• **Clinical Overview**: ${matchedDisease.overview}\n` +
+        `• **Indicative Package Tariffs**:\n` +
+        `  - Government Subsidized: **${matchedDisease.govtTariff}**\n` +
+        `  - Private NABH Accredited: **${matchedDisease.privateTariff}**\n` +
+        `  - Ayushman Bharat PMJAY: **${matchedDisease.pmjayRate}**\n` +
+        `• **Clinical Outcome Benchmark**: **${matchedDisease.successRatio}** audited success ratio • Expected stay: **${matchedDisease.stayDays}**\n\n` +
+        `Top accredited network hospitals with audited volumes for ${matchedDisease.commonName}:`,
       triage_level: "routine",
-      recommended_hospitals: recs,
+      recommended_hospitals: diseaseHospitals,
       action_buttons: [
-        { type: "compare", label: "⚖️ Compare Cardiac Centers", value: "/compare" },
-        { type: "sos", label: "🛡️ Cashless Pre-Auth Desk", value: "/emergency-cashless" },
+        { type: "compare", label: `⚖️ Compare ${matchedDisease.commonName.split(" ")[0]} Centers`, value: "/compare" },
+        { type: "sos", label: "🛡️ Check Cashless Sanction", value: "/emergency-cashless" },
+        ...(diseaseHospitals[0]?.slug
+          ? [{ type: "view_hospital", label: `🏥 View ${diseaseHospitals[0].name.split(" ")[0]} Packages`, value: `/hospitals/${diseaseHospitals[0].slug}` }]
+          : []),
       ],
       quick_suggestions: [
-        "What documents are needed for PMJAY stent?",
-        "Single vs double stent package rate",
-        "Recovery time after angioplasty",
+        `Is ${matchedDisease.commonName.split(" ")[0]} 100% cashless under PMJAY?`,
+        `What diagnostic tests are needed for ${matchedDisease.commonName.split(" ")[0]}?`,
+        `Typical recovery time and post-procedure care?`,
       ],
       timestamp: "Just now",
     };
   }
 
-  // 3. Orthopedics & Joint Replacement
-  if (
-    q.includes("knee") ||
-    q.includes("joint") ||
-    q.includes("hip") ||
-    q.includes("orthopedic") ||
-    q.includes("ghutna") ||
-    q.includes("tkr") ||
-    q.includes("thr") ||
-    q.includes("fracture")
-  ) {
-    const recs = resolveMobileHospitals(q, "orthopedic");
-    return {
-      id: "a-" + Date.now(),
-      role: "assistant",
-      content:
-        `**Orthopedics & Joint Surgery Directory:**\n\n` +
-        `• **Total Knee Replacement (TKR)**: Subsidized rate is ₹75,000–₹95,000; private robotic knee replacement ranges from ₹1,45,000–₹2,20,000.\n` +
-        `• **Total Hip Replacement (THR)**: Subsidized ₹85,000–₹1,10,000 vs Private ₹1,60,000–₹2,50,000.\n` +
-        `• **PMJAY Coverage**: Ayushman Bharat covers unilateral and bilateral TKR with certified implants.\n\n` +
-        `Recommended NABH orthopedic centers near you:`,
-      triage_level: "routine",
-      recommended_hospitals: recs,
-      action_buttons: [
-        { type: "compare", label: "⚖️ Compare Knee Centers", value: "/compare" },
-        { type: "view_hospital", label: `🏥 View ${recs[0]?.name.split(" ")[0]}`, value: `/hospitals/${recs[0]?.slug || ""}` },
-      ],
-      quick_suggestions: [
-        "Robotic vs traditional knee replacement",
-        "Does insurance cover bilateral knee surgery?",
-        "Physiotherapy timeline after TKR",
-      ],
-      timestamp: "Just now",
-    };
-  }
-
-  // 4. Dialysis & Kidney
-  if (
-    q.includes("dialysis") ||
-    q.includes("kidney") ||
-    q.includes("renal") ||
-    q.includes("creatinine") ||
-    q.includes("nephro") ||
-    q.includes("stone")
-  ) {
-    const recs = resolveMobileHospitals(q, "renal");
-    return {
-      id: "a-" + Date.now(),
-      role: "assistant",
-      content:
-        `**Renal Care & Dialysis Support:**\n\n` +
-        `• **Hemodialysis Tariffs**: ₹800–₹1,200 per session at government hospitals; ₹2,000–₹3,500 at private centers. Under **PMJAY Ayushman Bharat**, recurring dialysis is **100% free**.\n` +
-        `• **Kidney Stone Removal (PCNL / URSL)**: ₹25,000–₹55,000 with laser lithotripsy.\n` +
-        `• **Zero Deposit Protocol**: Show your ABHA ID or insurance card for instant cashless dialysis slot confirmation.\n\n` +
-        `Empanelled dialysis centers in your network:`,
-      triage_level: "routine",
-      recommended_hospitals: recs,
-      action_buttons: [
-        { type: "compare", label: "⚖️ Compare Dialysis Units", value: "/compare" },
-        { type: "sos", label: "🛡️ Check PMJAY Dialysis", value: "/emergency-cashless" },
-      ],
-      quick_suggestions: [
-        "PMJAY free dialysis registration process",
-        "AV Fistula surgery cost & recovery",
-        "Which hospital has evening dialysis slots?",
-      ],
-      timestamp: "Just now",
-    };
-  }
-
-  // 5. ICU & Bed Availability
+  // 3. ICU & Bed Availability
   if (
     q.includes("icu") ||
     q.includes("ventilator") ||
@@ -692,7 +1078,7 @@ function generateClientSideNLP(text: string): MessageItem {
     };
   }
 
-  // 6. Cashless Pre-Auth & Insurance
+  // 4. Cashless Pre-Auth & Insurance
   if (
     q.includes("cashless") ||
     q.includes("pre-auth") ||
@@ -731,7 +1117,7 @@ function generateClientSideNLP(text: string): MessageItem {
     };
   }
 
-  // 7. General Clinical Advisory
+  // 5. General Clinical Advisory
   const recs = resolveMobileHospitals(q, "general");
   return {
     id: "a-" + Date.now(),
@@ -936,6 +1322,14 @@ const styles = StyleSheet.create({
     color: colors.badgeCashless,
   },
   miniCardPmjay: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: colors.secondary,
+  },
+  miniCardMetricRow: {
+    marginTop: 4,
+  },
+  miniCardMetricText: {
     fontSize: 10,
     fontWeight: "700",
     color: colors.secondary,
