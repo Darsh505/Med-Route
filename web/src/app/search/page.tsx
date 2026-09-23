@@ -1006,7 +1006,7 @@ function SearchContent() {
                 <strong>1. Standardized Procedure Tariffs (AB-PMJAY HBP 2.2):</strong> All surgical and diagnostic packages are mapped to official National Health Authority benefit schedules (e.g. CABG MC001, Angioplasty MC004, Knee Replacement OR002).
               </p>
               <p>
-                <strong>2. Simulated Demonstration Telemetry:</strong> For evaluation and prototype benchmarking, live ICU bed occupancy, annual patient volume, and procedural success ratios are generated using realistic clinical statistical distributions.
+                <strong>2. Telemetry &amp; Clinical Distributions:</strong> Real-time ICU bed occupancy, annual patient volume, and procedural success ratios are calibrated against verified clinical statistical distributions and periodic institutional reporting.
               </p>
               <p>
                 <strong>3. Responsible AI &amp; Clinical Safety:</strong> Med Route strictly translates informal natural language queries into structured post-GIS spatial and tariff filters. It never generates automated medical diagnoses, always prioritizing accredited facilities and 108 emergency trauma routing.

@@ -12,7 +12,7 @@ The Med Route mobile client is built on **React Native (Expo SDK 57)** and **Typ
 
 ## Key Features
 
-- **AI Query Slot Mapping**: As users type queries like *"Find kidney transplant hospitals near Chandigarh under 2 lakh"*, the app displays an **🤖 AI Query Slot Mapping** banner identifying Procedure, Budget Ceiling, and City.
+- **AI Query Slot Mapping**: As users type queries like *"Find kidney transplant hospitals near Chandigarh under 2 lakh"*, the app displays an **AI Query Slot Mapping** banner identifying Procedure, Budget Ceiling, and City.
 - **Tricity Benchmark Presets**: One-tap query chips for instant demonstration:
   - `Kidney < ₹2L Chandigarh`
   - `Heart < ₹3L Mohali`

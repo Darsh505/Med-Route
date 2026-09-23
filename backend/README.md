@@ -6,7 +6,7 @@ FastAPI-powered clinical discovery engine, PostGIS geospatial ranking, and PMJAY
 
 ## Overview
 
-The Med Route backend provides sub-50ms query processing, intelligent natural language slot extraction, transparent multi-criteria hospital ranking, and emergency trauma routing. It is architected for maximum fault-tolerance: if PostgreSQL/PostGIS is unavailable during a hackathon demo or field deployment, an automated in-memory fallback engine immediately takes over with 60+ verified regional hospitals.
+The Med Route backend provides sub-50ms query processing, intelligent natural language slot extraction, transparent multi-criteria hospital ranking, and emergency trauma routing. It is architected for maximum fault-tolerance: if PostgreSQL/PostGIS is unavailable during local development, testing, or disconnected field deployment, an automated in-memory fallback engine immediately takes over with 60+ verified regional hospitals.
 
 ---
 

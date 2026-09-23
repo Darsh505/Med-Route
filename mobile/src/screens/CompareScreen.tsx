@@ -358,10 +358,10 @@ export default function CompareScreen({ navigation }: any) {
                 </View>
               )}
 
-              {/* Section: Mandatory Verifiable Metrics (TECHNOVA 2026 Deliverable) */}
+              {/* Section: Mandatory Verifiable Metrics */}
               <View style={[styles.sectionHeaderRow, { backgroundColor: "#E0F2FE" }]}>
                 <Text style={[styles.sectionHeaderText, { color: "#0369A1" }]}>
-                  🏆 MANDATORY VERIFIABLE METRICS
+                  MANDATORY VERIFIABLE CLINICAL METRICS
                 </Text>
               </View>
 

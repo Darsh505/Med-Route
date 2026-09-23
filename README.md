@@ -1,8 +1,6 @@
 # Med Route — Healthcare Discovery, Transparent Pricing & Emergency Trauma Routing
 
-> **Official Submission for TECHNOVA 2026**  
-> *Rayat Bahra Professional University*  
-> **Track:** Government Healthcare Discovery, Transparent Pricing & Emergency Hospital Recommendation
+> An open-access healthcare discovery, transparent surgical pricing, and emergency trauma routing platform for India.
 
 [![Next.js 16](https://img.shields.io/badge/Next.js-16.3.5-black?style=flat&logo=next.js)](https://nextjs.org/)
 [![React Native Expo](https://img.shields.io/badge/Expo-SDK_57-000020?style=flat&logo=expo)](https://expo.dev/)
@@ -265,7 +263,6 @@ The triage engine enforces a deterministic emergency-first ruleset. If user inpu
 
 ---
 
-## Team & Attribution
-- **Institution**: Rayat Bahra Professional University
-- **Event**: TECHNOVA 2026
-- **License**: MIT
+## License & Attribution
+- **License**: MIT Open Source License
+- **Maintainers**: Med Route Engineering Team
