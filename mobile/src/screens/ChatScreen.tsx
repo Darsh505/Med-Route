@@ -723,6 +723,21 @@ const CLINICAL_DISEASES_KB: DiseaseKBItem[] = [
     stayDays: "Outpatient (1–2 days if Hypertensive Crisis)",
     procedureKeywords: ["cardiac", "medicine"],
   },
+  {
+    id: "bone_fracture",
+    name: "Acute Bone Fracture & Musculoskeletal Trauma",
+    commonName: "Fracture (Haddi Tootna / Bone Fracture / Plaster)",
+    keywords: ["fracture", "bone fracture", "broken bone", "haddi tootna", "plaster", "orif", "bone crack", "broken leg", "broken arm"],
+    specialty: "Orthopedics & Trauma Surgery",
+    procedureName: "Open Reduction and Internal Fixation (ORIF) / Closed Reduction & Plaster",
+    overview: "Mechanical discontinuity in bone cortex due to acute trauma, requiring precise anatomic reduction and stable internal or cast fixation.",
+    govtTariff: "₹5,000 – ₹18,000",
+    privateTariff: "₹35,000 – ₹85,000 (Titanium Plates / Screws)",
+    pmjayRate: "100% Cashless Fracture Fixation & Implant Package",
+    successRatio: "98.8%",
+    stayDays: "2–3 days",
+    procedureKeywords: ["orthopedic", "fracture", "trauma"],
+  },
 ];
 
 function matchDiseaseFromQuery(query: string): DiseaseKBItem | null {

@@ -33,9 +33,8 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
-    # ── Google Gemini — for NLP search ────────────────────────────
     GEMINI_API_KEY: str = ""
-    GEMINI_MODEL: str = "gemini-2.0-flash"
+    GEMINI_MODEL: str = "gemini-2.5-flash-lite"
 
     # ── Firebase Auth ─────────────────────────────────────────────
     FIREBASE_PROJECT_ID: str = ""

@@ -25,8 +25,7 @@ async def find_nearest_hospital(
     Find nearest trauma center without creating an alert.
     Used for preview before user confirms SOS dispatch.
     """
-    # Just find nearest without saving
-    from app.services.hospital_service import hospital_service
+    from app.services.hospital_service import hospital_service, estimate_travel_time
     try:
         result = await hospital_service.find_nearest_trauma_center(
             db, request.latitude, request.longitude
@@ -43,22 +42,30 @@ async def find_nearest_hospital(
             detail={"code": "NO_HOSPITAL_NEARBY", "message": "No hospitals found within 100km"},
         )
     hospital, dist = result
-    eta = hospital_service.estimate_travel_time(dist)
+    eta = estimate_travel_time(dist)
+
+    # Handle both dict (in-memory mode) and ORM object (DB mode)
+    def _get(obj, key, default=None):
+        if isinstance(obj, dict):
+            return obj.get(key, default)
+        return getattr(obj, key, default)
+
+    h_name = _get(hospital, "name", "Unknown")
     return APIResponse(
         data=SOSNearestResponse(
-            hospital_id=hospital.id,
-            hospital_name=hospital.name,
-            hospital_phone=hospital.phone,
-            hospital_emergency_phone=hospital.emergency_phone,
-            hospital_address=hospital.address,
-            latitude=hospital.latitude,
-            longitude=hospital.longitude,
+            hospital_id=_get(hospital, "id", ""),
+            hospital_name=h_name,
+            hospital_phone=_get(hospital, "phone", ""),
+            hospital_emergency_phone=_get(hospital, "emergency_phone"),
+            hospital_address=_get(hospital, "address", ""),
+            latitude=_get(hospital, "latitude", 0),
+            longitude=_get(hospital, "longitude", 0),
             distance_km=dist,
             estimated_arrival_minutes=eta,
-            beds_icu_available=hospital.beds_icu_available,
-            is_trauma_center=hospital.is_trauma_center,
+            beds_icu_available=_get(hospital, "beds_icu_available", 0),
+            is_trauma_center=_get(hospital, "is_trauma_center", True),
         ),
-        message=f"Nearest hospital found: {hospital.name}",
+        message=f"Nearest hospital found: {h_name}",
     )
 
 

@@ -163,7 +163,7 @@ class HospitalListItem(BaseModel):
     cons: list[str] = []
     distance_km: Optional[float] = None
     ranking_score: Optional[float] = None
-    cost_range: Optional[dict] = None  # {"min": 50000, "max": 200000} for searched procedure
+    cost_range: Optional[Union[dict, str]] = None  # dict for search results, str for display label
     model_config = {"from_attributes": True}
 
 

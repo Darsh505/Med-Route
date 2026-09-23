@@ -8,7 +8,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Platform } from "react-native";
 
-const BASE_URL = Platform.OS === "android" ? "http://10.0.2.2:8000" : "http://localhost:8000";
+const DEFAULT_URL = Platform.OS === "android" ? "http://10.0.2.2:8000" : "http://localhost:8000";
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || DEFAULT_URL;
 
 const STORAGE_KEYS = {
   TOKEN: "medroute_mobile_token",

@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Union
 from pydantic import BaseModel, Field
 
 
@@ -16,7 +16,7 @@ class SOSRequest(BaseModel):
 
 class SOSNearestResponse(BaseModel):
     """Response from /api/sos/nearest — nearest trauma center."""
-    hospital_id: uuid.UUID
+    hospital_id: Union[uuid.UUID, str]
     hospital_name: str
     hospital_phone: str
     hospital_emergency_phone: Optional[str]
@@ -30,7 +30,7 @@ class SOSNearestResponse(BaseModel):
 
 
 class SOSAlertResponse(BaseModel):
-    id: uuid.UUID
+    id: Union[uuid.UUID, str]
     status: str
     hospital_name: Optional[str]
     hospital_phone: Optional[str]

@@ -38,9 +38,9 @@ except ImportError:
     import logging
     logger = logging.getLogger("nlp_parser")
 
-from typing import Optional
 from app.ai.medical_mappings import PROCEDURE_ALIASES, LOCATION_SHORTCUTS
 from app.schemas.search import SearchFilters
+from app.config import settings
 
 # ── Gemini Prompt Template ─────────────────────────────────────────
 GEMINI_EXTRACTION_PROMPT = """
@@ -99,7 +99,7 @@ class NLPParser:
             try:
                 import google.generativeai as genai
                 genai.configure(api_key=gemini_api_key)
-                self.gemini_model = genai.GenerativeModel("gemini-2.0-flash")
+                self.gemini_model = genai.GenerativeModel(settings.GEMINI_MODEL or "gemini-2.5-flash-lite")
                 logger.info("Gemini NLP parser initialized")
             except Exception as e:
                 logger.warning("Gemini init failed, will use rule-based parser", error=str(e))
@@ -119,7 +119,7 @@ class NLPParser:
     async def _parse_with_gemini(self, query: str) -> SearchFilters:
         """
         Uses Gemini with structured JSON output mode.
-        Timeout: 8 seconds (we fail fast to not delay users).
+        Timeout: 12 seconds.
         """
         import asyncio
 
@@ -129,7 +129,7 @@ class NLPParser:
         loop = asyncio.get_event_loop()
         response = await asyncio.wait_for(
             loop.run_in_executor(None, self.gemini_model.generate_content, prompt),
-            timeout=8.0,
+            timeout=12.0,
         )
 
         # Parse the JSON response
