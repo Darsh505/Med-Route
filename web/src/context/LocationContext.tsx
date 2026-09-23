@@ -14,7 +14,7 @@ export interface CityInfo {
 }
 
 export const INDIAN_CITIES: CityInfo[] = [
-  // ── Featured Hubs (Hoshiarpur Prominent) ──
+  // Featured Hubs (Hoshiarpur Prominent)
   {
     name: "Hoshiarpur",
     state: "Punjab",
@@ -56,7 +56,7 @@ export const INDIAN_CITIES: CityInfo[] = [
     isPopular: true,
   },
 
-  // ── North India ──
+  // North India
   {
     name: "Delhi",
     state: "Delhi NCR",
@@ -143,7 +143,7 @@ export const INDIAN_CITIES: CityInfo[] = [
     traumaCenter: "Level 1 (AIIMS Rishikesh Heli-Ambulance)",
   },
 
-  // ── South India ──
+  // South India
   {
     name: "Bengaluru",
     state: "Karnataka",
@@ -193,7 +193,7 @@ export const INDIAN_CITIES: CityInfo[] = [
     traumaCenter: "Level 1 (CMC Vellore)",
   },
 
-  // ── West India ──
+  // West India
   {
     name: "Mumbai",
     state: "Maharashtra",
@@ -234,7 +234,7 @@ export const INDIAN_CITIES: CityInfo[] = [
     traumaCenter: "Level 1 (AIIMS Nagpur)",
   },
 
-  // ── East & Central India ──
+  // East & Central India
   {
     name: "Kolkata",
     state: "West Bengal",

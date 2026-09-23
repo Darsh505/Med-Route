@@ -1,7 +1,5 @@
 """
---------------------------------------------------
 ai/chatbot.py — Clinical NLP Chatbot & Triage Engine
---------------------------------------------------
 
 Dual-engine medical AI chatbot:
 1. Primary: Google Gemini API (gemini-2.0-flash / gemini-1.5-flash) with structured JSON clinical dispatch.
@@ -167,9 +165,7 @@ REFERENCE_HOSPITALS = [
     },
 ]
 
-# ─────────────────────────────────────────────────────────────
 # Clinical Diseases Knowledge Base Registry
-# ─────────────────────────────────────────────────────────────
 
 CLINICAL_DISEASES_KB = [
     {
@@ -530,7 +526,6 @@ Instructions:
 }
 """
 
-
 class ClinicalChatbot:
     """Clinical NLP Chatbot Engine with Gemini AI and Rule-Based Triage Fallback."""
 
@@ -624,7 +619,7 @@ class ClinicalChatbot:
         """Clinical rule-based triage parser with symptom matching."""
         text = request.message.lower().strip()
 
-        # ── 1. Critical Red-Flag Emergency Triage ──
+        # 1. Critical Red-Flag Emergency Triage
         is_cardiac_emergency = any(
             k in text for k in [
                 "chest pain", "heart attack", "dil ka daura", "angina", "left arm pain",
@@ -678,7 +673,7 @@ class ClinicalChatbot:
                 ai_provider="clinical_rules",
             )
 
-        # ── 2. Direct Clinical Disease Knowledge Base Matching ──
+        # 2. Direct Clinical Disease Knowledge Base Matching
         for item in CLINICAL_DISEASES_KB:
             if any(kw in text for kw in item["keywords"]):
                 hospitals = self._resolve_hospitals(item["hospital_names"], specialty=item["specialty"])
@@ -714,7 +709,7 @@ class ClinicalChatbot:
                     ai_provider="clinical_rules",
                 )
 
-        # ── 3. Cardiac Elective / Angioplasty Queries ──
+        # 3. Cardiac Elective / Angioplasty Queries
         if any(k in text for k in ["angioplasty", "stent", "bypass", "cabg", "heart doctor", "cardiologist"]):
             hospitals = self._resolve_hospitals(["PGIMER Chandigarh", "Max Super Speciality Mohali", "Fortis Hospital Mohali"], specialty="cardiac")
             reply = (
@@ -743,7 +738,7 @@ class ClinicalChatbot:
                 ai_provider="clinical_rules",
             )
 
-        # ── 4. Orthopedics / Knee / Hip Replacement ──
+        # 4. Orthopedics / Knee / Hip Replacement
         if any(k in text for k in ["knee", "joint", "orthopedic", "ghutna", "hip replacement", "tkr", "acl", "bone"]):
             hospitals = self._resolve_hospitals(["Max Super Speciality Mohali", "Sohana Multi Speciality Hospital", "Ivy Hospital Mohali"], specialty="orthopedic")
             reply = (
@@ -772,7 +767,7 @@ class ClinicalChatbot:
                 ai_provider="clinical_rules",
             )
 
-        # ── 5. Nephrology / Dialysis / Kidney ──
+        # 5. Nephrology / Dialysis / Kidney
         if any(k in text for k in ["dialysis", "kidney", "renal", "gurda", "creatinine"]):
             hospitals = self._resolve_hospitals(["PGIMER Chandigarh", "Ivy Hospital Mohali", "CMC Ludhiana"], specialty="renal")
             reply = (
@@ -801,7 +796,7 @@ class ClinicalChatbot:
                 ai_provider="clinical_rules",
             )
 
-        # ── 6. General Inquiry Fallback ──
+        # 6. General Inquiry Fallback
         hospitals = self._resolve_hospitals(["PGIMER Chandigarh", "Max Super Speciality Mohali"])
         reply = (
             "**MedRoute Clinical Assistant Ready to Help:**\n\n"
@@ -985,6 +980,5 @@ class ClinicalChatbot:
                     value=f"/hospitals/{hospitals[0].slug}",
                 ))
         return actions
-
 
 clinical_chatbot = ClinicalChatbot()

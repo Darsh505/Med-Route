@@ -1,9 +1,7 @@
-# ──────────────────────────────────────────────
 # Dockerfile — Med Route FastAPI Backend
 # Multi-stage build for minimal production image
-# ──────────────────────────────────────────────
 
-# ── Stage 1: Builder ──────────────────────────
+# Stage 1: Builder
 FROM python:3.12-slim AS builder
 
 WORKDIR /build
@@ -18,8 +16,7 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --user --no-cache-dir -r requirements.txt
 
-
-# ── Stage 2: Production Image ─────────────────
+# Stage 2: Production Image
 FROM python:3.12-slim AS production
 
 # Install runtime dependencies only

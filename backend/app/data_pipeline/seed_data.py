@@ -1,7 +1,5 @@
 """
---------------------------------------------------
 data_pipeline/seed_data.py — Comprehensive Hospital & Procedure Dataset
---------------------------------------------------
 
 Generates 60+ accredited hospitals across Chandigarh Tricity, Punjab,
 Haryana, Delhi NCR, with 35+ PMJAY 2.2-aligned procedure packages,
@@ -24,7 +22,7 @@ if _all_hospitals_file.exists():
         HOSPITALS_DATA = json.load(_f)
 else:
     HOSPITALS_DATA = [
-        # ── Chandigarh Tricity: Chandigarh ──
+        # Chandigarh Tricity: Chandigarh
         {
             "name": "PGIMER Chandigarh",
             "type": "government",
@@ -210,7 +208,7 @@ else:
         "description": "Premier pediatric and neonatal critical care (NICU/PICU) facility with specialized maternity services.",
     },
 
-    # ── Chandigarh Tricity: Mohali / SAS Nagar ──
+    # Chandigarh Tricity: Mohali / SAS Nagar
     {
         "name": "Fortis Hospital Mohali",
         "type": "private",
@@ -396,7 +394,7 @@ else:
         "description": "Long-standing surgical and trauma nursing home providing rapid inpatient emergency triage in SAS Nagar.",
     },
 
-    # ── Chandigarh Tricity: Panchkula ──
+    # Chandigarh Tricity: Panchkula
     {
         "name": "Alchemist Hospital Panchkula",
         "type": "private",
@@ -513,7 +511,7 @@ else:
         "description": "Respected family surgical and medical center offering laparoscopy, urology, and maternity packages.",
     },
 
-    # ── Punjab: Ludhiana ──
+    # Punjab: Ludhiana
     {
         "name": "Christian Medical College (CMC) Ludhiana",
         "type": "trust",
@@ -653,7 +651,7 @@ else:
         "description": "Specialized pediatric, neonatal, and general laparoscopic hospital serving central Ludhiana.",
     },
 
-    # ── Punjab: Amritsar ──
+    # Punjab: Amritsar
     {
         "name": "Government Medical College Amritsar",
         "type": "government",
@@ -747,7 +745,7 @@ else:
         "description": "SGPC-affiliated charitable teaching hospital providing low-cost tertiary healthcare, dialysis, and surgical care.",
     },
 
-    # ── Punjab: Jalandhar ──
+    # Punjab: Jalandhar
     {
         "name": "Civil Hospital Jalandhar",
         "type": "government",
@@ -864,7 +862,7 @@ else:
         "description": "Ultra-modern super-specialty hospital with robotic surgery, high-end ICU, and interventional cardiology.",
     },
 
-    # ── Punjab: Patiala & Bathinda ──
+    # Punjab: Patiala & Bathinda
     {
         "name": "Government Rajindra Hospital Patiala",
         "type": "government",
@@ -935,7 +933,7 @@ else:
         "description": "Advanced multi-specialty private center with comprehensive oncology, cardiac cath lab, and trauma ICU.",
     },
 
-    # ── Haryana: Ambala, Kurukshetra, Karnal, Rohtak ──
+    # Haryana: Ambala, Kurukshetra, Karnal, Rohtak
     {
         "name": "Civil Hospital Ambala City",
         "type": "government",
@@ -1029,7 +1027,7 @@ else:
         "description": "Haryana's premier apex state medical institution offering super-specialty surgery, transplants, and regional trauma care.",
     },
 
-    # ── NCR: Gurugram & Faridabad ──
+    # NCR: Gurugram & Faridabad
     {
         "name": "Medanta The Medicity Gurugram",
         "type": "private",
@@ -1169,7 +1167,7 @@ else:
         "description": "Leading healthcare facility in south NCR with dedicated cath labs, joint replacement, and critical care units.",
     },
 
-    # ── NCR: Delhi ──
+    # NCR: Delhi
     {
         "name": "AIIMS New Delhi",
         "type": "government",
@@ -1377,7 +1375,7 @@ else:
         "total_doctors": 180,
         "description": "Dedicated autonomous government mono-specialty institute specializing exclusively in hepatology, liver transplant, and nephrology.",
     },
-    # ── Punjab: Hoshiarpur (Featured District) ──
+    # Punjab: Hoshiarpur (Featured District)
     {
         "name": "Civil Hospital Hoshiarpur",
         "type": "government",
@@ -1543,7 +1541,7 @@ else:
             "Complex open-heart bypass surgeries referred to regional tertiary partners"
         ]
     },
-    # ── Maharashtra (Mumbai, Pune, Nagpur) ──
+    # Maharashtra (Mumbai, Pune, Nagpur)
     {
         "name": "Tata Memorial Hospital Mumbai",
         "type": "government",
@@ -1676,7 +1674,7 @@ else:
             "Long registration lines for first-time outpatient appointments"
         ]
     },
-    # ── Karnataka (Bengaluru, Mysuru) ──
+    # Karnataka (Bengaluru, Mysuru)
     {
         "name": "NIMHANS Bengaluru",
         "type": "government",
@@ -1776,7 +1774,7 @@ else:
             "Heavy traffic congestion along Old Airport Road during peak hours"
         ]
     },
-    # ── Tamil Nadu (Chennai, Vellore, Coimbatore) ──
+    # Tamil Nadu (Chennai, Vellore, Coimbatore)
     {
         "name": "Christian Medical College (CMC) Vellore",
         "type": "private",
@@ -1876,7 +1874,7 @@ else:
             "General ward wait times for elective joint replacements"
         ]
     },
-    # ── Telangana & Andhra Pradesh (Hyderabad, Visakhapatnam) ──
+    # Telangana & Andhra Pradesh (Hyderabad, Visakhapatnam)
     {
         "name": "Nizam's Institute of Medical Sciences (NIMS)",
         "type": "government",
@@ -1943,7 +1941,7 @@ else:
             "Requires navigate appointment booking for prime consulting slots"
         ]
     },
-    # ── Gujarat & Rajasthan (Ahmedabad, Jaipur) ──
+    # Gujarat & Rajasthan (Ahmedabad, Jaipur)
     {
         "name": "Civil Hospital Ahmedabad",
         "type": "government",
@@ -2010,7 +2008,7 @@ else:
             "Long waiting list for routine non-emergency elective procedures"
         ]
     },
-    # ── Uttar Pradesh (Lucknow, Varanasi) ──
+    # Uttar Pradesh (Lucknow, Varanasi)
     {
         "name": "King George's Medical University (KGMU) Lucknow",
         "type": "government",
@@ -2077,7 +2075,7 @@ else:
             "Limited private air-conditioned rooms available on premise"
         ]
     },
-    # ── West Bengal & Odisha (Kolkata, Bhubaneswar) ──
+    # West Bengal & Odisha (Kolkata, Bhubaneswar)
     {
         "name": "IPGMER and SSKM Hospital Kolkata",
         "type": "government",
@@ -2144,7 +2142,7 @@ else:
             "Online appointment token registration recommended to avoid queues"
         ]
     },
-    # ── Madhya Pradesh & Bihar (Bhopal, Patna) ──
+    # Madhya Pradesh & Bihar (Bhopal, Patna)
     {
         "name": "AIIMS Bhopal",
         "type": "government",
@@ -2211,7 +2209,7 @@ else:
             "Phulwari Sharif highway route can experience heavy commuter traffic"
         ]
     },
-    # ── Kerala, Goa, Uttarakhand & North East ──
+    # Kerala, Goa, Uttarakhand & North East
     {
         "name": "Amrita Institute of Medical Sciences Kochi",
         "type": "private",
@@ -4554,11 +4552,9 @@ else:
 
 ]
 
-# --------------------------------------------------
 # 35+ PMJAY 2.2 Aligned Procedures
-# --------------------------------------------------
 PROCEDURES_SEED = [
-    # ── Cardiac Specialties ──
+    # Cardiac Specialties
     {
         "name": "Coronary Artery Bypass Graft (CABG)",
         "name_hindi": "हृदय बाईपास सर्जरी",
@@ -4620,7 +4616,7 @@ PROCEDURES_SEED = [
         "typical_duration_days": 5,
     },
 
-    # ── Orthopedics & Spine ──
+    # Orthopedics & Spine
     {
         "name": "Total Knee Replacement (TKR - Unilateral)",
         "name_hindi": "घुटना प्रत्यारोपण",
@@ -4670,7 +4666,7 @@ PROCEDURES_SEED = [
         "typical_duration_days": 3,
     },
 
-    # ── Nephrology & Urology ──
+    # Nephrology & Urology
     {
         "name": "Hemodialysis (per session)",
         "name_hindi": "हेमोडायलिसिस",
@@ -4720,7 +4716,7 @@ PROCEDURES_SEED = [
         "typical_duration_days": 3,
     },
 
-    # ── Neurology & Neurosurgery ──
+    # Neurology & Neurosurgery
     {
         "name": "Brain Tumor Craniotomy & Excision",
         "name_hindi": "ब्रेन ट्यूमर ऑपरेशन",
@@ -4746,7 +4742,7 @@ PROCEDURES_SEED = [
         "typical_duration_days": 5,
     },
 
-    # ── Oncology ──
+    # Oncology
     {
         "name": "Systemic Chemotherapy (per infusion cycle)",
         "name_hindi": "कीमोथेरेपी",
@@ -4796,7 +4792,7 @@ PROCEDURES_SEED = [
         "typical_duration_days": 30,
     },
 
-    # ── Gastroenterology & Abdominal Surgery ──
+    # Gastroenterology & Abdominal Surgery
     {
         "name": "Laparoscopic Cholecystectomy (Gallbladder Stones)",
         "name_hindi": "पित्ताशय की पथरी का ऑपरेशन",
@@ -4846,7 +4842,7 @@ PROCEDURES_SEED = [
         "typical_duration_days": 21,
     },
 
-    # ── Ophthalmology ──
+    # Ophthalmology
     {
         "name": "Cataract Surgery (Phaco + Foldable IOL)",
         "name_hindi": "मोतियाबिंद फेको ऑपरेशन",
@@ -4872,7 +4868,7 @@ PROCEDURES_SEED = [
         "typical_duration_days": 1,
     },
 
-    # ── Obstetrics & Gynecology ──
+    # Obstetrics & Gynecology
     {
         "name": "Normal Vaginal Delivery",
         "name_hindi": "सामान्य प्रसव",
@@ -4910,7 +4906,7 @@ PROCEDURES_SEED = [
         "typical_duration_days": 3,
     },
 
-    # ── Critical Care & Diagnostics ──
+    # Critical Care & Diagnostics
     {
         "name": "ICU Ventilator Life Support (per day)",
         "name_hindi": "आईसीयू वेंटिलेटर सेवा (प्रति दिन)",
@@ -4960,7 +4956,6 @@ PROCEDURES_SEED = [
         "typical_duration_days": 0,
     },
 ]
-
 
 async def seed_hospitals():
     """
@@ -5155,7 +5150,6 @@ async def seed_hospitals():
             hospitals=len(hospitals),
             procedures=len(procedures),
         )
-
 
 if __name__ == "__main__":
     asyncio.run(seed_hospitals())

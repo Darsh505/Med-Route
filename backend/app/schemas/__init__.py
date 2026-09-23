@@ -5,7 +5,6 @@ from pydantic import BaseModel
 
 T = TypeVar("T")
 
-
 class APIResponse(BaseModel, Generic[T]):
     """
     Standard API response envelope for all Med Route endpoints.
@@ -22,7 +21,6 @@ class APIResponse(BaseModel, Generic[T]):
     data: Optional[T] = None
     message: str = "OK"
     meta: Optional[dict[str, Any]] = None
-
 
 class ErrorResponse(BaseModel):
     """Standard error envelope."""

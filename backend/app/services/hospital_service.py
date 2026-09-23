@@ -1,7 +1,5 @@
 """
-──────────────────────────────────────────────
 services/hospital_service.py — Hospital Data Service
-──────────────────────────────────────────────
 
 Supports in-memory mode (no PostgreSQL) and full DB mode.
 """
@@ -17,11 +15,9 @@ except ImportError:
     import logging
     logger = logging.getLogger("hospital_service")
 
-
 def _is_memory_mode() -> bool:
     from app.database import USE_MEMORY_DB
     return USE_MEMORY_DB
-
 
 def estimate_travel_time(distance_km: float) -> int:
     """Estimate ambulance arrival time based on distance."""
@@ -38,10 +34,9 @@ def estimate_travel_time(distance_km: float) -> int:
     else:
         return 90
 
-
 class HospitalService:
 
-    # ── List All ──────────────────────────────────────────────────
+    # List All
 
     async def list_all(self, db, page=1, per_page=20, city=None, state=None,
                        hospital_type=None, verified_only=False):
@@ -74,7 +69,7 @@ class HospitalService:
                                                    hospital_type=hospital_type,
                                                    page=page, per_page=per_page)
 
-    # ── Get by Slug ───────────────────────────────────────────────
+    # Get by Slug
 
     async def get_by_slug(self, db, slug: str):
         if _is_memory_mode():
@@ -94,7 +89,7 @@ class HospitalService:
         from app.services.memory_store import memory_store
         return memory_store.get_by_slug(slug)
 
-    # ── Get by ID ─────────────────────────────────────────────────
+    # Get by ID
 
     async def get_by_id(self, db, hospital_id):
         if _is_memory_mode():
@@ -114,7 +109,7 @@ class HospitalService:
         from app.services.memory_store import memory_store
         return memory_store.get_by_id(str(hospital_id))
 
-    # ── Find Nearby ───────────────────────────────────────────────
+    # Find Nearby
 
     async def find_nearby(self, db, lat: float, lng: float, radius_km: float = 50,
                           filters=None, page: int = 1, per_page: int = 20):
@@ -155,7 +150,7 @@ class HospitalService:
             from app.services.memory_store import memory_store
             return memory_store.find_nearby(lat, lng, radius_km, {}, page, per_page)
 
-    # ── Find Nearest Trauma Center ────────────────────────────────
+    # Find Nearest Trauma Center
 
     async def find_nearest_trauma_center(self, db, lat: float, lng: float):
         if _is_memory_mode():
@@ -187,7 +182,7 @@ class HospitalService:
         from app.services.memory_store import memory_store
         return memory_store.find_nearest_trauma(lat, lng)
 
-    # ── Create / Update / Delete ──────────────────────────────────
+    # Create / Update / Delete
 
     async def create(self, db, data):
         if _is_memory_mode():
@@ -225,7 +220,6 @@ class HospitalService:
         hospital.is_active = False
         await db.flush()
 
-
 def _haversine(lat1, lng1, lat2, lng2) -> float:
     R = 6371.0
     phi1, phi2 = math.radians(lat1), math.radians(lat2)
@@ -233,6 +227,5 @@ def _haversine(lat1, lng1, lat2, lng2) -> float:
     dlam = math.radians(lng2 - lng1)
     a = math.sin(dphi/2)**2 + math.cos(phi1)*math.cos(phi2)*math.sin(dlam/2)**2
     return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
-
 
 hospital_service = HospitalService()

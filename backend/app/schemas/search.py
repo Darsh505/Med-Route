@@ -1,7 +1,5 @@
 """
-──────────────────────────────────────────────
 schemas/search.py — Search Request & Response Schemas
-──────────────────────────────────────────────
 
 These schemas define the contract between:
 1. The frontend (sends NL query)
@@ -13,7 +11,6 @@ These schemas define the contract between:
 import uuid
 from typing import Optional
 from pydantic import BaseModel, Field
-
 
 class NLSearchRequest(BaseModel):
     """Natural language search — what the user types in the search bar."""
@@ -29,7 +26,6 @@ class NLSearchRequest(BaseModel):
     # Optional: override extracted radius
     radius_km: Optional[float] = Field(None, ge=1, le=500)
 
-
 class SearchFilters(BaseModel):
     """
     Structured search filters — output of the NLP parser.
@@ -37,29 +33,29 @@ class SearchFilters(BaseModel):
     This is the contract between M2 (AI Lead) and M1 (Backend Lead).
     The NLP parser produces this; the search service consumes it.
     """
-    # ── Intent ─────────────────────────────────────────────────
+    # Intent
     intent: str = Field(
         default="hospital_search",
         examples=["hospital_search", "sos_emergency", "cost_inquiry"],
     )
 
-    # ── Medical Query ──────────────────────────────────────────
+    # Medical Query
     disease: Optional[str] = None              # "kidney disease"
     procedure_categories: list[str] = []       # ["renal"]
     mapped_procedures: list[str] = []          # ["dialysis", "kidney_transplant"]
     specialties: list[str] = []                # ["nephrology"]
 
-    # ── Location ───────────────────────────────────────────────
+    # Location
     location_text: Optional[str] = None        # "Chandigarh"
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     radius_km: float = 50.0
 
-    # ── Budget ─────────────────────────────────────────────────
+    # Budget
     max_budget: Optional[int] = None           # In INR (e.g. 200000)
     min_budget: Optional[int] = None
 
-    # ── Filters ────────────────────────────────────────────────
+    # Filters
     hospital_types: list[str] = []             # ["government", "private"]
     accreditation: Optional[str] = None        # "NABH"
     requires_pmjay: Optional[bool] = None
@@ -67,14 +63,13 @@ class SearchFilters(BaseModel):
     min_rating: Optional[float] = None
     min_icu_beds: Optional[int] = None
 
-    # ── Sort ───────────────────────────────────────────────────
+    # Sort
     sort_by: str = "relevance"                 # relevance | distance | rating | cost
 
-    # ── AI Metadata ────────────────────────────────────────────
+    # AI Metadata
     ai_provider: str = "rule_based"            # gemini | rule_based
     confidence: float = 1.0
     raw_query: Optional[str] = None
-
 
 class RankingWeights(BaseModel):
     """
@@ -85,7 +80,6 @@ class RankingWeights(BaseModel):
     cost: float = Field(default=0.25, ge=0, le=1)
     rating: float = Field(default=0.25, ge=0, le=1)
     accreditation: float = Field(default=0.20, ge=0, le=1)
-
 
 class StructuredSearchRequest(BaseModel):
     """Structured search for when user applies manual filters."""
@@ -104,7 +98,6 @@ class StructuredSearchRequest(BaseModel):
     page: int = Field(default=1, ge=1)
     per_page: int = Field(default=20, ge=1, le=50)
 
-
 class RankingBreakdown(BaseModel):
     """
     Transparent ranking breakdown — shown to user so they can see WHY
@@ -117,7 +110,6 @@ class RankingBreakdown(BaseModel):
     accreditation_score: float
     weights_used: RankingWeights
 
-
 class SearchResultMeta(BaseModel):
     total: int
     page: int
@@ -128,7 +120,6 @@ class SearchResultMeta(BaseModel):
     confidence: float
     extracted_filters: SearchFilters
     data_source: str = "SIMULATED"
-
 
 class SearchMeta(BaseModel):
     """Simplified meta object returned by search_service."""

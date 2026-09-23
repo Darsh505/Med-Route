@@ -5,14 +5,12 @@ from datetime import datetime
 from typing import Optional, Union
 from pydantic import BaseModel, Field
 
-
 class SOSRequest(BaseModel):
     latitude: float = Field(..., ge=-90, le=90)
     longitude: float = Field(..., ge=-180, le=180)
     emergency_description: Optional[str] = Field(None, max_length=500)
     patient_name: Optional[str] = Field(None, max_length=100)
     contact_phone: Optional[str] = None
-
 
 class SOSNearestResponse(BaseModel):
     """Response from /api/sos/nearest — nearest trauma center."""
@@ -28,7 +26,6 @@ class SOSNearestResponse(BaseModel):
     beds_icu_available: int
     is_trauma_center: bool
 
-
 class SOSAlertResponse(BaseModel):
     id: Union[uuid.UUID, str]
     status: str
@@ -39,7 +36,6 @@ class SOSAlertResponse(BaseModel):
     ambulance_number: Optional[str]
     created_at: datetime
     model_config = {"from_attributes": True}
-
 
 class SOSStatusUpdateRequest(BaseModel):
     status: str  # acknowledged | dispatched | resolved | cancelled

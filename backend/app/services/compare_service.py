@@ -13,11 +13,9 @@ except ImportError:
     import logging
     logger = logging.getLogger("compare_service")
 
-
 def _is_memory_mode() -> bool:
     from app.database import USE_MEMORY_DB
     return USE_MEMORY_DB
-
 
 STANDARD_PROCEDURES: Dict[str, Dict[str, Any]] = {
     "angioplasty": {
@@ -398,7 +396,6 @@ STANDARD_PROCEDURES: Dict[str, Dict[str, Any]] = {
     },
 }
 
-
 class CompareService:
 
     def get_all_procedures(self) -> List[Dict[str, Any]]:
@@ -648,6 +645,5 @@ class CompareService:
                 "icon": "star",
             },
         ]
-
 
 compare_service = CompareService()

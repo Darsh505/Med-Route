@@ -1,7 +1,5 @@
 """
-──────────────────────────────────────────────
 models/sos_alert.py — Emergency SOS Alerts
-──────────────────────────────────────────────
 
 SOS alert lifecycle:
   SENT → ACKNOWLEDGED → DISPATCHED → RESOLVED
@@ -30,7 +28,6 @@ if TYPE_CHECKING:
     from app.models.user import User
     from app.models.hospital import Hospital
 
-
 class SOSStatus(str, enum.Enum):
     SENT = "sent"
     ACKNOWLEDGED = "acknowledged"
@@ -38,18 +35,17 @@ class SOSStatus(str, enum.Enum):
     RESOLVED = "resolved"
     CANCELLED = "cancelled"     # User cancelled before acknowledgement
 
-
 class SOSAlert(TimestampedBase):
     __tablename__ = "sos_alerts"
 
-    # ── Who triggered SOS ─────────────────────────────────────────
+    # Who triggered SOS
     user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id"),
         comment="Null for anonymous SOS (mobile guest users)",
     )
 
-    # ── Location at time of SOS ───────────────────────────────────
+    # Location at time of SOS
     latitude: Mapped[float] = mapped_column(Float, nullable=False)
     longitude: Mapped[float] = mapped_column(Float, nullable=False)
     address_text: Mapped[Optional[str]] = mapped_column(
@@ -57,7 +53,7 @@ class SOSAlert(TimestampedBase):
         comment="Reverse-geocoded address for display",
     )
 
-    # ── Nearest Hospital Found ────────────────────────────────────
+    # Nearest Hospital Found
     hospital_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("hospitals.id"),
@@ -68,7 +64,7 @@ class SOSAlert(TimestampedBase):
     )
     estimated_arrival_minutes: Mapped[Optional[int]] = mapped_column(Integer)
 
-    # ── Alert Status ──────────────────────────────────────────────
+    # Alert Status
     status: Mapped[SOSStatus] = mapped_column(
         SAEnum(SOSStatus),
         default=SOSStatus.SENT,
@@ -76,7 +72,7 @@ class SOSAlert(TimestampedBase):
         index=True,
     )
 
-    # ── Emergency Info ────────────────────────────────────────────
+    # Emergency Info
     emergency_description: Mapped[Optional[str]] = mapped_column(
         Text,
         comment="Brief description of emergency (optional, user-provided)",
@@ -88,9 +84,9 @@ class SOSAlert(TimestampedBase):
         comment="Ambulance registration number once dispatched",
     )
 
-    # ── Resolution ────────────────────────────────────────────────
+    # Resolution
     resolved_note: Mapped[Optional[str]] = mapped_column(Text)
 
-    # ── Relationships ─────────────────────────────────────────────
+    # Relationships
     user: Mapped[Optional["User"]] = relationship(back_populates="sos_alerts")
     hospital: Mapped[Optional["Hospital"]] = relationship(back_populates="sos_alerts")

@@ -503,7 +503,6 @@ export default function HomePage() {
     setCurrentPage(1);
   };
 
-
   const totalPages = Math.ceil(hospitals.length / HOSPITALS_PER_PAGE) || 1;
   const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
 
@@ -1112,7 +1111,6 @@ export default function HomePage() {
 
                 </div>
               </aside>
-
 
               {/* Right Column: Verified Hospitals List */}
               <section className="lg:col-span-8 flex flex-col gap-space-md">

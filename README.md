@@ -10,6 +10,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat&logo=typescript)](https://www.typescriptlang.org/)
 [![Docker Compose](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat&logo=docker)](https://www.docker.com/)
 [![Database Catalog](https://img.shields.io/badge/Database-Schema_%26_Catalog-blue?style=flat&logo=postgresql)](docs/DATABASE.md)
+[![Judge Defense Guide](https://img.shields.io/badge/Defense-Judge_%26_Architecture_Guide-emerald?style=flat&logo=readme)](docs/JUDGE_DEFENSE_GUIDE.md)
 
 ---
 
@@ -182,7 +183,8 @@ med-route/
 │   └── src/components/     # Interactive Leaflet maps, chatbot widget, navigation
 ├── docs/                   # Full system specifications & deployment documentation
 │   ├── DATABASE.md         # Complete data catalog, ER diagram, and schema models
-│   └── DEPLOYMENT.md       # Cloud deployment guide (Render, Vercel, Expo EAS)
+│   ├── DEPLOYMENT.md       # Cloud deployment guide (Render, Vercel, Expo EAS)
+│   └── JUDGE_DEFENSE_GUIDE.md # Hackathon judge defense, Q&A, and feature cheat sheet
 ├── Dockerfile              # Production multi-stage backend container
 ├── docker-compose.yml      # Full-stack local orchestration (PostGIS, Redis, Web, Admin, Backend)
 ├── LICENSE                 # Open source MIT License

@@ -11,14 +11,12 @@ from app.models.base import TimestampedBase
 if TYPE_CHECKING:
     from app.models.hospital import Hospital
 
-
 class DataSourceType(str, enum.Enum):
     GOVERNMENT_API = "government_api"
     WEB_SCRAPE = "web_scrape"
     CSV_UPLOAD = "csv_upload"
     MANUAL_ENTRY = "manual_entry"
     SEED_SCRIPT = "seed_script"
-
 
 class DataSource(TimestampedBase):
     """
@@ -43,7 +41,7 @@ class DataSource(TimestampedBase):
     url: Mapped[Optional[str]] = mapped_column(String(500))
     description: Mapped[Optional[str]] = mapped_column(Text)
 
-    # ── Sync Statistics ───────────────────────────────────────────
+    # Sync Statistics
     record_count: Mapped[int] = mapped_column(Integer, default=0)
     last_synced_at: Mapped[Optional[str]] = mapped_column(String(50))
     sync_status: Mapped[Optional[str]] = mapped_column(String(50))

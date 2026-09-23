@@ -17,7 +17,6 @@ from app.models.user import User
 
 router = APIRouter(prefix="/api/hospitals", tags=["Hospitals"])
 
-
 @router.get("", response_model=APIResponse[list[HospitalListItem]])
 async def list_hospitals(
     page: int = Query(default=1, ge=1),
@@ -37,7 +36,6 @@ async def list_hospitals(
         message=f"{total} hospitals found",
         meta={"total": total, "page": page, "per_page": per_page},
     )
-
 
 @router.get("/nearby", response_model=APIResponse[list[HospitalListItem]])
 async def find_nearby(
@@ -62,7 +60,6 @@ async def find_nearby(
         meta={"total": total, "page": page, "per_page": per_page, "radius_km": radius_km},
     )
 
-
 @router.get("/{slug}", response_model=APIResponse[HospitalResponse])
 async def get_hospital(slug: str, db: AsyncSession = Depends(get_db)):
     """Get full hospital details by slug. Includes procedures, facilities, departments."""
@@ -79,7 +76,6 @@ async def get_hospital(slug: str, db: AsyncSession = Depends(get_db)):
         meta={"data_source": data_src},
     )
 
-
 @router.post("", response_model=APIResponse[HospitalResponse], status_code=201)
 async def create_hospital(
     data: HospitalCreateRequest,
@@ -92,7 +88,6 @@ async def create_hospital(
         data=HospitalResponse.model_validate(hospital),
         message="Hospital created successfully",
     )
-
 
 @router.patch("/{hospital_id}", response_model=APIResponse[HospitalResponse])
 async def update_hospital(
@@ -110,7 +105,6 @@ async def update_hospital(
         data=HospitalResponse.model_validate(hospital),
         message="Hospital updated",
     )
-
 
 @router.delete("/{hospital_id}", status_code=204)
 async def delete_hospital(

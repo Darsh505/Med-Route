@@ -1,7 +1,5 @@
 """
-──────────────────────────────────────────────
 config.py — Med Route Environment Configuration
-──────────────────────────────────────────────
 
 Uses Pydantic BaseSettings for type-safe, validated configuration.
 
@@ -18,16 +16,15 @@ from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import AnyUrl
 
-
 class Settings(BaseSettings):
-    # ── Database — PostGIS-enabled PostgreSQL ──────────────────────
+    # Database — PostGIS-enabled PostgreSQL
     DATABASE_URL: str = "postgresql+asyncpg://medroute:password@localhost:5432/medroute"
     DATABASE_URL_SYNC: str = "postgresql+psycopg2://medroute:password@localhost:5432/medroute"
 
-    # ── Redis — for caching and rate limiting ──────────────────────
+    # Redis — for caching and rate limiting
     REDIS_URL: str = "redis://localhost:6379/0"
 
-    # ── JWT Auth ───────────────────────────────────────────────────
+    # JWT Auth
     JWT_SECRET: str = "change-me-in-production-please-use-openssl-rand-hex-32"
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
@@ -36,14 +33,14 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
     GEMINI_MODEL: str = "gemini-2.5-flash-lite"
 
-    # ── Firebase Auth ─────────────────────────────────────────────
+    # Firebase Auth
     FIREBASE_PROJECT_ID: str = ""
     FIREBASE_SERVICE_ACCOUNT_PATH: str = ""
 
-    # ── Geocoding ─────────────────────────────────────────────────
+    # Geocoding
     NOMINATIM_USER_AGENT: str = "medroute-app/1.0"
 
-    # ── Application ───────────────────────────────────────────────
+    # Application
     APP_ENV: str = "development"
     APP_NAME: str = "Med Route API"
     APP_VERSION: str = "1.0.0"
@@ -59,11 +56,11 @@ class Settings(BaseSettings):
         "https://med-route.vercel.app",  # Production web
     ]
 
-    # ── Data Pipeline ─────────────────────────────────────────────
+    # Data Pipeline
     SEED_ON_STARTUP: bool = True   # Auto-seed DB with simulated data on first run
     SEED_HOSPITAL_COUNT: int = 55  # Number of hospitals to seed
 
-    # ── Rate Limiting ─────────────────────────────────────────────
+    # Rate Limiting
     RATE_LIMIT_REQUESTS: int = 100   # Max requests per window
     RATE_LIMIT_WINDOW_SECONDS: int = 60
 
@@ -74,7 +71,6 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-
 @lru_cache()
 def get_settings() -> Settings:
     """
@@ -83,7 +79,6 @@ def get_settings() -> Settings:
     not on every request. The function is called via FastAPI's Depends().
     """
     return Settings()
-
 
 # Global singleton for use outside of FastAPI dependency injection
 settings = get_settings()

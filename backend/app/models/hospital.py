@@ -1,7 +1,5 @@
 """
-──────────────────────────────────────────────
 models/hospital.py — Core Hospital Entity
-──────────────────────────────────────────────
 
 This is the most important model in Med Route.
 
@@ -55,14 +53,12 @@ if TYPE_CHECKING:
     from app.models.review import Review
     from app.models.sos_alert import SOSAlert
 
-
 class HospitalType(str, enum.Enum):
     """Hospital ownership type — affects PMJAY empanelment and cost structure."""
     GOVERNMENT = "government"
     PRIVATE = "private"
     TRUST = "trust"          # Non-profit / religious / community trust
     SEMI_GOVERNMENT = "semi_government"
-
 
 class DataSourceLabel(str, enum.Enum):
     """
@@ -81,7 +77,6 @@ class DataSourceLabel(str, enum.Enum):
     MANUAL_VERIFIED = "MANUAL_VERIFIED"
     USER_CONTRIBUTED = "USER_CONTRIBUTED"
 
-
 class Hospital(TimestampedBase):
     __tablename__ = "hospitals"
     __table_args__ = (
@@ -96,7 +91,7 @@ class Hospital(TimestampedBase):
         {"comment": "Hospital facility records — core entity of Med Route"},
     )
 
-    # ── Identity ──────────────────────────────────────────────────
+    # Identity
     name: Mapped[str] = mapped_column(
         String(255),
         nullable=False,
@@ -116,7 +111,7 @@ class Hospital(TimestampedBase):
         comment="Ownership type: government | private | trust | semi_government",
     )
 
-    # ── Address ───────────────────────────────────────────────────
+    # Address
     address: Mapped[str] = mapped_column(
         String(500),
         nullable=False,
@@ -134,7 +129,7 @@ class Hospital(TimestampedBase):
     pincode: Mapped[str] = mapped_column(String(6))
     district: Mapped[Optional[str]] = mapped_column(String(100))
 
-    # ── PostGIS Spatial Column ────────────────────────────────────
+    # PostGIS Spatial Column
     # Geography(POINT, 4326) — spherical Earth model, distances in meters
     # The GiST index above is what makes this column fast for radius queries.
     location: Mapped[object] = mapped_column(
@@ -147,7 +142,7 @@ class Hospital(TimestampedBase):
     latitude: Mapped[float] = mapped_column(Float, nullable=False)
     longitude: Mapped[float] = mapped_column(Float, nullable=False)
 
-    # ── Contact ───────────────────────────────────────────────────
+    # Contact
     phone: Mapped[str] = mapped_column(String(15), nullable=False)
     emergency_phone: Mapped[Optional[str]] = mapped_column(
         String(15),
@@ -156,7 +151,7 @@ class Hospital(TimestampedBase):
     email: Mapped[Optional[str]] = mapped_column(String(255))
     website: Mapped[Optional[str]] = mapped_column(String(500))
 
-    # ── Capacity ──────────────────────────────────────────────────
+    # Capacity
     beds_total: Mapped[int] = mapped_column(Integer, default=0)
     beds_icu: Mapped[int] = mapped_column(
         Integer,
@@ -172,7 +167,7 @@ class Hospital(TimestampedBase):
     beds_general: Mapped[int] = mapped_column(Integer, default=0)
     beds_pediatric: Mapped[int] = mapped_column(Integer, default=0)
 
-    # ── Accreditation & Certification ─────────────────────────────
+    # Accreditation & Certification
     is_trauma_center: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
@@ -196,7 +191,7 @@ class Hospital(TimestampedBase):
         comment="Rohini hospital ID (CGHS empanelment)",
     )
 
-    # ── Ratings (denormalized for query performance) ───────────────
+    # Ratings (denormalized for query performance)
     overall_rating: Mapped[float] = mapped_column(
         Float,
         default=0.0,
@@ -212,14 +207,14 @@ class Hospital(TimestampedBase):
         comment="Avg of cost transparency sub-rating from reviews",
     )
 
-    # ── Operational Info ──────────────────────────────────────────
+    # Operational Info
     established_year: Mapped[Optional[int]] = mapped_column(Integer)
     total_doctors: Mapped[Optional[int]] = mapped_column(Integer)
     specialties_count: Mapped[Optional[int]] = mapped_column(Integer)
     description: Mapped[Optional[str]] = mapped_column(Text)
     image_url: Mapped[Optional[str]] = mapped_column(String(500))
 
-    # ── Data Provenance (CRITICAL) ────────────────────────────────
+    # Data Provenance (CRITICAL)
     verified: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
@@ -237,10 +232,10 @@ class Hospital(TimestampedBase):
         comment="Link to the data_source record for audit trail",
     )
 
-    # ── Soft Delete ───────────────────────────────────────────────
+    # Soft Delete
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
-    # ── Relationships ─────────────────────────────────────────────
+    # Relationships
     data_source: Mapped[Optional["DataSource"]] = relationship(back_populates="hospitals")
     hospital_procedures: Mapped[list["HospitalProcedure"]] = relationship(
         back_populates="hospital",

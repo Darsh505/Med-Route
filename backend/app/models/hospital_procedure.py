@@ -1,7 +1,5 @@
 """
-──────────────────────────────────────────────
 models/hospital_procedure.py — Hospital-Procedure Junction
-──────────────────────────────────────────────
 
 Maps which procedures each hospital offers, with hospital-specific pricing.
 
@@ -30,12 +28,11 @@ if TYPE_CHECKING:
     from app.models.hospital import Hospital
     from app.models.procedure import Procedure
 
-
 class HospitalProcedure(TimestampedBase):
     __tablename__ = "hospital_procedures"
     __table_args__ = {"comment": "Hospital-specific procedure offerings with cost data"}
 
-    # ── Foreign Keys ──────────────────────────────────────────────
+    # Foreign Keys
     hospital_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("hospitals.id", ondelete="CASCADE"),
@@ -49,7 +46,7 @@ class HospitalProcedure(TimestampedBase):
         index=True,
     )
 
-    # ── Hospital-Specific Pricing (INR) ───────────────────────────
+    # Hospital-Specific Pricing (INR)
     cost_min: Mapped[Optional[int]] = mapped_column(
         Integer,
         comment="Minimum cost at THIS hospital (INR). May differ from PMJAY rate.",
@@ -72,7 +69,7 @@ class HospitalProcedure(TimestampedBase):
         comment="PMJAY package rate applicable at this hospital (INR)",
     )
 
-    # ── Quality Metrics ───────────────────────────────────────────
+    # Quality Metrics
     success_rate: Mapped[Optional[float]] = mapped_column(
         Float,
         comment="Reported success rate percentage (0-100)",
@@ -83,7 +80,7 @@ class HospitalProcedure(TimestampedBase):
     )
     average_stay_days: Mapped[Optional[int]] = mapped_column(Integer)
 
-    # ── Availability ──────────────────────────────────────────────
+    # Availability
     is_available: Mapped[bool] = mapped_column(
         Boolean,
         default=True,
@@ -98,7 +95,7 @@ class HospitalProcedure(TimestampedBase):
         comment="Department that performs this procedure",
     )
 
-    # ── Data Provenance ───────────────────────────────────────────
+    # Data Provenance
     data_source_label: Mapped[DataSourceLabel] = mapped_column(
         SAEnum(DataSourceLabel),
         default=DataSourceLabel.SIMULATED,
@@ -107,6 +104,6 @@ class HospitalProcedure(TimestampedBase):
     )
     notes: Mapped[Optional[str]] = mapped_column(Text)
 
-    # ── Relationships ─────────────────────────────────────────────
+    # Relationships
     hospital: Mapped["Hospital"] = relationship(back_populates="hospital_procedures")
     procedure: Mapped["Procedure"] = relationship(back_populates="hospital_procedures")

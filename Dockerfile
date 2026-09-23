@@ -1,7 +1,5 @@
-# ──────────────────────────────────────────────
 # Root Dockerfile — Med Route FastAPI Backend
 # Supports Docker deployment on Render / Railway / Cloud
-# ──────────────────────────────────────────────
 
 FROM python:3.12-slim AS builder
 
@@ -15,7 +13,7 @@ RUN apt-get update && apt-get install -y \
 COPY backend/requirements.txt .
 RUN pip install --user --no-cache-dir -r requirements.txt
 
-# ── Stage 2: Production Image ─────────────────
+# Stage 2: Production Image
 FROM python:3.12-slim AS production
 
 RUN apt-get update && apt-get install -y \

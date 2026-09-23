@@ -293,7 +293,7 @@ export default function AdminPortalPage() {
     setTimeout(() => setNotification(""), 3000);
   };
 
-  // ── Authentication Screen (Minimalist Black) ──
+  // Authentication Screen (Minimalist Black)
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-black text-zinc-100 flex flex-col items-center justify-center p-4">

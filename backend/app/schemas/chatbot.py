@@ -1,17 +1,13 @@
 """
---------------------------------------------------
 schemas/chatbot.py — Clinical Chatbot NLP Schemas
---------------------------------------------------
 """
 
 from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, Field
 
-
 class ChatMessage(BaseModel):
     role: str = Field(..., description="'user' or 'assistant'")
     content: str = Field(..., description="Message text")
-
 
 class ChatRequest(BaseModel):
     message: str = Field(
@@ -25,13 +21,11 @@ class ChatRequest(BaseModel):
     longitude: Optional[float] = Field(default=76.7794, ge=-180, le=180)
     preferred_language: str = Field(default="en", description="'en', 'hi', or 'hinglish'")
 
-
 class ChatAction(BaseModel):
     type: str = Field(..., description="'call_emergency', 'view_hospital', 'compare', 'call_hospital', 'sos_dispatch'")
     label: str
     value: str
     data: Optional[Dict[str, Any]] = None
-
 
 class ChatHospitalRecommendation(BaseModel):
     id: str
@@ -47,7 +41,6 @@ class ChatHospitalRecommendation(BaseModel):
     phone: Optional[str] = None
     emergency_phone: Optional[str] = None
     why_recommended: Optional[str] = None
-
 
 class ChatResponse(BaseModel):
     reply: str

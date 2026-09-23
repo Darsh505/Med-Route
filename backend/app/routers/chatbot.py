@@ -1,7 +1,5 @@
 """
---------------------------------------------------
 routers/chatbot.py — Clinical AI Chatbot Router
---------------------------------------------------
 """
 
 from fastapi import APIRouter, Depends, Query
@@ -12,7 +10,6 @@ from app.schemas.chatbot import ChatRequest, ChatResponse
 from app.ai.chatbot import clinical_chatbot, ClinicalChatbot
 
 router = APIRouter(prefix="/api/chat", tags=["Clinical Chatbot"])
-
 
 @router.post("", response_model=APIResponse[ChatResponse])
 @router.post("/triage", response_model=APIResponse[ChatResponse])
@@ -33,7 +30,6 @@ async def clinical_chat(request: ChatRequest):
         meta={"ai_provider": response.ai_provider, "triage_level": response.triage_level},
     )
 
-
 @router.get("/status")
 async def get_chatbot_status():
     """Returns real-time status of Gemini AI engine."""
@@ -46,7 +42,6 @@ async def get_chatbot_status():
         },
         message="Chatbot AI engine status",
     )
-
 
 @router.get("/suggestions")
 async def get_chat_suggestions():

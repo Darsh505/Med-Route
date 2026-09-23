@@ -1,7 +1,5 @@
 """
-──────────────────────────────────────────────
 routers/auth.py — Authentication Endpoints
-──────────────────────────────────────────────
 
 Endpoints:
   POST /api/auth/register  → Create new account
@@ -25,7 +23,6 @@ from app.services.auth_service import auth_service, decode_token
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 bearer_scheme = HTTPBearer(auto_error=False)
-
 
 def _user_to_response(user) -> dict:
     """Convert user dict or ORM object to response dict."""
@@ -53,7 +50,6 @@ def _user_to_response(user) -> dict:
         "created_at": user.created_at.isoformat() if hasattr(user.created_at, 'isoformat') else str(user.created_at),
     }
 
-
 def _tokens_to_response(tokens) -> dict:
     """Convert TokenResponseData to dict."""
     return {
@@ -62,7 +58,6 @@ def _tokens_to_response(tokens) -> dict:
         "token_type": "bearer",
         "expires_in": tokens.expires_in,
     }
-
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
@@ -82,7 +77,6 @@ async def get_current_user(
             detail={"code": "INVALID_TOKEN", "message": str(e)},
         )
 
-
 async def require_admin(current_user=Depends(get_current_user)):
     """Dependency: require admin role."""
     role = current_user.get("role") if isinstance(current_user, dict) else getattr(current_user.role, 'value', current_user.role)
@@ -92,7 +86,6 @@ async def require_admin(current_user=Depends(get_current_user)):
             detail={"code": "ADMIN_REQUIRED", "message": "Admin access required"},
         )
     return current_user
-
 
 @router.post("/register", status_code=201)
 async def register(data: RegisterRequest, db: AsyncSession = Depends(get_db)):
@@ -106,7 +99,6 @@ async def register(data: RegisterRequest, db: AsyncSession = Depends(get_db)):
     except ValueError as e:
         raise HTTPException(status_code=400, detail={"code": "REGISTRATION_ERROR", "message": str(e)})
 
-
 @router.post("/login")
 async def login(data: LoginRequest, db: AsyncSession = Depends(get_db)):
     """Login with email + password (JSON body). Returns access + refresh tokens."""
@@ -119,7 +111,6 @@ async def login(data: LoginRequest, db: AsyncSession = Depends(get_db)):
             detail={"code": "LOGIN_ERROR", "message": str(e)},
         )
 
-
 @router.post("/refresh")
 async def refresh_token(data: RefreshRequest, db: AsyncSession = Depends(get_db)):
     """Exchange a valid refresh token for a new access token."""
@@ -129,7 +120,6 @@ async def refresh_token(data: RefreshRequest, db: AsyncSession = Depends(get_db)
     except ValueError as e:
         raise HTTPException(status_code=401, detail={"code": "REFRESH_ERROR", "message": str(e)})
 
-
 @router.get("/me")
 async def get_me(current_user=Depends(get_current_user)):
     """Get the currently authenticated user's profile."""
@@ -137,7 +127,6 @@ async def get_me(current_user=Depends(get_current_user)):
         data=_user_to_response(current_user),
         message="Profile retrieved",
     )
-
 
 @router.post("/firebase")
 async def firebase_login(request: dict, db: AsyncSession = Depends(get_db)):

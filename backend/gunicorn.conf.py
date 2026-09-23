@@ -5,7 +5,7 @@ Used in Docker production deployment.
 
 import multiprocessing
 
-# ── Worker Config ─────────────────────────────────────────────────
+# Worker Config
 # Use Uvicorn workers for ASGI (async) support
 worker_class = "uvicorn.workers.UvicornWorker"
 
@@ -16,7 +16,7 @@ workers = min(workers, 4)  # Cap at 4 for Railway free tier
 
 import os
 
-# ── Networking ────────────────────────────────────────────────────
+# Networking
 port = os.getenv("PORT", "8000")
 bind = f"0.0.0.0:{port}"
 timeout = 120           # Request timeout (120s for large file uploads)
@@ -24,12 +24,12 @@ keepalive = 5           # Keep connections alive for 5s
 max_requests = 1000     # Restart worker after 1000 requests (memory leak prevention)
 max_requests_jitter = 50
 
-# ── Logging ───────────────────────────────────────────────────────
+# Logging
 accesslog = "-"         # Log to stdout (Docker/Railway captures this)
 errorlog = "-"
 loglevel = "info"
 access_log_format = '%(h)s %(r)s %(s)s %(b)s %(D)sµs'
 
-# ── Process Management ────────────────────────────────────────────
+# Process Management
 preload_app = True      # Load app before forking workers (memory efficient)
 graceful_timeout = 30   # Give workers 30s to finish requests on shutdown

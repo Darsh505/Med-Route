@@ -27,14 +27,12 @@ def compile_geography_sqlite(type_, compiler, **kw):
 # Use in-memory SQLite for tests (no PostGIS — spatial tests use mocks)
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
-
 @pytest.fixture(scope="session")
 def event_loop():
     """Use a single event loop for the entire test session."""
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
-
 
 @pytest_asyncio.fixture(scope="session")
 async def test_engine():
@@ -44,14 +42,12 @@ async def test_engine():
     yield engine
     await engine.dispose()
 
-
 @pytest_asyncio.fixture
 async def db_session(test_engine):
     session_factory = async_sessionmaker(test_engine, expire_on_commit=False)
     async with session_factory() as session:
         yield session
         await session.rollback()
-
 
 @pytest_asyncio.fixture
 async def client(db_session: AsyncSession):
@@ -67,7 +63,6 @@ async def client(db_session: AsyncSession):
         yield c
     app.dependency_overrides.clear()
 
-
 @pytest_asyncio.fixture
 async def admin_user(db_session: AsyncSession) -> User:
     user = User(
@@ -80,7 +75,6 @@ async def admin_user(db_session: AsyncSession) -> User:
     db_session.add(user)
     await db_session.flush()
     return user
-
 
 @pytest_asyncio.fixture
 async def citizen_user(db_session: AsyncSession) -> User:
@@ -95,11 +89,9 @@ async def citizen_user(db_session: AsyncSession) -> User:
     await db_session.flush()
     return user
 
-
 @pytest.fixture
 def admin_token(admin_user: User) -> str:
     return create_access_token(str(admin_user.id), admin_user.role.value)
-
 
 @pytest.fixture
 def citizen_token(citizen_user: User) -> str:

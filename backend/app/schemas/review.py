@@ -5,7 +5,6 @@ from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, Field
 
-
 class ReviewCreateRequest(BaseModel):
     rating_overall: int = Field(..., ge=1, le=5)
     rating_cleanliness: Optional[int] = Field(None, ge=1, le=5)
@@ -17,7 +16,6 @@ class ReviewCreateRequest(BaseModel):
     treatment_type: Optional[str] = Field(None, max_length=100)
     visit_date: Optional[str] = None
     would_recommend: Optional[bool] = None
-
 
 from typing import Optional, Union, Any
 
@@ -43,7 +41,6 @@ class ReviewResponse(BaseModel):
     helpful_count: int = 0
     created_at: Optional[Any] = None
     model_config = {"from_attributes": True}
-
 
 class ReviewListResponse(BaseModel):
     reviews: list[ReviewResponse]

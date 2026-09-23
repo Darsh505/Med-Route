@@ -15,7 +15,6 @@ from app.models.user import User
 
 router = APIRouter(prefix="/api/sos", tags=["SOS Emergency"])
 
-
 @router.post("/nearest", response_model=APIResponse[SOSNearestResponse])
 async def find_nearest_hospital(
     request: SOSRequest,
@@ -68,7 +67,6 @@ async def find_nearest_hospital(
         message=f"Nearest hospital found: {h_name}",
     )
 
-
 @router.post("/alert", response_model=APIResponse[SOSAlertResponse], status_code=201)
 async def create_sos_alert(
     request: SOSRequest,
@@ -101,7 +99,6 @@ async def create_sos_alert(
     except ValueError as e:
         raise HTTPException(status_code=404, detail={"code": "SOS_FAILED", "message": str(e)})
 
-
 @router.patch("/{alert_id}", response_model=APIResponse[SOSAlertResponse])
 async def update_alert_status(
     alert_id: uuid.UUID,
@@ -123,7 +120,6 @@ async def update_alert_status(
     )
     return APIResponse(data=SOSAlertResponse.model_validate(alert), message=f"Alert status: {data.status}")
 
-
 @router.get("/{alert_id}", response_model=APIResponse[SOSAlertResponse])
 async def get_alert_status(alert_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     """Citizen: check status of their SOS alert."""
@@ -132,7 +128,6 @@ async def get_alert_status(alert_id: uuid.UUID, db: AsyncSession = Depends(get_d
     if not alert:
         raise HTTPException(status_code=404, detail={"code": "ALERT_NOT_FOUND"})
     return APIResponse(data=SOSAlertResponse.model_validate(alert), message="Alert status")
-
 
 @router.websocket("/ws/{hospital_id}")
 async def hospital_sos_ws(hospital_id: str, websocket: WebSocket):

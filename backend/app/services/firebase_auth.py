@@ -10,7 +10,6 @@ except ImportError:
 from typing import Optional
 from app.config import settings
 
-
 def verify_firebase_token(id_token: str) -> Optional[dict]:
     """
     Verify a Firebase ID token using the Admin SDK.

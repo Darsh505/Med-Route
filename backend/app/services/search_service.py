@@ -9,11 +9,9 @@ except ImportError:
 
 from app.schemas.search import SearchMeta
 
-
 def _is_memory_mode() -> bool:
     from app.database import USE_MEMORY_DB
     return USE_MEMORY_DB
-
 
 class SearchService:
 
@@ -83,6 +81,5 @@ class SearchService:
                 parsed_intent='hospital_search', total_found=len(results), radius_km=radius_km,
             )
             return results, meta
-
 
 search_service = SearchService()

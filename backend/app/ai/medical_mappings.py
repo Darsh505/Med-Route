@@ -1,7 +1,5 @@
 """
-──────────────────────────────────────────────
 ai/medical_mappings.py — Medical Domain Knowledge Base
-──────────────────────────────────────────────
 
 Maps natural language terms (English + Hinglish) to canonical
 procedure names and procedure categories.
@@ -14,7 +12,7 @@ This is the "medical dictionary" that allows queries like:
 
 # Maps canonical procedure name → list of search aliases (English + Hinglish)
 PROCEDURE_ALIASES: dict[str, list[str]] = {
-    # ── Renal / Kidney ────────────────────────────────────────────
+    # Renal / Kidney
     "dialysis": [
         "dialysis", "hemodialysis", "kidney dialysis", "gurdey ki safai",
         "blood purification", "kidney cleaning", "kidney treatment", "kidney", "renal",
@@ -29,7 +27,7 @@ PROCEDURE_ALIASES: dict[str, list[str]] = {
     ],
     "nephrectomy": ["kidney removal", "nephrectomy", "gurdey ka operation"],
 
-    # ── Cardiac / Heart ───────────────────────────────────────────
+    # Cardiac / Heart
     "bypass_surgery": [
         "bypass", "bypass surgery", "cabg", "open heart surgery",
         "dil ka operation", "heart surgery",
@@ -43,7 +41,7 @@ PROCEDURE_ALIASES: dict[str, list[str]] = {
     ],
     "pacemaker": ["pacemaker", "heart pacemaker", "pacemaker implant"],
 
-    # ── Orthopedic ────────────────────────────────────────────────
+    # Orthopedic
     "knee_replacement": [
         "knee replacement", "knee surgery", "ghutne ka operation",
         "ghutne ka dard", "knee joint replacement", "tkr",
@@ -60,21 +58,21 @@ PROCEDURE_ALIASES: dict[str, list[str]] = {
         "broken bone", "cast", "plaster",
     ],
 
-    # ── Neurological ──────────────────────────────────────────────
+    # Neurological
     "brain_surgery": [
         "brain surgery", "brain tumor", "neurosurgery", "brain tumor surgery",
         "dimag ka operation",
     ],
     "stroke_treatment": ["stroke", "brain stroke", "paralysis", "brain attack"],
 
-    # ── Ophthalmology ─────────────────────────────────────────────
+    # Ophthalmology
     "cataract_surgery": [
         "cataract", "cataract surgery", "eye surgery", "aankh ka operation",
         "motia", "motiyabind", "lens replacement",
     ],
     "lasik": ["lasik", "laser eye surgery", "glasses removal", "eye laser"],
 
-    # ── Oncology ──────────────────────────────────────────────────
+    # Oncology
     "chemotherapy": [
         "chemotherapy", "chemo", "cancer treatment", "cancer ki dawa",
     ],
@@ -82,23 +80,23 @@ PROCEDURE_ALIASES: dict[str, list[str]] = {
         "radiation", "radiation therapy", "radiotherapy", "cancer radiation",
     ],
 
-    # ── Gynecology ────────────────────────────────────────────────
+    # Gynecology
     "delivery": [
         "delivery", "normal delivery", "c-section", "caesarean", "baby delivery",
         "bachcha paida karna", "prasav",
     ],
     "hysterectomy": ["hysterectomy", "uterus removal", "bacchedani ka operation"],
 
-    # ── General Surgery ───────────────────────────────────────────
+    # General Surgery
     "appendectomy": ["appendix", "appendectomy", "appendicitis"],
     "hernia_repair": ["hernia", "hernia surgery"],
     "laparoscopy": ["laparoscopy", "laparoscopic surgery", "keyhole surgery"],
 
-    # ── Dental ───────────────────────────────────────────────────
+    # Dental
     "dental_implant": ["dental implant", "tooth implant", "dental", "daant"],
     "root_canal": ["root canal", "rct", "daant ki jad", "tooth root canal"],
 
-    # ── Diagnostic ────────────────────────────────────────────────
+    # Diagnostic
     "mri_scan": ["mri", "mri scan", "magnetic resonance"],
     "ct_scan": ["ct scan", "ct", "computed tomography"],
 }

@@ -1,7 +1,5 @@
 """
-──────────────────────────────────────────────
 models/base.py — Common Base Model
-──────────────────────────────────────────────
 
 All Med Route models inherit from TimestampedBase which adds:
 - id: UUID primary key (safe for distributed systems, prevents enumeration)
@@ -23,7 +21,6 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
-
 
 class TimestampedBase(Base):
     """

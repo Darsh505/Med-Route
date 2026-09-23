@@ -10,7 +10,6 @@ from app.services.compare_service import compare_service
 
 router = APIRouter(prefix="/api/compare", tags=["Compare"])
 
-
 @router.get("/procedures", response_model=APIResponse[list[dict]])
 async def get_compare_procedures():
     """Get list of standardized AB-PMJAY HBP procedures available for side-by-side comparison."""
@@ -19,7 +18,6 @@ async def get_compare_procedures():
         data=procs,
         message=f"Found {len(procs)} standardized procedure packages",
     )
-
 
 @router.get("", response_model=APIResponse[dict])
 async def compare_hospitals_get(
@@ -42,7 +40,6 @@ async def compare_hospitals_get(
         data=result,
         message=f"Comparing {len(hospital_ids)} hospitals for {procedure}",
     )
-
 
 @router.post("", response_model=APIResponse[dict])
 async def compare_hospitals(

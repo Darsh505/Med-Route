@@ -10,11 +10,9 @@ except ImportError:
 from typing import Optional, Dict
 from app.services.hospital_service import hospital_service, estimate_travel_time
 
-
 def _is_memory_mode() -> bool:
     from app.database import USE_MEMORY_DB
     return USE_MEMORY_DB
-
 
 class SOSNearestResult:
     def __init__(self, hospital_name, hospital_phone, hospital_emergency_phone,
@@ -32,7 +30,6 @@ class SOSNearestResult:
         self.is_trauma_center = is_trauma_center
         self.hospital_id = hospital_id
 
-
 class SOSAlertResult:
     def __init__(self, id, status, hospital_name, hospital_phone, distance_km,
                  estimated_arrival_minutes, ambulance_number, created_at):
@@ -45,10 +42,8 @@ class SOSAlertResult:
         self.ambulance_number = ambulance_number
         self.created_at = created_at
 
-
 # WebSocket registry
 _ws_connections: Dict[str, list] = {}
-
 
 class SOSService:
 
@@ -207,6 +202,5 @@ class SOSService:
             alert.ambulance_number = ambulance_number
         await db.flush()
         return alert
-
 
 sos_service = SOSService()

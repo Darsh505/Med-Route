@@ -1,7 +1,5 @@
 """
-──────────────────────────────────────────────
 services/memory_store.py — In-Memory Data Store
-──────────────────────────────────────────────
 
 Provides full API functionality without PostgreSQL.
 Loaded from seed_data.py's HOSPITALS_DATA on startup.
@@ -29,7 +27,6 @@ except ImportError:
     import logging
     logger = logging.getLogger("memory_store")
 
-
 def haversine_km(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
     """Calculate great-circle distance in kilometers using Haversine formula."""
     R = 6371.0
@@ -38,7 +35,6 @@ def haversine_km(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
     dlam = math.radians(lng2 - lng1)
     a = math.sin(dphi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlam / 2) ** 2
     return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-
 
 class MemoryStore:
     """Central in-memory data store for demonstration mode."""
@@ -206,7 +202,7 @@ class MemoryStore:
             self._load_persisted_overrides()
             self._loaded = True
 
-    # ── Hospital Methods ──────────────────────────────────────────
+    # Hospital Methods
 
     def get_all_hospitals(
         self,
@@ -393,7 +389,7 @@ class MemoryStore:
                 results.append(dict(h))
         return results
 
-    # ── User / Auth Methods ───────────────────────────────────────
+    # User / Auth Methods
 
     def get_user_by_email(self, email: str) -> Optional[Dict]:
         return self._users.get(email.lower())
@@ -420,7 +416,7 @@ class MemoryStore:
         self._users_by_id[uid] = user
         return user
 
-    # ── SOS Alert Methods ─────────────────────────────────────────
+    # SOS Alert Methods
 
     def create_sos_alert(self, lat: float, lng: float, hospital_name: str, hospital_phone: str,
                           distance_km: float, eta_minutes: int, hospital_id: str = "") -> Dict:
@@ -444,7 +440,7 @@ class MemoryStore:
     def get_sos_alert(self, alert_id: str) -> Optional[Dict]:
         return self._sos_alerts.get(str(alert_id))
 
-    # ── Review Methods ────────────────────────────────────────────
+    # Review Methods
 
     def get_reviews(self, hospital_id: str, page: int = 1, per_page: int = 10) -> Tuple[List[Dict], int]:
         key = str(hospital_id)
@@ -478,7 +474,7 @@ class MemoryStore:
         self._reviews[key].insert(0, review)
         return review
 
-    # ── Admin Operations & Persistence ────────────────────────────
+    # Admin Operations & Persistence
 
     def _init_operations_data(self):
         if self._triage_cases and self._bookings and self._claims:
@@ -900,7 +896,7 @@ class MemoryStore:
             return dict(user)
         return None
 
-    # ── Fallback Hospital Data ────────────────────────────────────
+    # Fallback Hospital Data
 
     def _get_fallback_hospitals(self) -> List[Dict]:
         return [
@@ -997,7 +993,6 @@ class MemoryStore:
                 "is_trauma": True,
             },
         ]
-
 
 # Global singleton
 memory_store = MemoryStore()

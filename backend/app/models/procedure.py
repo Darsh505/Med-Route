@@ -1,7 +1,5 @@
 """
-──────────────────────────────────────────────
 models/procedure.py — Medical Procedure Catalog
-──────────────────────────────────────────────
 
 Normalized procedure catalog with:
 - ICD-10 codes for clinical accuracy
@@ -21,7 +19,6 @@ from app.models.base import TimestampedBase
 
 if TYPE_CHECKING:
     from app.models.hospital_procedure import HospitalProcedure
-
 
 class ProcedureCategory(str, enum.Enum):
     """Top-level medical specialties — used for filtering and UI chips."""
@@ -43,12 +40,11 @@ class ProcedureCategory(str, enum.Enum):
     DIAGNOSTIC = "diagnostic"
     OTHER = "other"
 
-
 class Procedure(TimestampedBase):
     __tablename__ = "procedures"
     __table_args__ = {"comment": "Normalized medical procedure catalog"}
 
-    # ── Identity ──────────────────────────────────────────────────
+    # Identity
     name: Mapped[str] = mapped_column(
         String(255),
         nullable=False,
@@ -62,7 +58,7 @@ class Procedure(TimestampedBase):
     )
     description: Mapped[Optional[str]] = mapped_column(Text)
 
-    # ── Classification ────────────────────────────────────────────
+    # Classification
     category: Mapped[ProcedureCategory] = mapped_column(
         SAEnum(ProcedureCategory),
         nullable=False,
@@ -73,7 +69,7 @@ class Procedure(TimestampedBase):
         comment="More specific grouping, e.g. 'Interventional Cardiology'",
     )
 
-    # ── Clinical Codes ────────────────────────────────────────────
+    # Clinical Codes
     icd10_code: Mapped[Optional[str]] = mapped_column(
         String(20),
         comment="ICD-10 procedure code for clinical interoperability",
@@ -87,7 +83,7 @@ class Procedure(TimestampedBase):
         comment="Official PMJAY package name for this procedure",
     )
 
-    # ── Cost Reference (National Range from PMJAY HBP) ────────────
+    # Cost Reference (National Range from PMJAY HBP)
     pmjay_cost_min: Mapped[Optional[int]] = mapped_column(
         Integer,
         comment="Minimum PMJAY package rate (INR) — government reference price",
@@ -97,7 +93,7 @@ class Procedure(TimestampedBase):
         comment="Maximum PMJAY package rate (INR)",
     )
 
-    # ── Search Aliases (for NLP matching) ─────────────────────────
+    # Search Aliases (for NLP matching)
     # Stored as JSONB array for fast GIN index full-text search
     # Example: ["kidney treatment", "renal failure", "gurdey ka ilaj", "dialysis"]
     search_aliases: Mapped[Optional[dict]] = mapped_column(
@@ -106,7 +102,7 @@ class Procedure(TimestampedBase):
         comment="Search aliases in English + Hinglish — used by NLP parser to map queries",
     )
 
-    # ── Metadata ──────────────────────────────────────────────────
+    # Metadata
     is_surgical: Mapped[bool] = mapped_column(
         default=False,
         comment="Requires surgery (OT) — affects hospital type filtering",
@@ -117,7 +113,7 @@ class Procedure(TimestampedBase):
         comment="Typical hospital stay duration in days",
     )
 
-    # ── Relationships ─────────────────────────────────────────────
+    # Relationships
     hospital_procedures: Mapped[list["HospitalProcedure"]] = relationship(
         back_populates="procedure"
     )

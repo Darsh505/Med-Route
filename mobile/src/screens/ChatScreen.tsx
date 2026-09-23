@@ -454,9 +454,7 @@ export default function ChatScreen({ navigation }: any) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────
 // Clinical Disease Knowledge Registry & Mobile NLP Engine
-// ─────────────────────────────────────────────────────────────
 
 interface DiseaseKBItem {
   id: string;

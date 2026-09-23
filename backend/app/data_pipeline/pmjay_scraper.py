@@ -1,7 +1,5 @@
 """
-──────────────────────────────────────────────
 data_pipeline/pmjay_scraper.py — PMJAY Hospital Registry Ingestion Client
-──────────────────────────────────────────────
 Connects to public PMJAY portal (hospitals.pmjay.gov.in) endpoints
 to fetch empanelled hospital directories by State and District.
 
@@ -10,7 +8,6 @@ Features:
 - Normalization through DataNormalizer
 - Assigns data_source_label = 'PMJAY_HBP'
 - Safe offline fallback mock parser for air-gapped testing
-──────────────────────────────────────────────
 """
 
 import asyncio
@@ -21,7 +18,6 @@ import httpx
 from app.data_pipeline.normalizer import normalizer, NormalizedHospitalRecord
 
 logger = logging.getLogger("medroute.pmjay_scraper")
-
 
 class PMJAYScraper:
     """ETL client for National Health Authority / PMJAY hospital empanelment records."""
@@ -140,6 +136,5 @@ class PMJAYScraper:
 
     async def close(self):
         await self.client.aclose()
-
 
 pmjay_scraper = PMJAYScraper()

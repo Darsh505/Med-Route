@@ -1,7 +1,5 @@
 """
-──────────────────────────────────────────────
 services/ranking_service.py — Transparent Ranking Algorithm
-──────────────────────────────────────────────
 
 Each hospital in search results gets a composite score from 0-100:
 
@@ -26,7 +24,6 @@ WHY this scoring model?
 from dataclasses import dataclass
 from typing import Optional
 
-
 @dataclass
 class RankingResult:
     hospital_id: str
@@ -36,7 +33,6 @@ class RankingResult:
     rating_score: float
     accreditation_score: float
     weights: dict
-
 
 class RankingService:
     """
@@ -141,7 +137,7 @@ class RankingService:
 
         return sorted(scored, key=lambda h: h.ranking_score, reverse=True)
 
-    # ── Scoring Sub-Functions ─────────────────────────────────────
+    # Scoring Sub-Functions
 
     def _distance_score(self, distance_km: Optional[float]) -> float:
         """
@@ -215,6 +211,5 @@ class RankingService:
             score += 5.0   # Our team verified the data
 
         return min(100.0, score)
-
 
 ranking_service = RankingService()

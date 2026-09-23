@@ -581,9 +581,7 @@ export default function ChatbotWidget() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────
 // Clinical Disease Knowledge Registry & Precision NLP Engine
-// ─────────────────────────────────────────────────────────────
 
 interface DiseaseKBItem {
   id: string;
@@ -1153,7 +1151,7 @@ function generateClientSideNLPResponse(
 ): MessageItem {
   const q = text.toLowerCase().trim();
 
-  // ── 0. Greeting & Introductory Queries ──
+  // 0. Greeting & Introductory Queries
   const isGreeting =
     q === "hi" ||
     q === "hello" ||
@@ -1202,7 +1200,7 @@ function generateClientSideNLPResponse(
     };
   }
 
-  // ── 1. Critical Red-Flag Emergency Triage ──
+  // 1. Critical Red-Flag Emergency Triage
   const isEmergency =
     q.includes("chest pain") ||
     q.includes("heart attack") ||
@@ -1261,7 +1259,7 @@ function generateClientSideNLPResponse(
     };
   }
 
-  // ── 2. Direct Clinical Disease & Procedure KB Matching ──
+  // 2. Direct Clinical Disease & Procedure KB Matching
   const matchedDisease = matchDiseaseFromQuery(q);
   if (matchedDisease) {
     const diseaseHospitals = resolveHospitalsForDisease(
@@ -1304,7 +1302,7 @@ function generateClientSideNLPResponse(
     };
   }
 
-  // ── 3. ICU Beds & Ventilator Telemetry ──
+  // 3. ICU Beds & Ventilator Telemetry
   if (
     q.includes("icu") ||
     q.includes("ventilator") ||
@@ -1340,7 +1338,7 @@ function generateClientSideNLPResponse(
     };
   }
 
-  // ── 4. Cashless Pre-Auth & Insurance Guarantees ──
+  // 4. Cashless Pre-Auth & Insurance Guarantees
   if (
     q.includes("cashless") ||
     q.includes("pre-auth") ||
@@ -1381,7 +1379,7 @@ function generateClientSideNLPResponse(
     };
   }
 
-  // ── 5. General Hospital Discovery by City ──
+  // 5. General Hospital Discovery by City
   if (q.includes("hospital") || q.includes("clinic") || q.includes("doctor") || q.includes("near me")) {
     const hospitals = resolveHospitalsFromDataset(q, userCity, userLat, userLng, "general");
     return {
@@ -1409,7 +1407,7 @@ function generateClientSideNLPResponse(
     };
   }
 
-  // ── 6. General Clinical Advisory ──
+  // 6. General Clinical Advisory
   const hospitals = resolveHospitalsFromDataset(q, userCity, userLat, userLng, "general");
   return {
     id: getNextMessageId("a"),

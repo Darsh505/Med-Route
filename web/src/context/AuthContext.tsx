@@ -61,7 +61,7 @@ const AuthContext = createContext<AuthContextType>({
   resetPassword: async () => {},
 });
 
-// ── Firebase Error Translation ────────────────────────────────────
+// Firebase Error Translation
 function _translateFirebaseError(e: { code?: string; message?: string }): Error {
   const map: Record<string, string> = {
     "auth/invalid-credential": "Invalid email or password",
@@ -102,7 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("medroute_user", JSON.stringify(userData));
   };
 
-  // ── Helper: Sync Firebase user with backend ───────────────────
+  // Helper: Sync Firebase user with backend
   const _syncFirebaseUser = async (firebaseUser: FirebaseSdkUser) => {
     try {
       const token = await firebaseUser.getIdToken();
@@ -174,7 +174,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // ── Sign In ────────────────────────────────────────────────────
+  // Sign In
   const signIn = async (email: string, password: string) => {
     if (isFirebaseConfigured && auth) {
       try {
@@ -231,7 +231,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     throw new Error("Invalid email or password provided.");
   };
 
-  // ── Sign Up ────────────────────────────────────────────────────
+  // Sign Up
   const signUp = async (email: string, password: string, name: string, role = "patient") => {
     if (isFirebaseConfigured && auth) {
       try {
@@ -274,7 +274,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  // ── Google Sign In ─────────────────────────────────────────────
+  // Google Sign In
   const signInWithGoogle = async () => {
     if (isFirebaseConfigured && auth) {
       try {
@@ -301,7 +301,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     _setLocalUser(googleUser);
   };
 
-  // ── Logout ─────────────────────────────────────────────────────
+  // Logout
   const logout = async () => {
     if (isFirebaseConfigured && auth) {
       try {
@@ -313,7 +313,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("medroute_user");
   };
 
-  // ── Reset Password ─────────────────────────────────────────────
+  // Reset Password
   const resetPassword = async (email: string) => {
     if (isFirebaseConfigured && auth) {
       try {

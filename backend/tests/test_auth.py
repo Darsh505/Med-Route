@@ -3,7 +3,6 @@
 import pytest
 from httpx import AsyncClient
 
-
 @pytest.mark.asyncio
 async def test_register_success(client: AsyncClient):
     response = await client.post("/api/auth/register", json={
@@ -15,7 +14,6 @@ async def test_register_success(client: AsyncClient):
     data = response.json()
     assert data["success"] is True
     assert data["data"]["email"] == "newuser@test.com"
-
 
 @pytest.mark.asyncio
 async def test_register_duplicate_email(client: AsyncClient):
@@ -33,7 +31,6 @@ async def test_register_duplicate_email(client: AsyncClient):
     })
     assert response.status_code == 400
 
-
 @pytest.mark.asyncio
 async def test_login_success(client: AsyncClient, citizen_user):
     response = await client.post("/api/auth/login", json={
@@ -45,7 +42,6 @@ async def test_login_success(client: AsyncClient, citizen_user):
     assert "access_token" in data["data"]
     assert "refresh_token" in data["data"]
 
-
 @pytest.mark.asyncio
 async def test_login_wrong_password(client: AsyncClient, citizen_user):
     response = await client.post("/api/auth/login", json={
@@ -53,7 +49,6 @@ async def test_login_wrong_password(client: AsyncClient, citizen_user):
         "password": "WrongPassword",
     })
     assert response.status_code == 401
-
 
 @pytest.mark.asyncio
 async def test_get_me(client: AsyncClient, citizen_token: str):
@@ -64,12 +59,10 @@ async def test_get_me(client: AsyncClient, citizen_token: str):
     assert response.status_code == 200
     assert response.json()["data"]["role"] == "citizen"
 
-
 @pytest.mark.asyncio
 async def test_get_me_no_token(client: AsyncClient):
     response = await client.get("/api/auth/me")
     assert response.status_code == 401
-
 
 @pytest.mark.asyncio
 async def test_admin_can_access_admin_route(client: AsyncClient, admin_token: str):
@@ -78,7 +71,6 @@ async def test_admin_can_access_admin_route(client: AsyncClient, admin_token: st
         headers={"Authorization": f"Bearer {admin_token}"},
     )
     assert response.status_code == 200
-
 
 @pytest.mark.asyncio
 async def test_citizen_cannot_access_admin_route(client: AsyncClient, citizen_token: str):

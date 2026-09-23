@@ -1,7 +1,5 @@
 """
-──────────────────────────────────────────────
 models/user.py — User Account Model
-──────────────────────────────────────────────
 
 Three user roles:
 - citizen: Regular users searching for hospitals, posting reviews
@@ -25,7 +23,6 @@ if TYPE_CHECKING:
     from app.models.review import Review
     from app.models.sos_alert import SOSAlert
 
-
 class UserRole(str, enum.Enum):
     """
     User roles — controls access throughout the application.
@@ -38,12 +35,11 @@ class UserRole(str, enum.Enum):
     ADMIN = "admin"
     HOSPITAL_STAFF = "hospital_staff"
 
-
 class User(TimestampedBase):
     __tablename__ = "users"
     __table_args__ = {"comment": "Med Route user accounts"}
 
-    # ── Identity ──────────────────────────────────────────────────
+    # Identity
     name: Mapped[str] = mapped_column(
         String(100),
         nullable=False,
@@ -61,7 +57,7 @@ class User(TimestampedBase):
         comment="Mobile number (optional) — used for SOS contact",
     )
 
-    # ── Auth ──────────────────────────────────────────────────────
+    # Auth
     password_hash: Mapped[str] = mapped_column(
         String(255),
         nullable=False,
@@ -74,7 +70,7 @@ class User(TimestampedBase):
         comment="User role — controls permissions",
     )
 
-    # ── Status ────────────────────────────────────────────────────
+    # Status
     is_active: Mapped[bool] = mapped_column(
         Boolean,
         default=True,
@@ -85,7 +81,7 @@ class User(TimestampedBase):
         default=False,
     )
 
-    # ── Location (optional — for nearby hospital suggestions) ──────
+    # Location (optional — for nearby hospital suggestions)
     latitude: Mapped[Optional[float]] = mapped_column(
         Float,
         comment="User's saved home location latitude",
@@ -99,10 +95,10 @@ class User(TimestampedBase):
         comment="User's city — used for default search radius",
     )
 
-    # ── Profile ───────────────────────────────────────────────────
+    # Profile
     avatar_url: Mapped[Optional[str]] = mapped_column(String(500))
 
-    # ── Relationships ─────────────────────────────────────────────
+    # Relationships
     reviews: Mapped[list["Review"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",

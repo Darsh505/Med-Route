@@ -1,7 +1,5 @@
 """
-──────────────────────────────────────────────
 data_pipeline/hbp_mapper.py — PMJAY Health Benefit Package (HBP) Mapper
-──────────────────────────────────────────────
 Maps Ayushman Bharat PMJAY Health Benefit Package (HBP 2.2 / 2022)
 specialty package codes to our normalized procedure schema.
 
@@ -9,12 +7,10 @@ Provides tier-based package reimbursement pricing:
 - Tier 1 (Metro cities: Delhi NCR, Mumbai, Bengaluru, etc.) — base rate + 10%
 - Tier 2 (State capitals & secondary hubs: Chandigarh, Ludhiana, Jaipur) — base rate
 - Tier 3 / Rural (District hospitals, talukas) — base rate - 10%
-──────────────────────────────────────────────
 """
 
 from typing import Optional, Dict, Any
 from pydantic import BaseModel
-
 
 class HBPMapping(BaseModel):
     hbp_code: str
@@ -24,7 +20,6 @@ class HBPMapping(BaseModel):
     icd10_code: Optional[str] = None
     pre_auth_required: bool = True
     average_stay_days: int = 3
-
 
 # Core PMJAY HBP 2.2 Package Master (Aligned with National Health Authority)
 HBP_PACKAGE_REGISTRY: Dict[str, HBPMapping] = {
@@ -111,7 +106,6 @@ HBP_PACKAGE_REGISTRY: Dict[str, HBPMapping] = {
     ),
 }
 
-
 class HBPMapper:
     """Utility to map and calculate package rates based on city tier."""
 
@@ -137,6 +131,5 @@ class HBPMapper:
         elif city_tier == 3:
             return int(base * 0.90)
         return base
-
 
 hbp_mapper = HBPMapper()

@@ -1,7 +1,5 @@
 """
-──────────────────────────────────────────────
 data_pipeline/normalizer.py — Data Normalization & Validation Pipeline
-──────────────────────────────────────────────
 This module cleanses, validates, and normalizes raw healthcare data
 ingested from PMJAY portals, state registries, or manual CSV uploads.
 
@@ -11,13 +9,11 @@ Standards enforced:
 3. Phone number normalization (+91 / STD code formatting)
 4. Hospital name standardization & title casing
 5. Accreditation normalization (NABH, NABL, JCI)
-──────────────────────────────────────────────
 """
 
 import re
 from typing import Optional, Tuple
 from pydantic import BaseModel, Field
-
 
 class NormalizedHospitalRecord(BaseModel):
     name: str
@@ -39,7 +35,6 @@ class NormalizedHospitalRecord(BaseModel):
     beds_total: int = 0
     beds_icu: int = 0
     data_source_label: str = "MANUAL_VERIFIED"
-
 
 class DataNormalizer:
     """Enterprise-grade sanitization for Indian hospital records."""
@@ -111,6 +106,5 @@ class DataNormalizer:
         if "JCI" in upper:
             tokens.append("JCI")
         return " & ".join(tokens) if tokens else raw_acc.strip()
-
 
 normalizer = DataNormalizer()

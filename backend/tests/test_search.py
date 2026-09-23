@@ -3,12 +3,10 @@
 import pytest
 from app.ai.nlp_parser import NLPParser
 
-
 @pytest.fixture
 def parser():
     """Rule-based parser (no API key needed for tests)."""
     return NLPParser(gemini_api_key="")  # Use rule-based fallback
-
 
 @pytest.mark.asyncio
 async def test_parse_kidney_chandigarh_budget(parser):
@@ -17,7 +15,6 @@ async def test_parse_kidney_chandigarh_budget(parser):
     assert filters.max_budget == 200000
     assert "dialysis" in filters.mapped_procedures or "renal" in filters.procedure_categories
 
-
 @pytest.mark.asyncio
 async def test_parse_hinglish_query(parser):
     filters = await parser.parse("ghutne ka operation government hospital Ludhiana mein")
@@ -25,12 +22,10 @@ async def test_parse_hinglish_query(parser):
     assert "government" in filters.hospital_types
     assert "knee_replacement" in filters.mapped_procedures
 
-
 @pytest.mark.asyncio
 async def test_parse_emergency_intent(parser):
     filters = await parser.parse("emergency cardiac care near Delhi urgent")
     assert filters.intent == "sos_emergency"
-
 
 @pytest.mark.asyncio
 async def test_parse_pmjay_filter(parser):
@@ -38,18 +33,15 @@ async def test_parse_pmjay_filter(parser):
     assert filters.requires_pmjay is True
     assert "bypass_surgery" in filters.mapped_procedures
 
-
 @pytest.mark.asyncio
 async def test_parse_budget_lakh(parser):
     filters = await parser.parse("orthopedic hospital under 1.5 lakhs Patiala")
     assert filters.max_budget == 150000
 
-
 @pytest.mark.asyncio
 async def test_parse_nabh_accreditation(parser):
     filters = await parser.parse("NABH hospital near Chandigarh")
     assert filters.accreditation == "NABH"
-
 
 @pytest.mark.asyncio
 async def test_parse_empty_returns_defaults(parser):

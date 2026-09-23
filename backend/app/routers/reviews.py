@@ -13,7 +13,6 @@ from app.models.user import User
 
 router = APIRouter(tags=["Reviews"])
 
-
 @router.get("/api/hospitals/{hospital_id}/reviews", response_model=APIResponse[ReviewListResponse])
 async def list_reviews(
     hospital_id: str,
@@ -41,7 +40,6 @@ async def list_reviews(
         message=f"{total} reviews",
     )
 
-
 @router.post("/api/hospitals/{hospital_id}/reviews", response_model=APIResponse[ReviewResponse], status_code=201)
 async def create_review(
     hospital_id: str,
@@ -58,7 +56,6 @@ async def create_review(
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail={"code": "REVIEW_ERROR", "message": str(e)})
-
 
 @router.post("/api/reviews/{review_id}/helpful", response_model=APIResponse[None])
 async def mark_helpful(review_id: uuid.UUID, db: AsyncSession = Depends(get_db)):

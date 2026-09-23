@@ -1,7 +1,5 @@
 """
-──────────────────────────────────────────────
 schemas/auth.py — Authentication Schemas
-──────────────────────────────────────────────
 """
 
 import uuid
@@ -9,7 +7,6 @@ from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
-
 
 class RegisterRequest(BaseModel):
     name: Optional[str] = Field(None, min_length=2, max_length=100, examples=["Arjun Sharma"])
@@ -30,11 +27,9 @@ class RegisterRequest(BaseModel):
         elif not self.name:
             self.name = self.email.split("@")[0] if self.email else "User"
 
-
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
-
 
 class TokenResponse(BaseModel):
     access_token: str
@@ -42,10 +37,8 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
     expires_in: int = Field(description="Access token expiry in seconds")
 
-
 class RefreshRequest(BaseModel):
     refresh_token: str
-
 
 class UserResponse(BaseModel):
     id: uuid.UUID
@@ -59,7 +52,6 @@ class UserResponse(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
-
 
 class PasswordChangeRequest(BaseModel):
     current_password: str

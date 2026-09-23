@@ -1,6 +1,4 @@
-# ──────────────────────────────────────────────
 # Dockerfile — Med Route Next.js Web App
-# ──────────────────────────────────────────────
 FROM node:20-alpine AS deps
 WORKDIR /app
 COPY package*.json ./

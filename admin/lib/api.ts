@@ -110,7 +110,7 @@ export interface UserRecord {
   status: string;
 }
 
-// ── 1. Statistics ──────────────────────────────────────────────────
+// 1. Statistics
 export async function fetchAdminStats(): Promise<AdminStats> {
   try {
     const res = await fetch(`${API_BASE}/api/admin/stats`, {
@@ -149,7 +149,7 @@ export async function fetchAdminStats(): Promise<AdminStats> {
   };
 }
 
-// ── 2. Hospitals Registry & Capacity Telemetry ─────────────────────
+// 2. Hospitals Registry & Capacity Telemetry
 export async function fetchAdminHospitals(params?: {
   query?: string;
   city?: string;
@@ -265,7 +265,7 @@ export async function updateHospitalTelemetry(
   };
 }
 
-// ── 3. Emergency Triage ─────────────────────────────────────────────
+// 3. Emergency Triage
 export async function fetchTriageCases(): Promise<TriageCase[]> {
   try {
     const res = await fetch(`${API_BASE}/api/admin/triage`, {
@@ -314,7 +314,7 @@ export async function updateTriageCase(
   };
 }
 
-// ── 4. Bookings ────────────────────────────────────────────────────
+// 4. Bookings
 export async function fetchBookings(): Promise<BookingRecord[]> {
   try {
     const res = await fetch(`${API_BASE}/api/admin/bookings`, {
@@ -363,7 +363,7 @@ export async function updateBookingStatus(
   };
 }
 
-// ── 5. Claims ──────────────────────────────────────────────────────
+// 5. Claims
 export async function fetchClaims(): Promise<ClaimRecord[]> {
   try {
     const res = await fetch(`${API_BASE}/api/admin/claims`, {
@@ -410,7 +410,7 @@ export async function updateClaimStatus(
   };
 }
 
-// ── 6. Users ───────────────────────────────────────────────────────
+// 6. Users
 export async function fetchUsers(): Promise<UserRecord[]> {
   try {
     const res = await fetch(`${API_BASE}/api/admin/users`, {

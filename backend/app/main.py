@@ -1,7 +1,5 @@
 """
-──────────────────────────────────────────────
 main.py — FastAPI Application Entry Point
-──────────────────────────────────────────────
 
 Med Route API v1.0
 AI-powered hospital discovery platform for India.
@@ -27,11 +25,10 @@ from app.database import create_db_and_tables
 
 logger = structlog.get_logger()
 
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan — setup on startup, cleanup on shutdown."""
-    # ── STARTUP ───────────────────────────────────────────────────
+    # STARTUP
     logger.info("[START] Med Route API starting up", env=settings.APP_ENV)
 
     # Try PostgreSQL, auto-fallback to in-memory mode
@@ -68,7 +65,7 @@ async def lifespan(app: FastAPI):
 
     yield  # Application runs here
 
-    # ── SHUTDOWN ──────────────────────────────────────────────────
+    # SHUTDOWN
     logger.info("[STOP] Med Route API shutting down gracefully")
     try:
         from app.database import engine
@@ -77,8 +74,7 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning("Error disposing database engine on shutdown", error=str(e))
 
-
-# ── FastAPI Application ────────────────────────────────────────────
+# FastAPI Application
 app = FastAPI(
     title=settings.APP_NAME,
     description=settings.APP_DESCRIPTION,
@@ -89,8 +85,7 @@ app = FastAPI(
     openapi_url="/openapi.json",
 )
 
-
-# ── CORS Middleware ────────────────────────────────────────────────
+# CORS Middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -100,8 +95,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-# ── Global Exception Handler ──────────────────────────────────────
+# Global Exception Handler
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     logger.error("Unhandled exception", path=request.url.path, error=str(exc))
@@ -116,8 +110,7 @@ async def global_exception_handler(request: Request, exc: Exception):
         },
     )
 
-
-# ── Register Routers ──────────────────────────────────────────────
+# Register Routers
 from app.routers import auth, hospitals, search, compare, reviews, sos, admin, chatbot
 
 app.include_router(auth.router)
@@ -129,8 +122,7 @@ app.include_router(sos.router)
 app.include_router(admin.router)
 app.include_router(chatbot.router)
 
-
-# ── Health Check ──────────────────────────────────────────────────
+# Health Check
 @app.get("/health", tags=["System"])
 async def health_check():
     from app.database import USE_MEMORY_DB
@@ -141,7 +133,6 @@ async def health_check():
         "mode": "in-memory-demo" if USE_MEMORY_DB else "postgresql",
         "gemini_configured": bool(settings.GEMINI_API_KEY),
     }
-
 
 @app.get("/", tags=["System"])
 async def root():

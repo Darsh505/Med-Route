@@ -4,12 +4,10 @@ import pytest
 from app.ai.chatbot import ClinicalChatbot
 from app.schemas.chatbot import ChatRequest, ChatMessage
 
-
 @pytest.fixture
 def chatbot():
     """Rule-based clinical chatbot (offline, no API key needed for testing)."""
     return ClinicalChatbot(api_key="")
-
 
 @pytest.mark.asyncio
 async def test_chat_cardiac_emergency_triage(chatbot):
@@ -26,7 +24,6 @@ async def test_chat_cardiac_emergency_triage(chatbot):
     assert any(a.value == "108" for a in res.action_buttons)
     assert len(res.recommended_hospitals) > 0
 
-
 @pytest.mark.asyncio
 async def test_chat_stroke_emergency_triage(chatbot):
     req = ChatRequest(
@@ -38,7 +35,6 @@ async def test_chat_stroke_emergency_triage(chatbot):
     assert res.triage_level == "emergency"
     assert res.intent == "emergency_sos"
     assert any(a.value == "/sos" for a in res.action_buttons)
-
 
 @pytest.mark.asyncio
 async def test_chat_elective_angioplasty_costs(chatbot):
@@ -53,7 +49,6 @@ async def test_chat_elective_angioplasty_costs(chatbot):
     assert "65,000" in res.reply or "PMJAY" in res.reply
     assert len(res.recommended_hospitals) >= 2
 
-
 @pytest.mark.asyncio
 async def test_chat_knee_replacement_query(chatbot):
     req = ChatRequest(
@@ -65,7 +60,6 @@ async def test_chat_knee_replacement_query(chatbot):
     assert res.specialty == "orthopedic"
     assert "PMJAY" in res.reply or "Knee" in res.reply
     assert len(res.action_buttons) > 0
-
 
 @pytest.mark.asyncio
 async def test_chat_dialysis_query(chatbot):

@@ -1,15 +1,13 @@
-# ──────────────────────────────────────────────
 # .gitignore — Med Route Monorepo
-# ──────────────────────────────────────────────
 
-# ── Environment & Secrets ─────────────────────
+# Environment & Secrets
 .env
 .env.local
 .env.production
 .env.staging
 *.env
 
-# ── Python / Backend ──────────────────────────
+# Python / Backend
 backend/app/data_pipeline/admin_overrides.json
 __pycache__/
 *.py[cod]
@@ -65,11 +63,11 @@ dmypy.json
 .pytype/
 cython_debug/
 
-# ── Alembic ───────────────────────────────────
+# Alembic
 # Keep migrations but ignore compiled files
 backend/alembic/__pycache__/
 
-# ── Node.js / Web Frontend ────────────────────
+# Node.js / Web Frontend
 node_modules/
 .npm
 .eslintcache
@@ -89,7 +87,7 @@ admin/next-env.d.ts
 web/dist/
 web/build/
 
-# ── React Native / Mobile ─────────────────────
+# React Native / Mobile
 mobile/node_modules/
 mobile/.expo/
 mobile/dist/
@@ -105,11 +103,11 @@ mobile/ios/
 .expo/
 .expo-shared/
 
-# ── Docker ────────────────────────────────────
+# Docker
 # Keep docker-compose.yml but ignore generated files
 .docker/
 
-# ── IDEs & Editors ────────────────────────────
+# IDEs & Editors
 .idea/
 .vscode/
 *.swp
@@ -118,7 +116,7 @@ mobile/ios/
 .DS_Store
 Thumbs.db
 
-# ── Logs ──────────────────────────────────────
+# Logs
 *.log
 logs/
 npm-debug.log*
@@ -126,11 +124,11 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# ── Turbopack & Build Caches ──────────────────
+# Turbopack & Build Caches
 .turbo/
 *.tsbuildinfo
 
-# ── AI / Agent Scratch & Prompts ───────────────
+# AI / Agent Scratch & Prompts
 *AGENTS.md
 AGENTS.md
 *CLAUDE.md
@@ -140,7 +138,7 @@ CLAUDE.md
 .cursor/
 scratch/
 
-# ── OS Generated ──────────────────────────────
+# OS Generated
 .DS_Store
 .DS_Store?
 ._*
@@ -149,28 +147,27 @@ scratch/
 ehthumbs.db
 Thumbs.db
 
-# ── Testing ───────────────────────────────────
+# Testing
 .pytest_cache/
 htmlcov/
 .coverage
 
-# ── Uploads (local dev only) ──────────────────
+# Uploads (local dev only)
 backend/uploads/
 
-# ── Design Reference Assets & Scratch ─────────
+# Design Reference Assets & Scratch
 stitch/
 bin/
 kul/
 
-# ── Preparation Scripts & Data Generators ────
+# Preparation Scripts & Data Generators
 backend/scripts/
 scripts/
 *.prep.py
 
-# ── Local SQLite Database Files ──────────────
+# Local SQLite Database Files
 *.db
 *.sqlite
 *.sqlite3
 backend/*.db
-
 

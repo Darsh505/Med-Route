@@ -990,9 +990,7 @@ export default function HospitalDetailPage({ params }: { params: Promise<{ slug:
   );
 }
 
-// ──────────────────────────────────────────────
 // Realistic Benchmark Mock Data Directory
-// ──────────────────────────────────────────────
 const DETAILED_HOSPITALS_REGISTRY: Record<string, Partial<HospitalData>> = {
   "pgimer-chandigarh": {
     name: "Postgraduate Institute of Medical Education and Research (PGIMER)",

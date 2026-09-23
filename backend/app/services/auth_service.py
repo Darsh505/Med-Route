@@ -1,7 +1,5 @@
 """
-──────────────────────────────────────────────
 services/auth_service.py — Authentication & Authorization
-──────────────────────────────────────────────
 
 Supports two modes:
 - PostgreSQL mode: stores users in DB
@@ -30,13 +28,11 @@ except ImportError:
 # fallback context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-
 def hash_password(password: str) -> str:
     try:
         return bcrypt.hashpw(password.encode("utf-8")[:72], bcrypt.gensalt()).decode("utf-8")
     except Exception:
         return pwd_context.hash(password[:72])
-
 
 def verify_password(plain: str, hashed: str) -> bool:
     try:
@@ -47,18 +43,15 @@ def verify_password(plain: str, hashed: str) -> bool:
         except Exception:
             return False
 
-
 def create_access_token(user_id: str, role: str) -> str:
     expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     payload = {"sub": user_id, "role": role, "exp": expire, "type": "access"}
     return jwt.encode(payload, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
 
-
 def create_refresh_token(user_id: str) -> str:
     expire = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     payload = {"sub": user_id, "exp": expire, "type": "refresh"}
     return jwt.encode(payload, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
-
 
 def decode_token(token: str) -> Optional[dict]:
     """Returns decoded payload or None if invalid/expired."""
@@ -67,15 +60,13 @@ def decode_token(token: str) -> Optional[dict]:
     except JWTError:
         return None
 
-
-# ── Token Response Schema ─────────────────────────────────────────
+# Token Response Schema
 class TokenResponseData:
     def __init__(self, access_token: str, refresh_token: str, expires_in: int):
         self.access_token = access_token
         self.refresh_token = refresh_token
         self.token_type = "bearer"
         self.expires_in = expires_in
-
 
 class AuthService:
 
@@ -209,6 +200,5 @@ class AuthService:
             refresh_token=create_refresh_token(str(user.id)),
             expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         )
-
 
 auth_service = AuthService()

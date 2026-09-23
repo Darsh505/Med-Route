@@ -1,7 +1,5 @@
 """
-──────────────────────────────────────────────
 routers/admin.py — Admin Operations & Synchronization Endpoints
-──────────────────────────────────────────────
 Connects the Admin Dashboard Console directly to live backend telemetry,
 providing real-time capacity editing, triage oversight, booking workflows,
 claims disbursements, and cross-platform synchronization with Web and Mobile.
@@ -26,8 +24,7 @@ from app.services.memory_store import memory_store
 
 router = APIRouter(prefix="/api/admin", tags=["Admin Operations"])
 
-
-# ── Flexible Authentication Dependency ──────────────────────────────
+# Flexible Authentication Dependency
 async def get_admin_actor(
     x_admin_key: Optional[str] = Header(None),
     authorization: Optional[str] = Header(None),
@@ -73,8 +70,7 @@ async def get_admin_actor(
         detail={"code": "ADMIN_AUTH_REQUIRED", "message": "Administrative access credentials required"},
     )
 
-
-# ── 1. Live Overview Stats ──────────────────────────────────────────
+# 1. Live Overview Stats
 @router.get("/stats", response_model=APIResponse[dict])
 async def get_dashboard_stats(
     db: AsyncSession = Depends(get_db),
@@ -104,8 +100,7 @@ async def get_dashboard_stats(
     except Exception:
         return APIResponse(data=memory_store.get_admin_stats(), message="Administrative statistics (fallback)")
 
-
-# ── 2. Hospitals Directory & Real-Time Telemetry ─────────────────────
+# 2. Hospitals Directory & Real-Time Telemetry
 @router.get("/hospitals", response_model=APIResponse[list])
 async def list_admin_hospitals(
     query: Optional[str] = None,
@@ -186,7 +181,6 @@ async def list_admin_hospitals(
         meta={"total": total, "page": page, "per_page": per_page},
     )
 
-
 @router.get("/hospitals/{hospital_id}", response_model=APIResponse[dict])
 async def get_admin_hospital(
     hospital_id: str,
@@ -198,7 +192,6 @@ async def get_admin_hospital(
     if not h:
         raise HTTPException(status_code=404, detail={"code": "HOSPITAL_NOT_FOUND"})
     return APIResponse(data=h, message="Hospital details retrieved")
-
 
 @router.patch("/hospitals/{hospital_id}", response_model=APIResponse[dict])
 async def update_admin_hospital(
@@ -236,7 +229,6 @@ async def update_admin_hospital(
         message=f"Hospital '{updated.get('name')}' updated successfully and synchronized across network",
     )
 
-
 @router.post("/hospitals", response_model=APIResponse[dict], status_code=201)
 async def create_admin_hospital(
     data: HospitalCreateRequest,
@@ -247,7 +239,6 @@ async def create_admin_hospital(
     h_data = data.model_dump()
     created = memory_store.create_hospital(h_data)
     return APIResponse(data=created, message=f"Hospital '{created.get('name')}' created successfully")
-
 
 @router.delete("/hospitals/{hospital_id}", response_model=APIResponse[dict])
 async def delete_admin_hospital(
@@ -261,8 +252,7 @@ async def delete_admin_hospital(
         raise HTTPException(status_code=404, detail={"code": "HOSPITAL_NOT_FOUND"})
     return APIResponse(data={"id": hospital_id, "is_active": False}, message="Hospital deactivated")
 
-
-# ── 3. Emergency Triage Cases ───────────────────────────────────────
+# 3. Emergency Triage Cases
 @router.get("/triage", response_model=APIResponse[list])
 async def list_admin_triage(
     admin: Dict = Depends(get_admin_actor),
@@ -270,7 +260,6 @@ async def list_admin_triage(
     """Retrieve active emergency trauma and triage cases."""
     cases = memory_store.get_triage_cases()
     return APIResponse(data=cases, message=f"{len(cases)} triage cases")
-
 
 @router.patch("/triage/{case_id}", response_model=APIResponse[dict])
 async def update_admin_triage(
@@ -284,8 +273,7 @@ async def update_admin_triage(
         raise HTTPException(status_code=404, detail={"code": "CASE_NOT_FOUND"})
     return APIResponse(data=case, message=f"Case '{case_id}' updated to {case.get('status')}")
 
-
-# ── 4. Patient Bookings & Appointments ──────────────────────────────
+# 4. Patient Bookings & Appointments
 @router.get("/bookings", response_model=APIResponse[list])
 async def list_admin_bookings(
     admin: Dict = Depends(get_admin_actor),
@@ -293,7 +281,6 @@ async def list_admin_bookings(
     """Retrieve all procedural and inpatient bookings."""
     bookings = memory_store.get_bookings()
     return APIResponse(data=bookings, message=f"{len(bookings)} bookings")
-
 
 @router.patch("/bookings/{booking_id}", response_model=APIResponse[dict])
 async def update_admin_booking(
@@ -307,8 +294,7 @@ async def update_admin_booking(
         raise HTTPException(status_code=404, detail={"code": "BOOKING_NOT_FOUND"})
     return APIResponse(data=booking, message=f"Booking '{booking_id}' status updated")
 
-
-# ── 5. Cashless Insurance Claims ───────────────────────────────────
+# 5. Cashless Insurance Claims
 @router.get("/claims", response_model=APIResponse[list])
 async def list_admin_claims(
     admin: Dict = Depends(get_admin_actor),
@@ -316,7 +302,6 @@ async def list_admin_claims(
     """Retrieve all cashless PMJAY and private claims."""
     claims = memory_store.get_claims()
     return APIResponse(data=claims, message=f"{len(claims)} claims")
-
 
 @router.patch("/claims/{claim_id}", response_model=APIResponse[dict])
 async def update_admin_claim(
@@ -330,8 +315,7 @@ async def update_admin_claim(
         raise HTTPException(status_code=404, detail={"code": "CLAIM_NOT_FOUND"})
     return APIResponse(data=claim, message=f"Claim '{claim_id}' status updated to {claim.get('status')}")
 
-
-# ── 6. Users Directory ──────────────────────────────────────────────
+# 6. Users Directory
 @router.get("/users", response_model=APIResponse[list])
 async def list_admin_users(
     admin: Dict = Depends(get_admin_actor),
@@ -339,7 +323,6 @@ async def list_admin_users(
     """Retrieve registered users, hospital administrators, and nodal officers."""
     users = memory_store.get_users_list()
     return APIResponse(data=users, message=f"{len(users)} users")
-
 
 @router.patch("/users/{user_id}", response_model=APIResponse[dict])
 async def update_admin_user(
@@ -353,8 +336,7 @@ async def update_admin_user(
         raise HTTPException(status_code=404, detail={"code": "USER_NOT_FOUND"})
     return APIResponse(data=user, message=f"User '{user_id}' updated")
 
-
-# ── 7. Verification Review Queue ────────────────────────────────────
+# 7. Verification Review Queue
 @router.get("/review-queue", response_model=APIResponse[list])
 async def get_review_queue(
     db: AsyncSession = Depends(get_db),
@@ -378,7 +360,6 @@ async def get_review_queue(
         message=f"{len(unverified)} facilities pending verification",
     )
 
-
 @router.patch("/verify/{hospital_id}", response_model=APIResponse[dict])
 async def verify_hospital(
     hospital_id: str,
@@ -398,8 +379,7 @@ async def verify_hospital(
 
     return APIResponse(data={"hospital_id": hospital_id, "action": action}, message=message)
 
-
-# ── 8. Data Sources ─────────────────────────────────────────────────
+# 8. Data Sources
 @router.get("/data-sources", response_model=APIResponse[list])
 async def list_data_sources(
     admin: Dict = Depends(get_admin_actor),

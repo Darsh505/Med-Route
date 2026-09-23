@@ -1,7 +1,5 @@
 """
-──────────────────────────────────────────────
 database.py — Async SQLAlchemy Setup
-──────────────────────────────────────────────
 
 Supports two modes:
 1. PostgreSQL mode — full PostGIS capabilities (production)
@@ -27,18 +25,15 @@ except ImportError:
     import logging
     logger = logging.getLogger("database")
 
-
-# ── Mode Flag ─────────────────────────────────────────────────────
+# Mode Flag
 USE_MEMORY_DB: bool = False  # Set to True on startup if PostgreSQL fails
 
-
-# ── Base Class for ORM Models ─────────────────────────────────────
+# Base Class for ORM Models
 class Base(DeclarativeBase):
     """All SQLAlchemy models inherit from this base."""
     pass
 
-
-# ── Async Engine (lazy init) ──────────────────────────────────────
+# Async Engine (lazy init)
 engine = None
 async_session_factory = None
 
@@ -66,8 +61,7 @@ def _init_engine():
     except Exception as e:
         logger.warning(f"Engine init failed (expected in demo mode): {e}")
 
-
-# ── Stub Session for In-Memory Mode ──────────────────────────────
+# Stub Session for In-Memory Mode
 class StubSession:
     """No-op session used when PostgreSQL is not available."""
     is_active = False
@@ -96,8 +90,7 @@ class StubSession:
     def expunge(self, obj):
         pass
 
-
-# ── Dependency Injection ──────────────────────────────────────────
+# Dependency Injection
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """
     FastAPI dependency: provides a DB session per request.
@@ -139,8 +132,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             except Exception:
                 pass
 
-
-# ── Startup Helper ────────────────────────────────────────────────
+# Startup Helper
 async def create_db_and_tables():
     """
     Attempts to create PostgreSQL tables.
@@ -173,7 +165,6 @@ async def create_db_and_tables():
         logger.info(f"[DEMO] PostgreSQL unavailable ({type(e).__name__}) - activating in-memory demonstration mode")
         USE_MEMORY_DB = True
         _init_memory_store()
-
 
 def _init_memory_store():
     """Initialize the in-memory store with seed data."""

@@ -12,7 +12,6 @@ from app.models.base import TimestampedBase
 if TYPE_CHECKING:
     from app.models.hospital import Hospital
 
-
 class Department(TimestampedBase):
     __tablename__ = "departments"
 

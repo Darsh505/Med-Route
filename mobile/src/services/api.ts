@@ -67,7 +67,6 @@ export const CITY_ALIASES: Record<string, string> = {
   kashi: "varanasi",
 };
 
-
 // Pre-computed lists of all unique cities and states from the actual hospital registry
 const ALL_REGISTRY_CITIES: string[] = Array.from(
   new Set((rawAllHospitals as any[]).map((h) => (h.city || "").trim()).filter(Boolean))
@@ -229,7 +228,6 @@ export const MOCK_HOSPITALS: MobileHospital[] = (rawAllHospitals as any[]).map((
     overall_success_ratio: h.overall_success_ratio,
   };
 });
-
 
 export const api = {
   async getNearbyHospitals(lat = 31.5305, lng = 75.9125, city?: string): Promise<MobileHospital[]> {

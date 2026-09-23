@@ -12,7 +12,6 @@ from app.ai.nlp_parser import get_nlp_parser, NLPParser
 
 router = APIRouter(prefix="/api/search", tags=["Search"])
 
-
 def serialize_hospital_item(h):
     if hasattr(h, "to_dict"):
         d = h.to_dict()
@@ -31,7 +30,6 @@ def serialize_hospital_item(h):
     if "type" in d and hasattr(d["type"], "value"):
         d["type"] = d["type"].value
     return d
-
 
 @router.post("/nl", response_model=APIResponse[list])
 async def natural_language_search(
@@ -62,7 +60,6 @@ async def natural_language_search(
         message=f"{len(hospitals)} hospitals found",
         meta=meta.model_dump(),
     )
-
 
 @router.get("/structured", response_model=APIResponse[list])
 async def structured_search(
@@ -113,7 +110,6 @@ async def structured_search(
         message=f"{total} hospitals match filters",
         meta={"total": total, "page": page, "per_page": per_page},
     )
-
 
 @router.get("/autocomplete")
 async def autocomplete(

@@ -1,7 +1,5 @@
 """
-──────────────────────────────────────────────
 models/facility.py — Hospital Facilities & Equipment
-──────────────────────────────────────────────
 
 Tracks availability of critical medical equipment and infrastructure.
 This data is used in:
@@ -23,7 +21,6 @@ from app.models.base import TimestampedBase
 if TYPE_CHECKING:
     from app.models.hospital import Hospital
 
-
 class FacilityCategory(str, enum.Enum):
     """Groups facilities for UI display in organized sections."""
     IMAGING = "imaging"          # MRI, CT, X-ray, Ultrasound, PET-CT
@@ -35,12 +32,11 @@ class FacilityCategory(str, enum.Enum):
     THERAPY = "therapy"          # Physiotherapy, dialysis, chemotherapy
     SUPPORT = "support"          # Canteen, parking, ambulance, mortuary
 
-
 class Facility(TimestampedBase):
     __tablename__ = "facilities"
     __table_args__ = {"comment": "Hospital equipment and service availability"}
 
-    # ── Foreign Key ───────────────────────────────────────────────
+    # Foreign Key
     hospital_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("hospitals.id", ondelete="CASCADE"),
@@ -48,7 +44,7 @@ class Facility(TimestampedBase):
         index=True,
     )
 
-    # ── Facility Info ─────────────────────────────────────────────
+    # Facility Info
     name: Mapped[str] = mapped_column(
         String(100),
         nullable=False,
@@ -60,7 +56,7 @@ class Facility(TimestampedBase):
         index=True,
     )
 
-    # ── Availability ──────────────────────────────────────────────
+    # Availability
     is_available: Mapped[bool] = mapped_column(
         Boolean,
         default=True,
@@ -76,12 +72,12 @@ class Facility(TimestampedBase):
         comment="Number of units, e.g. 3 OTs, 2 MRI machines",
     )
 
-    # ── Details ───────────────────────────────────────────────────
+    # Details
     description: Mapped[Optional[str]] = mapped_column(Text)
     icon_key: Mapped[Optional[str]] = mapped_column(
         String(50),
         comment="Icon name for UI display, e.g. 'mri', 'blood-drop', 'ambulance'",
     )
 
-    # ── Relationships ─────────────────────────────────────────────
+    # Relationships
     hospital: Mapped["Hospital"] = relationship(back_populates="facilities")

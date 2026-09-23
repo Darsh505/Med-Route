@@ -1,7 +1,5 @@
 """
-──────────────────────────────────────────────
 schemas/hospital.py — Hospital API Schemas
-──────────────────────────────────────────────
 
 DESIGN: Separate schemas for Create / Update / Response because:
 - Create: requires only what admin provides
@@ -14,8 +12,7 @@ from typing import Optional, Union, Any, List
 from datetime import datetime, timezone
 from pydantic import BaseModel, Field
 
-
-# ── Sub-schemas ───────────────────────────────────────────────────
+# Sub-schemas
 
 class FacilityResponse(BaseModel):
     id: Union[uuid.UUID, str] = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -27,7 +24,6 @@ class FacilityResponse(BaseModel):
     icon_key: Optional[str] = None
     model_config = {"from_attributes": True}
 
-
 class DepartmentResponse(BaseModel):
     id: Union[uuid.UUID, str] = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
@@ -37,14 +33,12 @@ class DepartmentResponse(BaseModel):
     specialization: Optional[str] = None
     model_config = {"from_attributes": True}
 
-
 class ProcedureBriefResponse(BaseModel):
     id: Union[uuid.UUID, str] = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
     category: str
     icd10_code: Optional[str] = None
     model_config = {"from_attributes": True}
-
 
 class HospitalProcedureResponse(BaseModel):
     procedure: ProcedureBriefResponse
@@ -60,8 +54,7 @@ class HospitalProcedureResponse(BaseModel):
     data_source_label: str = "SIMULATED"
     model_config = {"from_attributes": True}
 
-
-# ── Main Hospital Schemas ──────────────────────────────────────────
+# Main Hospital Schemas
 
 class HospitalResponse(BaseModel):
     """
@@ -133,7 +126,6 @@ class HospitalResponse(BaseModel):
 
     model_config = {"from_attributes": True}
 
-
 class HospitalListItem(BaseModel):
     """
     Compact hospital card — used in search results list view.
@@ -166,7 +158,6 @@ class HospitalListItem(BaseModel):
     cost_range: Optional[Union[dict, str]] = None  # dict for search results, str for display label
     model_config = {"from_attributes": True}
 
-
 class HospitalCreateRequest(BaseModel):
     """Admin: create new hospital record."""
     name: str = Field(..., min_length=3, max_length=255)
@@ -191,7 +182,6 @@ class HospitalCreateRequest(BaseModel):
     established_year: Optional[int] = None
     description: Optional[str] = None
     data_source_label: str = "MANUAL_VERIFIED"
-
 
 class HospitalUpdateRequest(BaseModel):
     """Admin: update hospital — all fields optional (PATCH semantics)."""

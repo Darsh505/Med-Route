@@ -1,7 +1,5 @@
 """
-──────────────────────────────────────────────
 ai/nlp_parser.py — Natural Language Query Parser
-──────────────────────────────────────────────
 
 The Brain of Med Route Search.
 
@@ -42,7 +40,7 @@ from app.ai.medical_mappings import PROCEDURE_ALIASES, LOCATION_SHORTCUTS
 from app.schemas.search import SearchFilters
 from app.config import settings
 
-# ── Gemini Prompt Template ─────────────────────────────────────────
+# Gemini Prompt Template
 GEMINI_EXTRACTION_PROMPT = """
 You are a medical query parser for an Indian hospital discovery platform.
 
@@ -77,7 +75,6 @@ Rules:
 - PMJAY / Ayushman keywords → requires_pmjay=true
 - Government / sarkari → hospital_types=["government"]
 """
-
 
 class NLPParser:
     """
@@ -175,12 +172,12 @@ class NLPParser:
         query_lower = query.lower()
         filters = SearchFilters(raw_query=query, ai_provider="rule_based", confidence=0.7)
 
-        # ── Intent detection ──────────────────────────────────────
+        # Intent detection
         emergency_words = ["emergency", "accident", "critical", "urgent", "ambulance", "sos"]
         if any(w in query_lower for w in emergency_words):
             filters.intent = "sos_emergency"
 
-        # ── Procedure / specialty detection ───────────────────────
+        # Procedure / specialty detection
         for procedure, aliases in PROCEDURE_ALIASES.items():
             if any(alias in query_lower for alias in aliases):
                 filters.mapped_procedures.append(procedure)
@@ -189,7 +186,7 @@ class NLPParser:
                 if category and category not in filters.procedure_categories:
                     filters.procedure_categories.append(category)
 
-        # ── Location detection ────────────────────────────────────
+        # Location detection
         # Check known city shortcuts first
         for location, canonical in LOCATION_SHORTCUTS.items():
             if location in query_lower:
@@ -206,7 +203,7 @@ class NLPParser:
             if near_match:
                 filters.location_text = near_match.group(1).strip()
 
-        # ── Budget detection ──────────────────────────────────────
+        # Budget detection
         # Patterns: "under 2 lakhs", "below 50000", "within 3 lakh", "2L", "₹2 lakh"
         lakh_match = re.search(
             r"(?:under|below|within|less than|max|upto)?\s*(?:₹|rs\.?|inr)?\s*(\d+(?:\.\d+)?)\s*(?:lakhs?|lacs?|l)\b",
@@ -228,17 +225,17 @@ class NLPParser:
             if num_match:
                 filters.max_budget = int(num_match.group(1))
 
-        # ── Hospital type detection ───────────────────────────────
+        # Hospital type detection
         if any(w in query_lower for w in ["government", "govt", "sarkari", "aiims", "pgimer", "esic"]):
             filters.hospital_types.append("government")
         if any(w in query_lower for w in ["private", "apollo", "fortis", "max", "columbia"]):
             filters.hospital_types.append("private")
 
-        # ── PMJAY / Ayushman detection ────────────────────────────
+        # PMJAY / Ayushman detection
         if any(w in query_lower for w in ["pmjay", "ayushman", "free", "cashless", "government scheme"]):
             filters.requires_pmjay = True
 
-        # ── Accreditation ─────────────────────────────────────────
+        # Accreditation
         if "nabh" in query_lower:
             filters.accreditation = "NABH"
         elif "jci" in query_lower:
@@ -258,15 +255,12 @@ class NLPParser:
         }
         return category_map.get(procedure)
 
-
 class RuleBasedExtractor:
     """Standalone rule-based extractor (used as fallback)."""
     pass  # Logic is in NLPParser._parse_with_rules()
 
-
 # Global singleton — initialized with API key from settings
 _parser_instance: Optional[NLPParser] = None
-
 
 def get_nlp_parser() -> NLPParser:
     """FastAPI dependency for NLP parser."""

@@ -7,11 +7,9 @@ except ImportError:
     import logging
     logger = logging.getLogger("review_service")
 
-
 def _is_memory_mode() -> bool:
     from app.database import USE_MEMORY_DB
     return USE_MEMORY_DB
-
 
 class ReviewService:
 
@@ -75,6 +73,5 @@ class ReviewService:
                 await db.flush()
         except Exception as e:
             logger.warning(f"DB mark_helpful failed: {e}")
-
 
 review_service = ReviewService()
