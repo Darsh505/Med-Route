@@ -1,7 +1,8 @@
 import { Platform } from "react-native";
 import rawAllHospitals from "../data/allHospitals.json";
 
-const BASE_URL = Platform.OS === "android" ? "http://10.0.2.2:8000" : "http://localhost:8000";
+const DEFAULT_URL = Platform.OS === "android" ? "http://10.0.2.2:8000" : "http://localhost:8000";
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || DEFAULT_URL;
 
 // Default user location (Bangalore, Indiranagar) — updated dynamically by HomeScreen
 export let USER_LAT = 12.9716;

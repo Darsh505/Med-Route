@@ -27,7 +27,8 @@
       "adaptiveIcon": {
         "backgroundColor": "#1B4D89",
         "foregroundImage": "./assets/android-icon-foreground.png"
-      }
+      },
+      "usesCleartextTraffic": true
     },
     "plugins": [
       [
