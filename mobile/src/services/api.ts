@@ -225,16 +225,38 @@ export const api = {
     const q = (query || category || "").toLowerCase().trim();
     let list = MOCK_HOSPITALS;
 
-    if (city && city !== "All") {
-      const cityFiltered = list.filter((h) => h.city.toLowerCase().includes(city.toLowerCase()));
+    // Natural Language City Extraction (e.g., "near Chandigarh", "in Mohali")
+    let extractedCity = city;
+    const citiesToCheck = ["chandigarh", "mohali", "panchkula", "hoshiarpur", "ludhiana", "amritsar", "jalandhar", "delhi"];
+    for (const c of citiesToCheck) {
+      if (q.includes(c)) {
+        extractedCity = c;
+        break;
+      }
+    }
+
+    if (extractedCity && extractedCity !== "All") {
+      const cityFiltered = list.filter((h) => h.city.toLowerCase().includes(extractedCity.toLowerCase()));
       if (cityFiltered.length > 0) list = cityFiltered;
     }
 
-    if (maxBudget !== undefined && maxBudget !== null) {
-      if (maxBudget === -1) {
+    // Natural Language Budget Extraction (e.g., "under 2 lakh", "under 1 lakh", "under 50k")
+    let effectiveBudget = maxBudget;
+    if (effectiveBudget === undefined || effectiveBudget === null) {
+      const lakhMatch = q.match(/(?:under|below|within|<)\s*(\d+(?:\.\d+)?)\s*(?:lakh|lakhs|lac|lacs|l)\b/);
+      if (lakhMatch) {
+        effectiveBudget = Math.round(parseFloat(lakhMatch[1]) * 100000);
+      } else {
+        const kMatch = q.match(/(?:under|below|within|<)\s*(\d+)\s*(?:k|thousand)\b/);
+        if (kMatch) effectiveBudget = parseInt(kMatch[1], 10) * 1000;
+      }
+    }
+
+    if (effectiveBudget !== undefined && effectiveBudget !== null) {
+      if (effectiveBudget === -1) {
         list = list.filter((h) => h.is_pmjay_empanelled);
       } else {
-        list = list.filter((h) => (h.base_package_inr || 85000) <= maxBudget || h.type === "Government");
+        list = list.filter((h) => (h.base_package_inr || 85000) <= effectiveBudget || h.type === "Government");
       }
     }
 
@@ -260,6 +282,15 @@ export const api = {
         (h.specialties?.some((s) => s.toLowerCase().includes("ortho") || s.toLowerCase().includes("joint")) ||
          h.top_disease_treated?.toLowerCase().includes("knee") ||
          (h.procedures || []).some((p) => p.disease.toLowerCase().includes("osteoarthritis") || p.name.toLowerCase().includes("knee")));
+      const matchRenal = (q.includes("kidney") || q.includes("renal") || q.includes("dialysis") || q.includes("gurde") || q.includes("nephro") || q.includes("stone")) &&
+        (h.specialties?.some((s) => s.toLowerCase().includes("kidney") || s.toLowerCase().includes("renal") || s.toLowerCase().includes("nephro") || s.toLowerCase().includes("dialysis")) ||
+         h.top_disease_treated?.toLowerCase().includes("kidney") ||
+         h.top_disease_treated?.toLowerCase().includes("calculi") ||
+         h.top_disease_treated?.toLowerCase().includes("esrd") ||
+         (h.procedures || []).some((p) => p.disease.toLowerCase().includes("kidney") || p.name.toLowerCase().includes("renal") || p.name.toLowerCase().includes("dialysis") || p.name.toLowerCase().includes("stone")));
+      const matchCancer = (q.includes("cancer") || q.includes("onco") || q.includes("tumor") || q.includes("chemo")) &&
+        (h.specialties?.some((s) => s.toLowerCase().includes("onco") || s.toLowerCase().includes("cancer")) ||
+         (h.procedures || []).some((p) => p.disease.toLowerCase().includes("cancer") || p.disease.toLowerCase().includes("tumor") || p.name.toLowerCase().includes("chemo")));
 
       return (
         matchName ||
@@ -272,7 +303,9 @@ export const api = {
         matchTrauma ||
         matchPmjay ||
         matchCardiac ||
-        matchOrtho
+        matchOrtho ||
+        matchRenal ||
+        matchCancer
       );
     });
   },

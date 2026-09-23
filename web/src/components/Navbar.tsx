@@ -47,7 +47,7 @@ export default function Navbar() {
             >
               <span className="material-symbols-outlined text-[18px]">location_on</span>
               <span className="font-label-md text-label-md text-on-surface font-semibold">
-                {selectedCity || "Bangalore, KA"}
+                {selectedCity || "Chandigarh / Tricity"}
               </span>
               <span className="material-symbols-outlined text-[16px] text-on-surface-variant">keyboard_arrow_down</span>
             </Link>
@@ -152,18 +152,30 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Row 2: Centered Sub-Nav Bar (Exact match to PNG) */}
+        {/* Row 2: Centered Sub-Nav Bar */}
         <div className="hidden lg:flex items-center justify-center bg-surface-card border-t border-border-subtle/40 py-2.5">
           <nav className="flex items-center justify-center gap-space-sm max-w-[1280px] w-full px-margin">
             <Link
               href="/"
               className={`px-space-md py-1.5 transition-all text-title-md rounded-lg ${
-                isFind
+                pathname === "/"
                   ? "bg-primary-container text-on-primary font-bold shadow-sm"
                   : "font-semibold text-on-surface hover:text-primary-container hover:bg-surface-container"
               }`}
             >
-              Find Hospitals
+              Home
+            </Link>
+
+            <Link
+              href="/search"
+              className={`px-space-md py-1.5 transition-all text-title-md rounded-lg flex items-center gap-1.5 ${
+                pathname === "/search"
+                  ? "bg-primary-container text-on-primary font-bold shadow-sm"
+                  : "font-semibold text-on-surface hover:text-primary-container hover:bg-surface-container"
+              }`}
+            >
+              <span className="material-symbols-outlined text-[18px]">auto_awesome</span>
+              <span>AI Radar Search</span>
             </Link>
 
             <Link
@@ -174,7 +186,7 @@ export default function Navbar() {
                   : "font-semibold text-on-surface hover:text-primary-container hover:bg-surface-container"
               }`}
             >
-              Compare Hospitals
+              Compare Matrix
             </Link>
 
             <Link
@@ -189,14 +201,11 @@ export default function Navbar() {
             </Link>
 
             <Link
-              href="/#specialty-hub"
-              className={`px-space-md py-1.5 transition-all text-title-md rounded-lg ${
-                isDoctors
-                  ? "bg-primary-container text-on-primary font-bold shadow-sm"
-                  : "font-semibold text-on-surface hover:text-primary-container hover:bg-surface-container"
-              }`}
+              href="/portal/admin"
+              className="px-space-md py-1.5 transition-all text-title-md rounded-lg font-semibold text-on-surface-variant hover:text-secondary hover:bg-surface-container flex items-center gap-1"
             >
-              Doctors &amp; Specialists
+              <span className="material-symbols-outlined text-[16px]">admin_panel_settings</span>
+              <span>Admin Portal</span>
             </Link>
           </nav>
         </div>
@@ -212,7 +221,7 @@ export default function Navbar() {
           >
             <span className="flex items-center gap-1.5">
               <span className="material-symbols-outlined text-[18px]">location_on</span>
-              <span>{selectedCity || "Bangalore, KA"}</span>
+              <span>{selectedCity || "Chandigarh / Tricity"}</span>
             </span>
             <span className="text-xs text-on-surface-variant font-bold">Change</span>
           </Link>
@@ -220,11 +229,22 @@ export default function Navbar() {
           <Link
             href="/"
             className={`px-space-md py-space-sm rounded-lg font-label-md text-label-md ${
-              isFind ? "bg-primary-container text-on-primary font-bold" : "text-on-surface font-semibold"
+              pathname === "/" ? "bg-primary-container text-on-primary font-bold" : "text-on-surface font-semibold"
             }`}
             onClick={() => setMobileMenuOpen(false)}
           >
-            Find Hospitals
+            Home
+          </Link>
+
+          <Link
+            href="/search"
+            className={`px-space-md py-space-sm rounded-lg font-label-md text-label-md flex items-center gap-1.5 ${
+              pathname === "/search" ? "bg-primary-container text-on-primary font-bold" : "text-on-surface font-semibold"
+            }`}
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            <span className="material-symbols-outlined text-[18px]">auto_awesome</span>
+            <span>AI Radar Search</span>
           </Link>
 
           <Link
@@ -234,7 +254,7 @@ export default function Navbar() {
             }`}
             onClick={() => setMobileMenuOpen(false)}
           >
-            Compare Hospitals
+            Compare Matrix
           </Link>
 
           <Link
@@ -245,6 +265,15 @@ export default function Navbar() {
             onClick={() => setMobileMenuOpen(false)}
           >
             Emergency &amp; Cashless Admission
+          </Link>
+
+          <Link
+            href="/portal/admin"
+            className="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant font-semibold flex items-center gap-1.5"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            <span className="material-symbols-outlined text-[18px]">admin_panel_settings</span>
+            <span>Admin Telemetry Portal</span>
           </Link>
 
           <div className="pt-space-xs border-t border-border-subtle flex flex-col gap-space-xs">

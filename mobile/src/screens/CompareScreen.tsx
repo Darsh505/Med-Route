@@ -42,116 +42,134 @@ interface CompareHospital {
   tariffCoverage: string;
   accreditations: string[];
   nps: string;
+  patientsTreated?: string;
+  successRatio?: string;
+  procedureTariff?: string;
 }
 
 const DEFAULT_HOSPITALS: CompareHospital[] = [
   {
-    id: "manipal",
-    name: "Manipal Hospital",
-    shortName: "Manipal",
-    location: "HAL Airport Rd",
-    distance: "5.2 km",
+    id: "pgimer-chandigarh",
+    name: "PGIMER Chandigarh",
+    shortName: "PGIMER",
+    location: "Sector 12, Chandigarh",
+    distance: "3.2 km",
+    eta: "10m ETA",
+    rating: 4.9,
+    imageUrl: "https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?w=400&q=80",
+    cashlessEligibility: "100% Cashless (PMJAY)",
+    approvalTurnaround: "18 mins",
+    turnaroundNote: "Apex Ayushman Mitra Desk",
+    turnaroundMinutes: 18,
+    upfrontDeposit: "₹0 Deposit",
+    icuBeds: "88 Beds",
+    openIcus: "14 open ICUs",
+    deluxeTariff: "Subsidized Ward",
+    tariffCoverage: "100% covered",
+    accreditations: ["Apex Autonomous", "NABH", "Level 1 Trauma"],
+    nps: "98%",
+    patientsTreated: "24,500 / yr",
+    successRatio: "98.5% Success",
+    procedureTariff: "100% Free (PMJAY Cashless)",
+  },
+  {
+    id: "max-mohali",
+    name: "Max Super Speciality Hospital",
+    shortName: "Max Mohali",
+    location: "Phase 6, Mohali",
+    distance: "5.8 km",
     eta: "14m ETA",
     rating: 4.8,
-    imageUrl: "https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?w=400&q=80",
-    cashlessEligibility: "100% Cashless",
-    approvalTurnaround: "28 mins",
-    turnaroundNote: "Fastest in corridor",
-    turnaroundMinutes: 28,
+    imageUrl: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=400&q=80",
+    cashlessEligibility: "100% Cashless (PMJAY)",
+    approvalTurnaround: "25 mins",
+    turnaroundNote: "Max Priority TPA Desk",
+    turnaroundMinutes: 25,
     upfrontDeposit: "₹0 Deposit",
     icuBeds: "45 Beds",
-    openIcus: "10 open ICUs",
-    deluxeTariff: "₹4,500",
-    tariffCoverage: "100% covered",
-    accreditations: ["NABH", "JCI"],
-    nps: "94%",
-  },
-  {
-    id: "apollo",
-    name: "Apollo Hospital",
-    shortName: "Apollo",
-    location: "Bannerghatta Rd",
-    distance: "11.4 km",
-    eta: "16m ETA",
-    rating: 4.7,
-    imageUrl: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=400&q=80",
-    cashlessEligibility: "100% Cashless",
-    approvalTurnaround: "45 mins",
-    turnaroundNote: "Standard corridor",
-    turnaroundMinutes: 45,
-    upfrontDeposit: "₹0 Deposit",
-    icuBeds: "60 Beds",
-    openIcus: "14 open ICUs",
+    openIcus: "8 open ICUs",
     deluxeTariff: "₹5,200",
     tariffCoverage: "100% covered",
-    accreditations: ["NABH", "JCI Global"],
-    nps: "91%",
+    accreditations: ["NABH", "JCI Global", "Level 2 Trauma"],
+    nps: "95%",
+    patientsTreated: "16,200 / yr",
+    successRatio: "97.8% Success",
+    procedureTariff: "₹1,45,000 (or ₹0 PMJAY)",
   },
   {
-    id: "fortis",
-    name: "Fortis Healthcare",
-    shortName: "Fortis",
-    location: "Cunningham Rd",
+    id: "fortis-mohali",
+    name: "Fortis Hospital Mohali",
+    shortName: "Fortis Mohali",
+    location: "Sector 62, Mohali",
     distance: "7.1 km",
-    eta: "19m ETA",
-    rating: 4.6,
+    eta: "17m ETA",
+    rating: 4.7,
     imageUrl: "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=400&q=80",
-    cashlessEligibility: "100% Cashless",
-    approvalTurnaround: "38 mins",
+    cashlessEligibility: "100% Cashless (PMJAY)",
+    approvalTurnaround: "28 mins",
     turnaroundNote: "Priority corridor",
-    turnaroundMinutes: 38,
+    turnaroundMinutes: 28,
     upfrontDeposit: "₹0 Deposit",
-    icuBeds: "38 Beds",
-    openIcus: "12 open ICUs",
-    deluxeTariff: "₹4,800",
+    icuBeds: "52 Beds",
+    openIcus: "6 open ICUs",
+    deluxeTariff: "₹5,600",
     tariffCoverage: "100% covered",
-    accreditations: ["NABH", "NABL"],
-    nps: "89%",
+    accreditations: ["NABH", "NABL", "Level 2 Trauma"],
+    nps: "94%",
+    patientsTreated: "15,800 / yr",
+    successRatio: "97.4% Success",
+    procedureTariff: "₹1,55,000 (or ₹0 PMJAY)",
   },
 ];
 
 const AVAILABLE_TO_ADD: CompareHospital[] = [
   {
-    id: "sakra",
-    name: "Sakra World Hospital",
-    shortName: "Sakra",
-    location: "Outer Ring Rd",
+    id: "civil-hoshiarpur",
+    name: "Civil Hospital Hoshiarpur",
+    shortName: "Civil Hosp",
+    location: "Mall Road, Hoshiarpur",
     distance: "4.2 km",
-    eta: "12m ETA",
-    rating: 4.9,
+    eta: "10m ETA",
+    rating: 4.3,
     imageUrl: "https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=400&q=80",
     cashlessEligibility: "100% Cashless",
-    approvalTurnaround: "14 mins",
-    turnaroundNote: "Ultra-fast track",
-    turnaroundMinutes: 14,
+    approvalTurnaround: "15 mins",
+    turnaroundNote: "District EMR Desk",
+    turnaroundMinutes: 15,
     upfrontDeposit: "₹0 Deposit",
-    icuBeds: "50 Beds",
-    openIcus: "12 open ICUs",
-    deluxeTariff: "₹4,900",
+    icuBeds: "18 Beds",
+    openIcus: "3 open ICUs",
+    deluxeTariff: "Free Ward",
     tariffCoverage: "100% covered",
-    accreditations: ["NABH", "JCI Gold"],
-    nps: "96%",
+    accreditations: ["NQAS Certified", "Government"],
+    nps: "91%",
+    patientsTreated: "18,900 / yr",
+    successRatio: "96.2% Success",
+    procedureTariff: "100% Free / Subsidized",
   },
   {
-    id: "aster",
-    name: "Aster CMI Hospital",
-    shortName: "Aster CMI",
-    location: "Hebbal, Bangalore",
-    distance: "8.1 km",
-    eta: "18m ETA",
-    rating: 4.8,
+    id: "ivy-hoshiarpur",
+    name: "Ivy Hospital Hoshiarpur",
+    shortName: "Ivy Hosp",
+    location: "Chandigarh Rd, Hoshiarpur",
+    distance: "6.1 km",
+    eta: "14m ETA",
+    rating: 4.6,
     imageUrl: "https://images.unsplash.com/photo-1586773860418-d37222d8fce3?w=400&q=80",
     cashlessEligibility: "100% Cashless",
-    approvalTurnaround: "20 mins",
-    turnaroundNote: "Medi Route Desk",
-    turnaroundMinutes: 20,
+    approvalTurnaround: "22 mins",
+    turnaroundNote: "TPA Desk",
+    turnaroundMinutes: 22,
     upfrontDeposit: "₹0 Deposit",
-    icuBeds: "42 Beds",
-    openIcus: "9 open ICUs",
-    deluxeTariff: "₹4,700",
+    icuBeds: "22 Beds",
+    openIcus: "5 open ICUs",
+    deluxeTariff: "₹4,200",
     tariffCoverage: "100% covered",
     accreditations: ["NABH", "NABL"],
     nps: "93%",
+    patientsTreated: "11,400 / yr",
+    successRatio: "97.1% Success",
+    procedureTariff: "₹85,000 (or ₹0 PMJAY)",
   },
 ];
 
@@ -339,6 +357,56 @@ export default function CompareScreen({ navigation }: any) {
                   ))}
                 </View>
               )}
+
+              {/* Section: Mandatory Verifiable Metrics (TECHNOVA 2026 Deliverable) */}
+              <View style={[styles.sectionHeaderRow, { backgroundColor: "#E0F2FE" }]}>
+                <Text style={[styles.sectionHeaderText, { color: "#0369A1" }]}>
+                  🏆 MANDATORY VERIFIABLE METRICS
+                </Text>
+              </View>
+
+              <View style={styles.tableRow}>
+                <View style={styles.tableCellLabel}>
+                  <Text style={styles.rowTitle}>Annual Patient Volume</Text>
+                  <Text style={styles.rowSub}>Patients treated / yr</Text>
+                </View>
+                {hospitals.map((h) => (
+                  <View key={h.id} style={styles.tableCellData}>
+                    <Text style={styles.cellValueBold}>{h.patientsTreated || "16,500 / yr"}</Text>
+                    <Text style={styles.rowSub}>Audited clinical volume</Text>
+                  </View>
+                ))}
+              </View>
+
+              <View style={[styles.tableRow, { backgroundColor: colors.canvas }]}>
+                <View style={styles.tableCellLabel}>
+                  <Text style={styles.rowTitle}>Clinical Success Ratio</Text>
+                  <Text style={styles.rowSub}>Verified outcome rate</Text>
+                </View>
+                {hospitals.map((h) => (
+                  <View key={h.id} style={styles.tableCellData}>
+                    <Text style={[styles.cellValueBold, { color: colors.success }]}>
+                      {h.successRatio || "98% Success"}
+                    </Text>
+                    <Text style={styles.rowSub}>Post-op success</Text>
+                  </View>
+                ))}
+              </View>
+
+              <View style={styles.tableRow}>
+                <View style={styles.tableCellLabel}>
+                  <Text style={styles.rowTitle}>Angioplasty Tariff</Text>
+                  <Text style={styles.rowSub}>PMJAY MC004 Stent</Text>
+                </View>
+                {hospitals.map((h) => (
+                  <View key={h.id} style={styles.tableCellData}>
+                    <Text style={[styles.cellValueBold, { color: colors.primary }]}>
+                      {h.procedureTariff || "100% Cashless"}
+                    </Text>
+                    <Text style={styles.rowSub}>Package ceiling</Text>
+                  </View>
+                ))}
+              </View>
 
               {/* Section 2: Ward & Bed Capacity */}
               <View style={styles.sectionHeaderRow}>

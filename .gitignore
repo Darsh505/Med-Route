@@ -137,6 +137,8 @@ htmlcov/
 # ── Uploads (local dev only) ──────────────────
 backend/uploads/
 
-# ── Design Reference Assets ───────────────────
+# ── Design Reference Assets & Scratch ─────────
 stitch/
+bin/
+kul/
 
