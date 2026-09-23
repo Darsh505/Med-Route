@@ -147,3 +147,9 @@ backend/scripts/
 scripts/
 *.prep.py
 
+# ── Local SQLite Database Files ──────────────
+*.db
+*.sqlite
+*.sqlite3
+backend/*.db
+
