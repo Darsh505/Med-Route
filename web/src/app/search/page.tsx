@@ -7,7 +7,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SearchMap from "@/components/SearchMap";
 import { useLocation } from "@/context/LocationContext";
-import { ALL_HOSPITALS, HospitalOption } from "@/data/hospitalsData";
+import { ALL_HOSPITALS, getAllHospitalsWithOverrides, HospitalOption } from "@/data/hospitalsData";
 
 const SPECIALTY_OPTIONS = [
   { label: "All Specialties", value: "All" },
@@ -323,7 +323,7 @@ function SearchContent() {
 
   // 2. Filter & Mathematical Ranking Computation
   const scoredHospitals = useMemo(() => {
-    let list = ALL_HOSPITALS;
+    let list = getAllHospitalsWithOverrides();
 
     // Filter by Dropdown City (if manually selected)
     if (selectedCityFilter && selectedCityFilter !== "All") {

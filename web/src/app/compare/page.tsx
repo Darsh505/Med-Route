@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { ALL_HOSPITALS, HospitalOption } from "@/data/hospitalsData";
+import { getAllHospitalsWithOverrides, HospitalOption } from "@/data/hospitalsData";
 
 interface CompareHospitalItem {
   id: string;
@@ -139,13 +139,14 @@ function CompareContent() {
   // Find Tricity defaults from ALL_HOSPITALS
   const defaultTricityList = useMemo(() => {
     // Look for Chandigarh and Mohali benchmark institutions
-    const chd = ALL_HOSPITALS.filter(
+    const activeHospitals = getAllHospitalsWithOverrides();
+    const chd = activeHospitals.filter(
       (h) => h.city.toLowerCase() === "chandigarh" || h.city.toLowerCase() === "mohali"
     );
     if (chd.length >= 3) {
       return chd.slice(0, 3).map((h, i) => transformOptionToCompare(h, i));
     }
-    return ALL_HOSPITALS.slice(0, 3).map((h, i) => transformOptionToCompare(h, i));
+    return activeHospitals.slice(0, 3).map((h, i) => transformOptionToCompare(h, i));
   }, []);
 
   const [selectedHospitals, setSelectedHospitals] = useState<CompareHospitalItem[]>(defaultTricityList);
@@ -177,8 +178,9 @@ function CompareContent() {
 
     if (idsToLoad.length > 0) {
       const found: CompareHospitalItem[] = [];
+      const allH = getAllHospitalsWithOverrides();
       idsToLoad.forEach((idOrSlug, idx) => {
-        const match = ALL_HOSPITALS.find(
+        const match = allH.find(
           (h) =>
             h.id.toLowerCase() === idOrSlug ||
             h.slug.toLowerCase() === idOrSlug ||
@@ -248,7 +250,7 @@ function CompareContent() {
   };
 
   const availableToAdd = useMemo(() => {
-    return ALL_HOSPITALS.filter(
+    return getAllHospitalsWithOverrides().filter(
       (a) =>
         !selectedHospitals.some((s) => s.id === a.id || s.slug === a.slug) &&
         (searchTerm === "" ||
