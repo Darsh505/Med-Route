@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -8,6 +8,7 @@ import { useLocation } from "@/context/LocationContext";
 import { useTranslations, useLocale } from "next-intl";
 import { localizeCity } from "@/i18n/hospitalLocalization";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import MedRouteLogo from "@/components/MedRouteLogo";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -32,18 +33,7 @@ export default function Navbar() {
           
           {/* Brand & City Selector */}
           <div className="flex items-center gap-space-lg shrink-0">
-            <Link href="/" className="flex items-center gap-space-sm group">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0">
-                <svg viewBox="0 0 32 32" className="w-8 h-8" fill="none">
-                  <rect width="32" height="32" rx="8" fill="var(--color-primary, #0052cc)" />
-                  <path d="M16 8v16M8 16h16" stroke="white" strokeWidth="3" strokeLinecap="round" />
-                  <circle cx="16" cy="16" r="3" fill="#00c853" />
-                </svg>
-              </div>
-              <span className="font-headline-md text-headline-md text-primary-container tracking-tight font-bold">
-                {t("navbar.brandName")}
-              </span>
-            </Link>
+            <MedRouteLogo size="sm" clickable={true} />
 
             {/* City Selector Pill */}
             <Link

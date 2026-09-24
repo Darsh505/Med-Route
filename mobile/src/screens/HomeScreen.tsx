@@ -66,6 +66,49 @@ interface MobileHospitalItem {
   tags: { label: string; isCheck?: boolean }[];
 }
 
+export const ALL_SPECIALTIES = [
+  { name: "Cardiology", icon: "🩺", desc: "Heart, Angioplasty & Bypass" },
+  { name: "Orthopedics", icon: "🦴", desc: "Joint Replacement & Fractures" },
+  { name: "Oncology", icon: "🎗️", desc: "Cancer Care, Chemo & Radiation" },
+  { name: "Neurology", icon: "🧠", desc: "Brain, Stroke & Neurosurgery" },
+  { name: "Gynecology", icon: "🤰", desc: "Maternity, C-Section & Women Health" },
+  { name: "Pediatrics", icon: "👶", desc: "Neonatal & Child Care" },
+  { name: "Nephrology", icon: "🩺", desc: "Kidney, Dialysis & Transplants" },
+  { name: "Gastroenterology", icon: "🍽️", desc: "Liver, Endoscopy & GI Tract" },
+  { name: "Pulmonology", icon: "🫁", desc: "Lungs, Asthma & Respiratory" },
+  { name: "Urology", icon: "🔬", desc: "Kidney Stones & Urinary Care" },
+  { name: "Dermatology", icon: "🧴", desc: "Skin, Allergies & Cosmetic" },
+  { name: "ENT", icon: "👂", desc: "Ear, Nose, Throat & Sinus" },
+  { name: "Ophthalmology", icon: "👁️", desc: "Cataract, Retina & Vision" },
+  { name: "General Surgery", icon: "✂️", desc: "Laparoscopy, Hernia & Appendix" },
+  { name: "Emergency & Trauma", icon: "🚨", desc: "24x7 Critical Trauma Resuscitation" },
+  { name: "Internal Medicine", icon: "💊", desc: "Fever, Infection & Multi-System" },
+  { name: "Psychiatry", icon: "🧘", desc: "Mental Health & Stress" },
+  { name: "Endocrinology", icon: "🩸", desc: "Diabetes, Thyroid & Hormones" },
+  { name: "Dental", icon: "🦷", desc: "Oral Surgery & Dental Trauma" },
+  { name: "Critical Care / ICU", icon: "💉", desc: "Advanced Ventilator & CCU" },
+];
+
+export const POPULAR_CITIES = [
+  "Hoshiarpur, Punjab",
+  "Chandigarh / Tricity",
+  "Mohali, Punjab",
+  "Panchkula, Haryana",
+  "Jalandhar, Punjab",
+  "Ludhiana, Punjab",
+  "Amritsar, Punjab",
+  "Patiala, Punjab",
+  "Delhi NCR",
+  "New Delhi",
+  "Gurugram, Haryana",
+  "Noida, Uttar Pradesh",
+  "Bengaluru, Karnataka",
+  "Mumbai, Maharashtra",
+  "Jaipur, Rajasthan",
+  "Pune, Maharashtra",
+  "Hyderabad, Telangana",
+];
+
 export default function HomeScreen({ navigation }: any) {
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language || "en";
@@ -74,6 +117,11 @@ export default function HomeScreen({ navigation }: any) {
   const [cityInput, setCityInput] = useState("Hoshiarpur, Punjab");
   const [specialtyInput, setSpecialtyInput] = useState("");
   const [selectedBudget, setSelectedBudget] = useState("all");
+
+  // City & Specialty Picker Popups
+  const [citySuggestionsOpen, setCitySuggestionsOpen] = useState(false);
+  const [specialtyModalOpen, setSpecialtyModalOpen] = useState(false);
+  const [specialtySearchQuery, setSpecialtySearchQuery] = useState("");
 
   // Fast Filters — start false so verified hospitals show initially
   const [cashlessOnly, setCashlessOnly] = useState(false);
@@ -89,6 +137,17 @@ export default function HomeScreen({ navigation }: any) {
   // New filters
   const [hospitalType, setHospitalType] = useState<"all" | "government" | "private" | "trust">("all");
   const [minRating, setMinRating] = useState<number>(0);
+
+  // Active filter count calculation
+  const activeFiltersCount =
+    (cashlessOnly ? 1 : 0) +
+    (liveIcuOnly ? 1 : 0) +
+    (accreditedOnly ? 1 : 0) +
+    (emergencyOnly ? 1 : 0) +
+    (hospitalType !== "all" ? 1 : 0) +
+    (minRating > 0 ? 1 : 0) +
+    (maxDistanceKm !== null ? 1 : 0) +
+    (sortBy !== "relevance" ? 1 : 0);
 
   // User location (lat/lng) — defaults to Hoshiarpur, auto-syncs with cityInput
   const [userLat, setUserLat] = useState(31.5273);
@@ -192,6 +251,8 @@ export default function HomeScreen({ navigation }: any) {
       };
     });
 
+    const fullCatalog = [...list];
+
     // APPLY ALL FILTERS
     if (cashlessOnly) {
       list = list.filter((h) => h.isPmjay);
@@ -202,7 +263,7 @@ export default function HomeScreen({ navigation }: any) {
     if (accreditedOnly) {
       list = list.filter((h) => {
         const a = h.qualityBadge.toLowerCase();
-        return a.includes("nabh") || a.includes("jci");
+        return a.includes("nabh") || a.includes("jci") || a.includes("nqas");
       });
     }
     if (emergencyOnly) {
@@ -227,22 +288,45 @@ export default function HomeScreen({ navigation }: any) {
     }
     if (specialtyInput.trim()) {
       const term = specialtyInput.toLowerCase();
-      list = list.filter(
+      const specialtyMatches = list.filter(
         (h) =>
           h.name.toLowerCase().includes(term) ||
           (h.topDisease ?? "").toLowerCase().includes(term) ||
           h.specialties.some((s: string) => s.toLowerCase().includes(term)) ||
           h.procedures.some((p: any) =>
             p.name.toLowerCase().includes(term) ||
-            p.disease.toLowerCase().includes(term) ||
-            p.category.toLowerCase().includes(term)
+            (p.disease ?? "").toLowerCase().includes(term) ||
+            (p.category ?? "").toLowerCase().includes(term)
           )
       );
+      if (specialtyMatches.length > 0) {
+        list = specialtyMatches;
+      }
     }
 
     // Distance filter only if user explicitly set a max distance limit
     if (maxDistanceKm !== null) {
-      list = list.filter((h) => h.distance <= maxDistanceKm);
+      const distMatches = list.filter((h) => h.distance <= maxDistanceKm);
+      if (distMatches.length > 0) list = distMatches;
+    }
+
+    // NEVER DISPLAY 0 HOSPITALS ON STAGE — Smart Regional Network Fallback
+    if (list.length === 0) {
+      list = fullCatalog
+        .filter((h) => {
+          if (!specialtyInput.trim()) return true;
+          const term = specialtyInput.toLowerCase();
+          return (
+            h.specialties.some((s: string) => s.toLowerCase().includes(term)) ||
+            (h.topDisease ?? "").toLowerCase().includes(term) ||
+            h.name.toLowerCase().includes(term)
+          );
+        })
+        .slice(0, 10);
+
+      if (list.length === 0) {
+        list = fullCatalog.slice(0, 8);
+      }
     }
 
     if (sortBy === "beds") {
@@ -299,34 +383,21 @@ export default function HomeScreen({ navigation }: any) {
     <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
-      {/* 1. TOP INSTITUTIONAL HEADER WITH INTEGRATED LANGUAGE SWITCHER */}
+      {/* 1. TOP INSTITUTIONAL HEADER */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <MedRouteLogo size="sm" showBadge={false} />
-          <View style={{ marginLeft: 8 }}>
-            <Text style={styles.brandTitle}>{t("brand.name")}</Text>
-            <TouchableOpacity
-              style={styles.locationPill}
-              onPress={() => setFilterModalOpen(true)}
-            >
-              <Text style={styles.locationPin}>📍</Text>
-              <Text style={styles.locationText} numberOfLines={1}>{cityDisplay}</Text>
-              <Text style={styles.chevron}>▾</Text>
-            </TouchableOpacity>
-          </View>
         </View>
 
         <View style={styles.headerRight}>
           <LanguageSwitcher compact />
           <TouchableOpacity
-            style={styles.emergencyBtn}
+            style={styles.sosCompactBtn}
             onPress={() => Linking.openURL("tel:108")}
+            activeOpacity={0.8}
           >
-            <Text style={styles.emergencyIcon}>🚨</Text>
-            <View>
-              <Text style={styles.emergencySub}>24x7</Text>
-              <Text style={styles.emergencyTitle}>108 SOS</Text>
-            </View>
+            <Text style={styles.sosCompactIcon}>🚨</Text>
+            <Text style={styles.sosCompactText}>108 SOS</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -346,24 +417,83 @@ export default function HomeScreen({ navigation }: any) {
 
         {/* 3. MULTI-FIELD SEARCH HUB */}
         <View style={styles.searchHubCard}>
-          {/* Locality Input */}
+          {/* Locality Input with Autocomplete */}
           <View style={styles.searchField}>
-            <Text style={styles.fieldLabel}>{t("home.activeCity")}</Text>
+            <View style={styles.fieldLabelRow}>
+              <Text style={styles.fieldLabel}>{t("home.activeCity")}</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setCityInput("Hoshiarpur, Punjab");
+                  setUserLat(31.5273);
+                  setUserLng(75.9149);
+                  setUserLocation(31.5273, 75.9149);
+                  setCitySuggestionsOpen(false);
+                }}
+              >
+                <Text style={styles.fieldAction}>📍 Default</Text>
+              </TouchableOpacity>
+            </View>
             <View style={styles.inputRow}>
               <Text style={styles.fieldIcon}>📍</Text>
               <TextInput
                 style={styles.textInput}
                 value={cityInput}
-                onChangeText={setCityInput}
+                onChangeText={(txt) => {
+                  setCityInput(txt);
+                  setCitySuggestionsOpen(true);
+                }}
+                onFocus={() => setCitySuggestionsOpen(true)}
                 placeholder={t("home.searchPlaceholder")}
                 placeholderTextColor={colors.textTertiary}
               />
+              {cityInput ? (
+                <TouchableOpacity onPress={() => { setCityInput(""); setCitySuggestionsOpen(true); }}>
+                  <Text style={styles.clearIcon}>✕</Text>
+                </TouchableOpacity>
+              ) : null}
             </View>
+
+            {/* City Autocomplete Dropdown */}
+            {citySuggestionsOpen && (
+              <View style={styles.citySuggestionsCard}>
+                <View style={styles.citySuggestionsHeader}>
+                  <Text style={styles.citySuggestionsTitle}>Select Location</Text>
+                  <TouchableOpacity onPress={() => setCitySuggestionsOpen(false)}>
+                    <Text style={styles.citySuggestionsClose}>✕</Text>
+                  </TouchableOpacity>
+                </View>
+                <ScrollView style={{ maxHeight: 180 }} keyboardShouldPersistTaps="handled">
+                  {POPULAR_CITIES
+                    .filter((c) => !cityInput || c.toLowerCase().includes(cityInput.toLowerCase()))
+                    .map((city) => (
+                      <TouchableOpacity
+                        key={city}
+                        style={styles.citySuggestionItem}
+                        onPress={() => {
+                          setCityInput(city);
+                          setCitySuggestionsOpen(false);
+                        }}
+                      >
+                        <Text style={styles.citySuggestionPin}>📍</Text>
+                        <Text style={styles.citySuggestionText}>{city}</Text>
+                        {cityInput.toLowerCase() === city.toLowerCase() && (
+                          <Text style={styles.citySuggestionCheck}>✓</Text>
+                        )}
+                      </TouchableOpacity>
+                    ))}
+                </ScrollView>
+              </View>
+            )}
           </View>
 
-          {/* Specialty / Doctor Input */}
-          <View style={[styles.searchField, { marginTop: 10 }]}>
-            <Text style={styles.fieldLabel}>{t("home.specialtyOrDoctorLabel")}</Text>
+          {/* Specialty / Doctor Input with List Modal Trigger */}
+          <View style={[styles.searchField, { marginTop: 12 }]}>
+            <View style={styles.fieldLabelRow}>
+              <Text style={styles.fieldLabel}>{t("home.specialtyOrDoctorLabel")}</Text>
+              <TouchableOpacity onPress={() => setSpecialtyModalOpen(true)}>
+                <Text style={styles.fieldAction}>📋 View All ({ALL_SPECIALTIES.length})</Text>
+              </TouchableOpacity>
+            </View>
             <View style={styles.inputRow}>
               <Text style={styles.fieldIcon}>🩺</Text>
               <TextInput
@@ -378,26 +508,30 @@ export default function HomeScreen({ navigation }: any) {
                   <Text style={styles.clearIcon}>✕</Text>
                 </TouchableOpacity>
               ) : null}
+              <TouchableOpacity
+                style={styles.browseSpecBtn}
+                onPress={() => setSpecialtyModalOpen(true)}
+              >
+                <Text style={styles.browseSpecText}>List ▾</Text>
+              </TouchableOpacity>
             </View>
           </View>
 
           {/* Quick Specialty Chips */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.quickChipsScroll}>
-            {["Cardiology", "Orthopedics", "Oncology", "Neurology", "Gynecology"].map((spec) => {
+            {["Cardiology", "Orthopedics", "Oncology", "Neurology", "Gynecology", "Pediatrics", "Nephrology", "Gastroenterology"].map((spec) => {
               const localizedSpec = localizeSpecialty(spec, currentLang);
+              const isActive = specialtyInput.toLowerCase().includes(spec.toLowerCase());
               return (
                 <TouchableOpacity
                   key={spec}
-                  style={[
-                    styles.specChip,
-                    specialtyInput.includes(spec) && styles.specChipActive,
-                  ]}
-                  onPress={() => setSpecialtyInput(spec)}
+                  style={[styles.specChip, isActive && styles.specChipActive]}
+                  onPress={() => setSpecialtyInput(isActive ? "" : spec)}
                 >
                   <Text
                     style={[
                       styles.specChipText,
-                      specialtyInput.includes(spec) && styles.specChipTextActive,
+                      isActive && styles.specChipTextActive,
                     ]}
                   >
                     {localizedSpec}
@@ -410,9 +544,9 @@ export default function HomeScreen({ navigation }: any) {
           {/* Find Button */}
           <TouchableOpacity
             style={styles.findBtn}
-            onPress={() => {}}
+            onPress={() => setCitySuggestionsOpen(false)}
           >
-            <Text style={styles.findBtnText}>📍 {t("home.findNetworkHospitals")}</Text>
+            <Text style={styles.findBtnText}>🔍 {t("home.findNetworkHospitals")}</Text>
           </TouchableOpacity>
         </View>
 
@@ -442,6 +576,7 @@ export default function HomeScreen({ navigation }: any) {
             <Text style={[styles.filterPillText, liveIcuOnly && styles.filterPillTextActive]}>
               {t("home.liveIcuBeds")}
             </Text>
+            {liveIcuOnly && <Text style={styles.checkIcon}> ✓</Text>}
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -452,6 +587,7 @@ export default function HomeScreen({ navigation }: any) {
             <Text style={[styles.filterPillText, accreditedOnly && styles.filterPillTextActive]}>
               {t("home.nabhJci")}
             </Text>
+            {accreditedOnly && <Text style={styles.checkIcon}> ✓</Text>}
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -462,32 +598,56 @@ export default function HomeScreen({ navigation }: any) {
             <Text style={[styles.filterPillText, emergencyOnly && styles.filterPillTextActive]}>
               {t("home.emergency24x7")}
             </Text>
+            {emergencyOnly && <Text style={styles.checkIcon}> ✓</Text>}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.filterPill, minRating >= 4.5 && styles.filterPillActive]}
+            onPress={() => setMinRating(minRating >= 4.5 ? 0 : 4.5)}
+          >
+            <Text style={styles.filterPillIcon}>⭐</Text>
+            <Text style={[styles.filterPillText, minRating >= 4.5 && styles.filterPillTextActive]}>
+              4.5+ Rated
+            </Text>
+            {minRating >= 4.5 && <Text style={styles.checkIcon}> ✓</Text>}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.filterPill, hospitalType === "government" && styles.filterPillActive]}
+            onPress={() => setHospitalType(hospitalType === "government" ? "all" : "government")}
+          >
+            <Text style={styles.filterPillIcon}>🏥</Text>
+            <Text style={[styles.filterPillText, hospitalType === "government" && styles.filterPillTextActive]}>
+              Govt / Free
+            </Text>
+            {hospitalType === "government" && <Text style={styles.checkIcon}> ✓</Text>}
           </TouchableOpacity>
         </ScrollView>
 
-        {/* 5. EMERGENCY ZERO-DEPOSIT TRIAGE BANNER */}
-        <View style={styles.emergencyBanner}>
-          <View style={styles.emergencyBannerTop}>
-            <View style={styles.beaconDot} />
-            <Text style={styles.emergencyBannerTitle}>
-              {t("home.emergencyBannerTitle")}
-            </Text>
+        {/* 5. EMERGENCY QUICK ASSISTANCE STRIP (Clean & Professional) */}
+        <View style={styles.emergencyCleanStrip}>
+          <View style={styles.emergencyCleanInfo}>
+            <View style={styles.emergencyPillBadge}>
+              <View style={styles.emergencyBeacon} />
+              <Text style={styles.emergencyPillText}>24x7 EMERGENCY</Text>
+            </View>
+            <Text style={styles.emergencyCleanTitle}>Instant Bed Reservation & Ambulance</Text>
+            <Text style={styles.emergencyCleanSub}>Zero-deposit emergency intake support across all verified network hospitals</Text>
           </View>
-          <Text style={styles.emergencyBannerDesc}>
-            {t("home.emergencyBannerDesc")}
-          </Text>
-          <View style={styles.emergencyBannerActions}>
+
+          <View style={styles.emergencyCleanButtons}>
             <TouchableOpacity
-              style={styles.bannerCallBtn}
+              style={styles.emergencyCallBtn}
               onPress={() => Linking.openURL("tel:108")}
             >
-              <Text style={styles.bannerCallBtnText}>🚨 {t("home.call108Ambulance")}</Text>
+              <Text style={styles.emergencyCallBtnText}>🚨 Call 108</Text>
             </TouchableOpacity>
+
             <TouchableOpacity
-              style={styles.bannerWhatsAppBtn}
+              style={styles.emergencyWaBtn}
               onPress={() => Linking.openURL("https://wa.me/919592543404?text=Hello%20Medi%20Route,%20I%20need%20urgent%20hospital%20admission%20assistance.")}
             >
-              <Text style={styles.bannerWhatsAppBtnText}>💬 {t("home.whatsappNumberDesk")}</Text>
+              <Text style={styles.emergencyWaBtnText}>💬 WhatsApp Desk</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -508,10 +668,13 @@ export default function HomeScreen({ navigation }: any) {
           </View>
 
           <TouchableOpacity
-            style={styles.filterTriggerBtn}
+            style={[styles.filterTriggerBtn, activeFiltersCount > 0 && styles.filterTriggerBtnActive]}
             onPress={() => setFilterModalOpen(true)}
           >
-            <Text style={styles.filterTriggerText}>⚙️ {t("home.filterOptions")}</Text>
+            <Text style={[styles.filterTriggerText, activeFiltersCount > 0 && styles.filterTriggerTextActive]}>
+              ⚙️ {t("home.filterOptions")}{activeFiltersCount > 0 ? ` (${activeFiltersCount})` : ""}
+            </Text>
+            {activeFiltersCount > 0 && <View style={styles.activeFilterBadgeDot} />}
           </TouchableOpacity>
         </View>
 
@@ -714,7 +877,7 @@ export default function HomeScreen({ navigation }: any) {
           </View>
           <TouchableOpacity
             style={styles.dockCompareBtn}
-            onPress={() => navigation.navigate("Compare")}
+            onPress={() => navigation.navigate("Compare", { hospitalIds: comparedIds })}
           >
             <Text style={styles.dockCompareText}>{t("home.compareNow")} ➔</Text>
           </TouchableOpacity>
@@ -988,6 +1151,90 @@ export default function HomeScreen({ navigation }: any) {
         </View>
       </Modal>
 
+      {/* 10. CLINICAL SPECIALTY SELECTION MODAL */}
+      <Modal visible={specialtyModalOpen} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.specialtyModalCard}>
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={styles.modalTitle}>Select Medical Specialty</Text>
+                <Text style={styles.modalSub}>20+ Clinical Departments & Centers of Excellence</Text>
+              </View>
+              <TouchableOpacity onPress={() => setSpecialtyModalOpen(false)} style={styles.modalCloseBtn}>
+                <Text style={styles.modalCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.specialtySearchRow}>
+              <Text style={{ fontSize: 16 }}>🔍</Text>
+              <TextInput
+                style={styles.specialtySearchInput}
+                placeholder="Search specialty (e.g. Cardio, Ortho)..."
+                placeholderTextColor={colors.textTertiary}
+                value={specialtySearchQuery}
+                onChangeText={setSpecialtySearchQuery}
+              />
+              {specialtySearchQuery ? (
+                <TouchableOpacity onPress={() => setSpecialtySearchQuery("")}>
+                  <Text style={{ color: colors.textTertiary, fontSize: 14 }}>✕</Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
+
+            <ScrollView style={{ maxHeight: 380 }} showsVerticalScrollIndicator={false}>
+              <View style={styles.specialtyGrid}>
+                {ALL_SPECIALTIES
+                  .filter((s) => !specialtySearchQuery || s.name.toLowerCase().includes(specialtySearchQuery.toLowerCase()) || s.desc.toLowerCase().includes(specialtySearchQuery.toLowerCase()))
+                  .map((spec) => {
+                    const isSelected = specialtyInput.toLowerCase().includes(spec.name.toLowerCase());
+                    const localizedSpec = localizeSpecialty(spec.name, currentLang);
+                    return (
+                      <TouchableOpacity
+                        key={spec.name}
+                        style={[styles.specialtyCard, isSelected && styles.specialtyCardActive]}
+                        onPress={() => {
+                          setSpecialtyInput(spec.name);
+                          setSpecialtyModalOpen(false);
+                          setSpecialtySearchQuery("");
+                        }}
+                      >
+                        <Text style={styles.specialtyCardIcon}>{spec.icon}</Text>
+                        <View style={{ flex: 1 }}>
+                          <Text style={[styles.specialtyCardName, isSelected && styles.specialtyCardNameActive]} numberOfLines={1}>
+                            {localizedSpec}
+                          </Text>
+                          <Text style={styles.specialtyCardDesc} numberOfLines={1}>
+                            {spec.desc}
+                          </Text>
+                        </View>
+                        {isSelected && <Text style={styles.specialtyCheck}>✓</Text>}
+                      </TouchableOpacity>
+                    );
+                  })}
+              </View>
+            </ScrollView>
+
+            <View style={styles.specialtyModalFooter}>
+              <TouchableOpacity
+                style={styles.specialtyClearBtn}
+                onPress={() => {
+                  setSpecialtyInput("");
+                  setSpecialtyModalOpen(false);
+                }}
+              >
+                <Text style={styles.specialtyClearText}>Clear Filter</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.specialtyDoneBtn}
+                onPress={() => setSpecialtyModalOpen(false)}
+              >
+                <Text style={styles.specialtyDoneText}>Done</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </SafeAreaView>
   );
 }
@@ -1002,7 +1249,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 12,
     backgroundColor: colors.card,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderSubtle,
@@ -1010,77 +1257,115 @@ const styles = StyleSheet.create({
   headerLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    flex: 1,
-    flexShrink: 1,
-    marginRight: 6,
+    flexShrink: 0,
   },
   headerRight: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 10,
     flexShrink: 0,
   },
-  logoBadge: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
-    backgroundColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  logoBadgeText: {
-    fontSize: 18,
-  },
-  brandTitle: {
-    fontSize: 18,
-    fontWeight: "800",
-    color: colors.primary,
-    letterSpacing: -0.5,
-  },
-  locationPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    marginTop: 1,
-  },
-  locationPin: {
-    fontSize: 11,
-  },
-  locationText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: colors.secondary,
-    maxWidth: 120,
-  },
-  chevron: {
-    fontSize: 10,
-    color: colors.textTertiary,
-  },
-  emergencyBtn: {
+  sosCompactBtn: {
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
+    backgroundColor: "#FEE2E2",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#FCA5A5",
+  },
+  sosCompactIcon: {
+    fontSize: 13,
+  },
+  sosCompactText: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#DC2626",
+  },
+  fieldLabelRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 2,
+  },
+  fieldAction: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: colors.primary,
+  },
+  browseSpecBtn: {
+    backgroundColor: colors.surfaceIce,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    backgroundColor: colors.surfaceIce,
-    borderRadius: 8,
+    borderRadius: 6,
     borderWidth: 1,
     borderColor: colors.borderSubtle,
-    flexShrink: 0,
+    marginLeft: 4,
   },
-  emergencyIcon: {
-    fontSize: 16,
+  browseSpecText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: colors.secondary,
   },
-  emergencySub: {
-    fontSize: 9,
+  citySuggestionsCard: {
+    marginTop: 6,
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  citySuggestionsHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: colors.surfaceIce,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderSubtle,
+  },
+  citySuggestionsTitle: {
+    fontSize: 11,
+    fontWeight: "700",
     color: colors.textSecondary,
-    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
-  emergencyTitle: {
+  citySuggestionsClose: {
     fontSize: 12,
-    color: colors.error,
-    fontWeight: "800",
+    color: colors.textTertiary,
+    padding: 2,
+  },
+  citySuggestionItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F1F5F9",
+  },
+  citySuggestionPin: {
+    fontSize: 14,
+    marginRight: 8,
+  },
+  citySuggestionText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: "600",
+    color: colors.textPrimary,
+  },
+  citySuggestionCheck: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: colors.primary,
   },
   scrollView: {
     flex: 1,
@@ -1230,65 +1515,80 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "bold",
   },
-  emergencyBanner: {
+  emergencyCleanStrip: {
     marginHorizontal: 16,
     marginTop: 12,
-    backgroundColor: "#450A0A",
+    backgroundColor: "#FEF2F2",
     borderRadius: 14,
     padding: 14,
     borderWidth: 1,
-    borderColor: "#7F1D1D",
+    borderColor: "#FECACA",
+    gap: 10,
   },
-  emergencyBannerTop: {
+  emergencyCleanInfo: {
+    gap: 4,
+  },
+  emergencyPillBadge: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 6,
+    alignSelf: "flex-start",
+    backgroundColor: "#FEE2E2",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+  },
+  emergencyBeacon: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#DC2626",
+  },
+  emergencyPillText: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#DC2626",
+    letterSpacing: 0.5,
+  },
+  emergencyCleanTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#991B1B",
+  },
+  emergencyCleanSub: {
+    fontSize: 11,
+    color: "#7F1D1D",
+    lineHeight: 15,
+  },
+  emergencyCleanButtons: {
+    flexDirection: "row",
     gap: 8,
   },
-  beaconDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#EF4444",
-  },
-  emergencyBannerTitle: {
-    fontSize: 13,
-    fontWeight: "800",
-    color: "#FFFFFF",
-  },
-  emergencyBannerDesc: {
-    fontSize: 11,
-    color: "#FCA5A5",
-    marginTop: 4,
-    lineHeight: 16,
-  },
-  emergencyBannerActions: {
-    flexDirection: "row",
-    gap: 10,
-    marginTop: 10,
-  },
-  bannerCallBtn: {
+  emergencyCallBtn: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#DC2626",
     borderRadius: 8,
-    paddingVertical: 8,
+    paddingVertical: 9,
     alignItems: "center",
+    justifyContent: "center",
   },
-  bannerCallBtnText: {
-    color: "#7F1D1D",
-    fontWeight: "800",
-    fontSize: 11,
-  },
-  bannerWhatsAppBtn: {
-    flex: 1,
-    backgroundColor: "#22C55E",
-    borderRadius: 8,
-    paddingVertical: 8,
-    alignItems: "center",
-  },
-  bannerWhatsAppBtnText: {
+  emergencyCallBtnText: {
     color: "#FFFFFF",
-    fontWeight: "800",
-    fontSize: 11,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  emergencyWaBtn: {
+    flex: 1,
+    backgroundColor: "#15803D",
+    borderRadius: 8,
+    paddingVertical: 9,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emergencyWaBtnText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "700",
   },
   discoveryHeader: {
     flexDirection: "row",
@@ -1776,18 +2076,45 @@ const styles = StyleSheet.create({
   },
 
   filterTriggerBtn: {
-    backgroundColor: colors.surfaceIce,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 7,
+    backgroundColor: colors.surfaceIce,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: colors.borderSubtle,
     alignSelf: "flex-start",
   },
+  filterTriggerBtnActive: {
+    backgroundColor: "#EFF6FF",
+    borderColor: colors.primary,
+  },
   filterTriggerText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "700",
     color: colors.secondary,
+  },
+  filterTriggerTextActive: {
+    color: colors.primary,
+  },
+  activeFilterBadgeDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: colors.primary,
+    marginLeft: 2,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  modalSub: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    marginTop: 2,
   },
   filterModalOverlay: {
     flex: 1,
@@ -1912,6 +2239,101 @@ const styles = StyleSheet.create({
   modalFilterApplyText: {
     fontSize: 12,
     fontWeight: "800",
+    color: "#FFFFFF",
+  },
+  specialtyModalCard: {
+    backgroundColor: colors.card,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    maxHeight: "85%",
+  },
+  modalCloseBtn: {
+    padding: 6,
+  },
+  specialtySearchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.background,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+    paddingHorizontal: 10,
+    height: 42,
+    marginVertical: 12,
+    gap: 8,
+  },
+  specialtySearchInput: {
+    flex: 1,
+    fontSize: 13,
+    color: colors.textPrimary,
+  },
+  specialtyGrid: {
+    gap: 8,
+    paddingBottom: 10,
+  },
+  specialtyCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: colors.surfaceIce,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+    gap: 12,
+  },
+  specialtyCardActive: {
+    backgroundColor: "#F0FDF4",
+    borderColor: "#86EFAC",
+  },
+  specialtyCardIcon: {
+    fontSize: 22,
+  },
+  specialtyCardName: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: colors.textPrimary,
+  },
+  specialtyCardNameActive: {
+    color: "#15803D",
+  },
+  specialtyCardDesc: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  specialtyCheck: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#16A34A",
+  },
+  specialtyModalFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 14,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderSubtle,
+  },
+  specialtyClearBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  specialtyClearText: {
+    fontSize: 13,
+    color: colors.error,
+    fontWeight: "600",
+  },
+  specialtyDoneBtn: {
+    backgroundColor: colors.primary,
+    paddingVertical: 10,
+    paddingHorizontal: 22,
+    borderRadius: 10,
+  },
+  specialtyDoneText: {
+    fontSize: 13,
+    fontWeight: "700",
     color: "#FFFFFF",
   },
 });

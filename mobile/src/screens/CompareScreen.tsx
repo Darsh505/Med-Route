@@ -16,12 +16,14 @@ import {
   Share,
   Modal,
   Linking,
+  TextInput,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { colors } from "../theme/colors";
 import MedRouteLogo from "../components/MedRouteLogo";
 import LanguageSwitcher from "../components/LanguageSwitcher";
+import { MOCK_HOSPITALS } from "../services/api";
 import { localizeHospital, localizeHospitalName, localizeAddress, localizeAccreditation, localizeTurnaround, localizeTariff } from "../i18n/hospitalLocalization";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -162,6 +164,50 @@ const ALL_COMPARE_HOSPITALS: CompareHospital[] = [
   },
 ];
 
+export const MAPPED_ALL_COMPARE: CompareHospital[] = (() => {
+  const existingMap = new Map<string, CompareHospital>();
+  for (const h of ALL_COMPARE_HOSPITALS) {
+    existingMap.set(h.id, h);
+  }
+
+  for (const h of MOCK_HOSPITALS) {
+    const key = h.id || h.slug;
+    if (!existingMap.has(key)) {
+      const isPmjay = h.is_pmjay_empanelled ?? true;
+      const isGovt = (h.type ?? "").toLowerCase() === "government";
+      const nameParts = h.name.split(" ");
+      const shortName = nameParts.slice(0, 2).join(" ");
+      const dist = h.distance_km ?? 3.5;
+      const etaMins = Math.max(5, Math.round(dist * 2.5));
+
+      existingMap.set(key, {
+        id: key,
+        name: h.name,
+        shortName: shortName,
+        location: h.address || `${h.city}, ${h.state}`,
+        distance: `${dist} km`,
+        eta: `${etaMins}m ETA`,
+        rating: h.overall_rating || (isGovt ? 4.7 : 4.6),
+        imageUrl: (h as any).image_url || (h as any).imageUrl || "https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?w=400&q=80",
+        cashlessEligibility: isPmjay ? "100% Cashless (PMJAY)" : "TPA Empanelled",
+        approvalTurnaround: isGovt ? "15 mins" : "25 mins",
+        turnaroundMinutes: isGovt ? 15 : 25,
+        upfrontDeposit: isPmjay ? "₹0 Waived" : "₹0 Emergency Intake",
+        icuBeds: `${h.beds_icu || 36} Beds`,
+        openIcus: `${h.beds_icu_available ?? 8} Open ICUs`,
+        deluxeTariff: isGovt ? "Subsidized Ward" : (h.cost_indicative || "₹5,200 / day"),
+        accreditations: [h.accreditation || "NABH Accredited", isGovt ? "Apex Tertiary" : "Level 1 Trauma"],
+        patientsTreated: `${(h.total_patients_treated || 24000).toLocaleString()} / yr`,
+        successRatio: h.overall_success_ratio || "98.2% Success",
+        procedureTariff: isGovt ? "100% Free (PMJAY)" : (h.cost_indicative || "₹95,000 (or ₹0 PMJAY)"),
+        phone: h.phone || h.emergency_phone || "108",
+      });
+    }
+  }
+
+  return Array.from(existingMap.values());
+})();
+
 function localizeCompareHospital(h: CompareHospital, lang: string): CompareHospital {
   if (lang === "en") return h;
   const isHi = lang === "hi";
@@ -217,12 +263,27 @@ function localizeCompareHospital(h: CompareHospital, lang: string): CompareHospi
 export default function CompareScreen({ navigation, route }: any) {
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language || "en";
-  const [hosp1Id, setHosp1Id] = useState<string>("pgimer-chandigarh");
-  const [hosp2Id, setHosp2Id] = useState<string>("max-mohali");
-  const [pickerModalSlot, setPickerModalSlot] = useState<1 | 2 | null>(null);
 
-  const rawHosp1 = ALL_COMPARE_HOSPITALS.find((h) => h.id === hosp1Id) || ALL_COMPARE_HOSPITALS[0];
-  const rawHosp2 = ALL_COMPARE_HOSPITALS.find((h) => h.id === hosp2Id) || ALL_COMPARE_HOSPITALS[1];
+  const paramIds = route?.params?.hospitalIds;
+  const initialHosp1 = paramIds?.[0] || "civil-hoshiarpur";
+  const initialHosp2 = paramIds?.[1] || "ivy-hoshiarpur";
+
+  const [hosp1Id, setHosp1Id] = useState<string>(initialHosp1);
+  const [hosp2Id, setHosp2Id] = useState<string>(initialHosp2);
+  const [pickerModalSlot, setPickerModalSlot] = useState<1 | 2 | null>(null);
+  const [pickerSearch, setPickerSearch] = useState<string>("");
+
+  React.useEffect(() => {
+    if (paramIds && paramIds.length > 0) {
+      setHosp1Id(paramIds[0]);
+      if (paramIds.length > 1) {
+        setHosp2Id(paramIds[1]);
+      }
+    }
+  }, [paramIds]);
+
+  const rawHosp1 = MAPPED_ALL_COMPARE.find((h) => h.id === hosp1Id) || MAPPED_ALL_COMPARE[0];
+  const rawHosp2 = MAPPED_ALL_COMPARE.find((h) => h.id === hosp2Id) || MAPPED_ALL_COMPARE[1];
 
   const hosp1 = localizeCompareHospital(rawHosp1, currentLang);
   const hosp2 = localizeCompareHospital(rawHosp2, currentLang);
@@ -458,36 +519,64 @@ export default function CompareScreen({ navigation, route }: any) {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{t("compare.selectHospital", { slot: pickerModalSlot })}</Text>
-              <TouchableOpacity onPress={() => setPickerModalSlot(null)} style={{ padding: 4 }}>
+              <View>
+                <Text style={styles.modalTitle}>{t("compare.selectHospital", { slot: pickerModalSlot })}</Text>
+                <Text style={styles.modalSubTitle}>Choose from {MAPPED_ALL_COMPARE.length} accredited facilities</Text>
+              </View>
+              <TouchableOpacity onPress={() => { setPickerModalSlot(null); setPickerSearch(""); }} style={{ padding: 6 }}>
                 <Text style={styles.modalCloseText}>✕</Text>
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={{ maxHeight: 400 }}>
-              {ALL_COMPARE_HOSPITALS.map((rawH) => {
-                const h = localizeCompareHospital(rawH, currentLang);
-                const isSelected = (pickerModalSlot === 1 && h.id === hosp1Id) || (pickerModalSlot === 2 && h.id === hosp2Id);
-                return (
-                  <TouchableOpacity
-                    key={h.id}
-                    style={[styles.modalItem, isSelected && styles.modalItemSelected]}
-                    onPress={() => {
-                      if (pickerModalSlot === 1) setHosp1Id(h.id);
-                      if (pickerModalSlot === 2) setHosp2Id(h.id);
-                      setPickerModalSlot(null);
-                    }}
-                  >
-                    <Image source={{ uri: h.imageUrl }} style={styles.modalItemImg} />
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.modalItemName}>{h.name}</Text>
-                      <Text style={styles.modalItemLoc}>{h.location} • ★ {h.rating}</Text>
-                      <Text style={styles.modalItemIcu}>● {h.openIcus}</Text>
-                    </View>
-                    {isSelected && <Text style={styles.modalItemCheck}>✓</Text>}
-                  </TouchableOpacity>
-                );
-              })}
+            {/* Search Bar in Picker */}
+            <View style={styles.pickerSearchRow}>
+              <Text style={{ fontSize: 16 }}>🔍</Text>
+              <TextInput
+                style={styles.pickerSearchInput}
+                placeholder="Search hospital or city (e.g. Max, Fortis, Delhi, Mohali)..."
+                placeholderTextColor={colors.textTertiary}
+                value={pickerSearch}
+                onChangeText={setPickerSearch}
+              />
+              {pickerSearch ? (
+                <TouchableOpacity onPress={() => setPickerSearch("")}>
+                  <Text style={{ color: colors.textTertiary, fontSize: 14 }}>✕</Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
+
+            <ScrollView style={{ maxHeight: 420 }} keyboardShouldPersistTaps="handled">
+              {MAPPED_ALL_COMPARE
+                .filter((rawH) => {
+                  if (!pickerSearch.trim()) return true;
+                  const q = pickerSearch.toLowerCase();
+                  return rawH.name.toLowerCase().includes(q) || rawH.location.toLowerCase().includes(q);
+                })
+                .slice(0, 60)
+                .map((rawH) => {
+                  const h = localizeCompareHospital(rawH, currentLang);
+                  const isSelected = (pickerModalSlot === 1 && h.id === hosp1Id) || (pickerModalSlot === 2 && h.id === hosp2Id);
+                  return (
+                    <TouchableOpacity
+                      key={h.id}
+                      style={[styles.modalItem, isSelected && styles.modalItemSelected]}
+                      onPress={() => {
+                        if (pickerModalSlot === 1) setHosp1Id(h.id);
+                        if (pickerModalSlot === 2) setHosp2Id(h.id);
+                        setPickerModalSlot(null);
+                        setPickerSearch("");
+                      }}
+                    >
+                      <Image source={{ uri: h.imageUrl }} style={styles.modalItemImg} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.modalItemName}>{h.name}</Text>
+                        <Text style={styles.modalItemLoc}>{h.location} • ★ {h.rating}</Text>
+                        <Text style={styles.modalItemIcu}>● {h.openIcus}</Text>
+                      </View>
+                      {isSelected && <Text style={styles.modalItemCheck}>✓</Text>}
+                    </TouchableOpacity>
+                  );
+                })}
             </ScrollView>
           </View>
         </View>
@@ -727,6 +816,28 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "800",
     color: colors.onSurface,
+  },
+  modalSubTitle: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    marginTop: 1,
+  },
+  pickerSearchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.surfaceIce,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+    paddingHorizontal: 10,
+    height: 40,
+    marginBottom: 12,
+    gap: 8,
+  },
+  pickerSearchInput: {
+    flex: 1,
+    fontSize: 13,
+    color: colors.textPrimary,
   },
   modalCloseText: {
     fontSize: 18,

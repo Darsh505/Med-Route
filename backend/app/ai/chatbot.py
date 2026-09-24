@@ -578,7 +578,7 @@ class ClinicalChatbot:
                 full_prompt,
                 generation_config={"temperature": 0.2, "max_output_tokens": 1000},
             ),
-            timeout=4.0,
+            timeout=12.0,
         )
 
         raw = response.text.strip()

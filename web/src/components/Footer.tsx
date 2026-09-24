@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import MedRouteLogo from "@/components/MedRouteLogo";
 
 export default function Footer() {
   const t = useTranslations();
@@ -13,14 +14,7 @@ export default function Footer() {
           
           {/* Col 1 & 2: Institutional Brand & Accreditations */}
           <div className="lg:col-span-2 flex flex-col gap-space-sm">
-            <div className="flex items-center gap-space-sm">
-              <div className="w-9 h-9 rounded-xl bg-primary-container flex items-center justify-center text-on-primary shadow-sm">
-                <span className="material-symbols-outlined text-[22px]">local_hospital</span>
-              </div>
-              <span className="font-headline-md text-headline-md text-primary-container tracking-tight font-bold">
-                {t("navbar.brandName")}
-              </span>
-            </div>
+            <MedRouteLogo size="md" clickable={true} />
             
             <p className="font-body-sm text-body-sm text-on-surface-variant max-w-sm leading-relaxed">
               {t("footer.brandDescription")}

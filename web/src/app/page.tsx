@@ -634,7 +634,7 @@ export default function HomePage() {
 
                     {/* Quick Specialty Chips Row */}
                     <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 no-scrollbar mt-space-xs">
-                      {["Cardiology", "Orthopedics", "Oncology", "Neurology", "Gynecology", "Gastro"].map((spec) => (
+                      {["Cardiology", "Orthopedics", "Oncology", "Neurology", "Gynecology", "Nephrology", "Pediatrics", "Urology"].map((spec) => (
                         <button
                           key={spec}
                           className={`px-space-sm py-1 rounded-full text-label-sm font-semibold whitespace-nowrap transition-colors border border-border-subtle/50 flex items-center gap-1 ${
@@ -650,71 +650,86 @@ export default function HomePage() {
                       ))}
                     </div>
 
-                    {/* Specialty Selection Popover */}
+                    {/* Specialty Selection Popover with Outside Click Backdrop */}
                     {specialtyPopoverOpen && (
-                      <div className="absolute top-full left-0 w-full md:w-[480px] z-50 mt-1 bg-surface-card rounded-2xl shadow-xl border border-border-subtle p-space-md flex flex-col gap-space-sm">
-                        <div className="flex items-center justify-between pb-space-xs border-b border-border-subtle/50">
-                          <div className="flex items-center gap-space-xs">
-                            <span className="material-symbols-outlined text-secondary text-[20px]">local_hospital</span>
-                            <span className="font-headline-md text-headline-md font-bold text-on-surface text-[16px]">
-                              {t("hero.popularSpecialties")}
-                            </span>
+                      <>
+                        <div
+                          className="fixed inset-0 z-40"
+                          onClick={() => setSpecialtyPopoverOpen(false)}
+                          aria-hidden="true"
+                        />
+                        <div className="absolute top-full left-0 w-full md:w-[520px] z-50 mt-1 bg-surface-card rounded-2xl shadow-2xl border border-border-subtle p-space-md flex flex-col gap-space-sm animate-in fade-in duration-150">
+                          <div className="flex items-center justify-between pb-space-xs border-b border-border-subtle/50">
+                            <div className="flex items-center gap-space-xs">
+                              <span className="material-symbols-outlined text-secondary text-[20px]">local_hospital</span>
+                              <span className="font-headline-md text-headline-md font-bold text-on-surface text-[16px]">
+                                {t("hero.popularSpecialties")}
+                              </span>
+                            </div>
+                            <button
+                              className="text-on-surface-variant hover:text-on-surface p-1 rounded-lg hover:bg-surface-container cursor-pointer"
+                              onClick={() => setSpecialtyPopoverOpen(false)}
+                              type="button"
+                            >
+                              <span className="material-symbols-outlined text-[18px]">close</span>
+                            </button>
                           </div>
-                          <button
-                            className="text-on-surface-variant hover:text-on-surface p-1 rounded-lg hover:bg-surface-container"
-                            onClick={() => setSpecialtyPopoverOpen(false)}
-                            type="button"
-                          >
-                            <span className="material-symbols-outlined text-[18px]">close</span>
-                          </button>
-                        </div>
 
-                        <div className="grid grid-cols-2 gap-space-xs max-h-64 overflow-y-auto pr-1">
-                          {[
-                            { name: "Cardiology", docs: "18 Hospitals • 42 Docs", icon: "cardiology" },
-                            { name: "Orthopedics", docs: "24 Hospitals • 56 Docs", icon: "orthopedics" },
-                            { name: "Oncology", docs: "14 Hospitals • 29 Docs", icon: "radiology" },
-                            { name: "Neurology", docs: "12 Hospitals • 31 Docs", icon: "neurology" },
-                            { name: "Gynecology", docs: "21 Hospitals • 47 Docs", icon: "pregnancy" },
-                            { name: "Gastroenterology", docs: "16 Hospitals • 34 Docs", icon: "gastroenterology" },
-                          ].map((item) => (
-                            <div
-                              key={item.name}
-                              className="p-space-xs rounded-xl bg-surface-canvas hover:bg-surface-ice border border-border-subtle/60 cursor-pointer flex items-center gap-space-xs transition-colors"
+                          <div className="grid grid-cols-2 gap-space-xs max-h-72 overflow-y-auto pr-1">
+                            {[
+                              { name: "Cardiology", docs: "18 Hospitals • 42 Docs", icon: "cardiology" },
+                              { name: "Orthopedics", docs: "24 Hospitals • 56 Docs", icon: "orthopedics" },
+                              { name: "Oncology", docs: "14 Hospitals • 29 Docs", icon: "radiology" },
+                              { name: "Neurology", docs: "12 Hospitals • 31 Docs", icon: "neurology" },
+                              { name: "Gynecology", docs: "21 Hospitals • 47 Docs", icon: "pregnancy" },
+                              { name: "Gastroenterology", docs: "16 Hospitals • 34 Docs", icon: "gastroenterology" },
+                              { name: "Nephrology", docs: "15 Hospitals • 28 Docs", icon: "nephrology" },
+                              { name: "Pulmonology", docs: "13 Hospitals • 25 Docs", icon: "pulmonology" },
+                              { name: "Pediatrics", docs: "22 Hospitals • 45 Docs", icon: "pediatrics" },
+                              { name: "Urology", docs: "17 Hospitals • 32 Docs", icon: "urology" },
+                              { name: "Dermatology", docs: "11 Hospitals • 19 Docs", icon: "dermatology" },
+                              { name: "ENT", docs: "16 Hospitals • 27 Docs", icon: "ent" },
+                              { name: "Ophthalmology", docs: "19 Hospitals • 36 Docs", icon: "ophthalmology" },
+                              { name: "General Surgery", docs: "26 Hospitals • 60 Docs", icon: "surgery" },
+                            ].map((item) => (
+                              <div
+                                key={item.name}
+                                className="p-space-xs rounded-xl bg-surface-canvas hover:bg-surface-ice border border-border-subtle/60 cursor-pointer flex items-center gap-space-xs transition-colors"
+                                onClick={() => {
+                                  setSpecialtyInput(item.name);
+                                  setSpecialtyPopoverOpen(false);
+                                }}
+                              >
+                                <div className="w-8 h-8 rounded-lg bg-surface-ice flex items-center justify-center text-secondary shrink-0">
+                                  <span className="material-symbols-outlined text-[18px]">{item.icon}</span>
+                                </div>
+                                <div className="flex flex-col min-w-0">
+                                  <span className="font-label-md text-label-md font-bold text-on-surface truncate">
+                                    {item.name}
+                                  </span>
+                                  <span className="font-label-sm text-label-sm text-on-surface-variant">
+                                    {item.docs}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          <div className="flex items-center justify-between pt-space-xs border-t border-border-subtle/50 text-label-sm">
+                            <span className="text-on-surface-variant">{t("hero.verifiedSpecialists")}</span>
+                            <button
+                              type="button"
+                              className="text-brand-blue-interactive hover:underline font-bold flex items-center gap-0.5 cursor-pointer"
                               onClick={() => {
-                                setSpecialtyInput(item.name);
+                                setSpecialtyInput("");
                                 setSpecialtyPopoverOpen(false);
                               }}
                             >
-                              <div className="w-8 h-8 rounded-lg bg-surface-ice flex items-center justify-center text-secondary shrink-0">
-                                <span className="material-symbols-outlined text-[18px]">{item.icon}</span>
-                              </div>
-                              <div className="flex flex-col min-w-0">
-                                <span className="font-label-md text-label-md font-bold text-on-surface truncate">
-                                  {item.name}
-                                </span>
-                                <span className="font-label-sm text-label-sm text-on-surface-variant">
-                                  {item.docs}
-                                </span>
-                              </div>
-                            </div>
-                          ))}
+                              <span>{t("hero.clearFilter")}</span>
+                            </button>
+                          </div>
                         </div>
-
-                        <div className="flex items-center justify-between pt-space-xs border-t border-border-subtle/50 text-label-sm">
-                          <span className="text-on-surface-variant">{t("hero.verifiedSpecialists")}</span>
-                          <button
-                            type="button"
-                            className="text-brand-blue-interactive hover:underline font-bold flex items-center gap-0.5"
-                            onClick={() => {
-                              setSpecialtyInput("");
-                              setSpecialtyPopoverOpen(false);
-                            }}
-                          >
-                            <span>{t("hero.clearFilter")}</span>
-                          </button>
-                        </div>
-                      </div>
+                      </>
                     )}
                   </div>
 
@@ -1431,8 +1446,19 @@ export default function HomePage() {
 
           {/* 4. MODALS FOR BEDS & CASHLESS ADMISSION */}
           {modalType && modalHospital && (
-            <div className="fixed inset-0 z-50 bg-primary/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-space-md animate-in fade-in duration-150">
-              <div className="bg-surface-card rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-4 sm:p-space-lg shadow-2xl border border-border-subtle flex flex-col gap-space-md relative">
+            <div
+              className="fixed inset-0 z-50 bg-primary/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-space-md animate-in fade-in duration-150 cursor-pointer"
+              onClick={(e) => {
+                if (e.target === e.currentTarget) {
+                  setModalType(null);
+                  setModalHospital(null);
+                }
+              }}
+            >
+              <div
+                className="bg-surface-card rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-4 sm:p-space-lg shadow-2xl border border-border-subtle flex flex-col gap-space-md relative cursor-default"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <div className="flex items-center justify-between pb-space-xs border-b border-border-subtle">
                   <div className="flex items-center gap-space-xs font-title-md text-title-md text-primary-container font-bold">
                     <span className="material-symbols-outlined text-secondary">
@@ -1441,7 +1467,7 @@ export default function HomePage() {
                     <span>{modalType === "beds" ? t("home.realTimeBedTelemetry") : t("home.fastTrackCashlessAdmission")}</span>
                   </div>
                   <button
-                    className="w-8 h-8 rounded-full bg-surface-canvas flex items-center justify-center text-on-surface-variant hover:text-on-surface"
+                    className="w-8 h-8 rounded-full bg-surface-canvas flex items-center justify-center text-on-surface-variant hover:text-on-surface cursor-pointer"
                     onClick={() => {
                       setModalType(null);
                       setModalHospital(null);
