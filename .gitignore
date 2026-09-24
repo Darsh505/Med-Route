@@ -171,3 +171,7 @@ scripts/
 *.sqlite3
 backend/*.db
 
+# Android Binaries (distributed via GitHub Releases)
+*.apk
+*.aab
+
