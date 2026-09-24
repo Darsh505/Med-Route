@@ -19,6 +19,7 @@ class ChatRequest(BaseModel):
     history: List[ChatMessage] = Field(default=[], description="Previous conversation turns")
     latitude: Optional[float] = Field(default=30.7333, ge=-90, le=90)
     longitude: Optional[float] = Field(default=76.7794, ge=-180, le=180)
+    city: Optional[str] = Field(default=None, description="Patient's current active city, e.g. 'Jalandhar'")
     preferred_language: str = Field(default="en", description="'en', 'hi', or 'hinglish'")
 
 class ChatAction(BaseModel):

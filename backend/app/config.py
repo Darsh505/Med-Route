@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     GEMINI_API_KEY: str = ""
-    GEMINI_MODEL: str = "gemini-2.5-flash-lite"
+    GEMINI_MODEL: str = "gemini-2.5-flash"
 
     # Firebase Auth
     FIREBASE_PROJECT_ID: str = ""

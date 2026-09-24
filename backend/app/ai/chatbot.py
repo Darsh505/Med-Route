@@ -9,7 +9,20 @@ Dual-engine medical AI chatbot:
 
 import json
 import re
+import math
 from typing import Optional, List, Dict, Any
+
+def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """Calculates geodesic distance between two coordinate pairs in kilometers."""
+    try:
+        r = 6371.0
+        dlat = math.radians(lat2 - lat1)
+        dlon = math.radians(lon2 - lon1)
+        a = math.sin(dlat / 2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2)**2
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        return round(r * c, 1)
+    except Exception:
+        return 3.5
 
 try:
     import structlog
@@ -561,11 +574,22 @@ class ClinicalChatbot:
 
     async def _chat_with_gemini(self, request: ChatRequest) -> ChatResponse:
         """Invokes Gemini with conversation history."""
-        # Build prompt incorporating history
         prompt_parts = []
         for msg in request.history[-6:]:
             role_label = "Patient" if msg.role == "user" else "Clinical Dispatch AI"
             prompt_parts.append(f"{role_label}: {msg.content}")
+
+        active_city = request.city or "Jalandhar, Punjab"
+        prompt_parts.append(
+            f"[PATIENT LOCATION & REGIONAL CONTEXT: The patient is currently confirmed to be located in '{active_city}' "
+            f"(Latitude: {request.latitude}, Longitude: {request.longitude}).\n"
+            f"MANDATORY PROTOCOLS:\n"
+            f"1. NEVER ask the patient what city or location they are in. Their location is already confirmed as '{active_city}'.\n"
+            f"2. You MUST prioritize accredited hospitals situated in or directly servicing '{active_city}' (or nearest tertiary hospitals in Punjab/NCR).\n"
+            f"3. In 'recommended_hospital_names', list accredited hospitals that operate in '{active_city}'.\n"
+            f"4. If patient asks about general ailments like fever, cold, weakness, or stomach pain, provide actionable clinical guidance "
+            f"(temperature monitoring, hydration, paracetamol precautions, red-flag symptoms) and recommend local multi-speciality/general medicine facilities in '{active_city}'.]"
+        )
 
         prompt_parts.append(f"Patient: {request.message}")
         prompt_parts.append("\nReturn strictly the JSON object:")
@@ -594,6 +618,9 @@ class ClinicalChatbot:
             specialty=data.get("specialty"),
             is_emergency=(data.get("triage_level") == "emergency"),
             user_query=request.message,
+            user_city=request.city,
+            latitude=request.latitude,
+            longitude=request.longitude,
         )
 
         # Build interactive action buttons
@@ -796,19 +823,66 @@ class ClinicalChatbot:
                 ai_provider="clinical_rules",
             )
 
-        # 6. General Inquiry Fallback
-        hospitals = self._resolve_hospitals(["PGIMER Chandigarh", "Max Super Speciality Mohali"])
+        # 6. Acute Fever, Infection & General Illness
+        is_fever_query = any(k in text for k in [
+            "fever", "bukhar", "tap", "temperature", "pyrexia", "flu", "cold", "cough",
+            "khansi", "nazla", "zukaam", "infection", "headache", "sar dard", "stomach pain",
+            "pet dard", "vomiting", "ulti", "dast", "loose motion", "weakness", "kamzori"
+        ])
+        if is_fever_query:
+            patient_city = request.city or "Jalandhar"
+            city_label = patient_city.split(",")[0].strip()
+            hospitals = self._resolve_hospitals(
+                specialty="general",
+                user_city=patient_city,
+                latitude=request.latitude,
+                longitude=request.longitude,
+                user_query=request.message,
+            )
+            reply = (
+                f"**Clinical Advisory: Acute Fever & Symptom Guidance ({city_label})**\n\n"
+                "• **Immediate Home Care & Hydration**: Rest in a cool, well-ventilated space. Maintain continuous fluid intake (water, ORS oral rehydration salts, tender coconut water, clear broth) to prevent dehydration.\n"
+                "• **Antipyretic Fever Protocol**: For adult temperature control, Paracetamol (500mg – 650mg every 6–8 hours as clinically appropriate) can help alleviate discomfort. Avoid Aspirin or NSAIDs without a doctor's advice, especially if dengue or viral illnesses are prevalent.\n"
+                "• **Red-Flag Warning Signs (Seek Immediate Medical Care)**:\n"
+                "  - Fever exceeds **103°F (39.4°C)** or persists continuously for >48–72 hours.\n"
+                "  - Accompanied by neck stiffness, shortness of breath, confusion, extreme lethargy, or red petechial skin rashes.\n\n"
+                f"Top accredited hospitals with 24/7 general medicine, pathology diagnostic labs, and emergency care in **{city_label}**:"
+            )
+            actions = [
+                ChatAction(type="compare", label=f"⚖️ Compare Hospitals in {city_label}", value="/compare"),
+                ChatAction(type="view_hospital", label=f"🏥 View {hospitals[0].name.split()[0]}", value=f"/hospitals/{hospitals[0].slug}") if hospitals else ChatAction(type="sos_dispatch", label="🚨 Emergency SOS", value="/sos"),
+            ]
+            return ChatResponse(
+                reply=reply,
+                triage_level="urgent" if ("high fever" in text or "severe" in text) else "routine",
+                intent="hospital_recommendation",
+                specialty="general",
+                disease_or_condition="Acute Fever / General Infection",
+                recommended_hospitals=hospitals,
+                action_buttons=actions,
+                quick_suggestions=[
+                    f"Check vacant ICU and general beds in {city_label}",
+                    f"What blood tests confirm dengue or typhoid in {city_label}?",
+                    "When to rush a patient with fever to emergency?",
+                ],
+                ai_provider="clinical_rules",
+            )
+
+        # 7. General Inquiry Fallback
+        patient_city = request.city or "Jalandhar"
+        city_label = patient_city.split(",")[0].strip()
+        hospitals = self._resolve_hospitals(user_city=patient_city, latitude=request.latitude, longitude=request.longitude, user_query=request.message)
         reply = (
-            "**MedRoute Clinical Assistant Ready to Help:**\n\n"
+            f"**MedRoute Clinical Assistant Ready to Help ({city_label}):**\n\n"
             "I can help you:\n"
-            "1. **Locate Nearby Accredited Hospitals** based on symptoms, specialty, and live ICU bed telemetry.\n"
+            f"1. **Locate Nearby Accredited Hospitals** in {city_label} based on symptoms, specialty, and live ICU bed telemetry.\n"
             "2. **Check Ayushman Bharat (PMJAY) Coverage** and verified package tariffs with zero hidden charges.\n"
             "3. **Emergency Triage**: If you or a family member is experiencing critical symptoms, please describe them or tap **SOS Dispatch** immediately.\n\n"
             "How can I assist your healthcare query today?"
         )
         actions = [
             ChatAction(type="sos_dispatch", label="🚨 Emergency SOS", value="/sos"),
-            ChatAction(type="compare", label="🔍 Browse Hospital Directory", value="/search"),
+            ChatAction(type="compare", label=f"🔍 Browse {city_label} Hospitals", value="/search"),
         ]
         return ChatResponse(
             reply=reply,
@@ -819,9 +893,9 @@ class ClinicalChatbot:
             recommended_hospitals=hospitals,
             action_buttons=actions,
             quick_suggestions=[
-                "Find heart hospital in Mohali under 2 lakh",
-                "Knee replacement with PMJAY cashless",
-                "Emergency ICU beds available right now",
+                f"Find accredited hospitals in {city_label}",
+                f"Hospitals with free ICU beds in {city_label}",
+                "Check Ayushman Bharat PMJAY coverage",
             ],
             ai_provider="clinical_rules",
         )
@@ -832,13 +906,16 @@ class ClinicalChatbot:
         specialty: Optional[str] = None,
         is_emergency: bool = False,
         user_query: str = "",
+        user_city: Optional[str] = None,
+        latitude: Optional[float] = None,
+        longitude: Optional[float] = None,
     ) -> List[ChatHospitalRecommendation]:
         """Matches hospital names or dynamically queries memory_store for user requested city."""
         names = names or []
         results = []
         matched_slugs = set()
 
-        # 1. Dynamically scan memory store for ANY Indian city or state in query
+        # 1. Dynamically scan memory store for ANY Indian city or state in query or user_city
         target_city = None
         if user_query:
             uq = user_query.lower()
@@ -868,7 +945,6 @@ class ClinicalChatbot:
                         break
 
                 if not target_city:
-                    # Dynamically check against ALL unique cities in the hospital dataset (longest first)
                     dataset_cities = sorted(
                         list({h.get("city", "").strip() for h in memory_store._hospitals if h.get("city")}),
                         key=lambda x: len(x),
@@ -880,7 +956,6 @@ class ClinicalChatbot:
                             break
 
                 if not target_city:
-                    # Dynamically check against ALL unique states in the hospital dataset
                     dataset_states = sorted(
                         list({h.get("state", "").strip() for h in memory_store._hospitals if h.get("state")}),
                         key=lambda x: len(x),
@@ -890,25 +965,49 @@ class ClinicalChatbot:
                         if len(s) > 2 and re.search(r'\b' + re.escape(s.lower()) + r'\b', uq):
                             target_city = s
                             break
+            except Exception as e:
+                logger.warning("City extraction failed", error=str(e))
 
-                if target_city:
-                    t_regex = r'\b' + re.escape(target_city.lower()) + r'\b'
-                    city_matches = [
-                        h for h in memory_store._hospitals
-                        if re.search(t_regex, (h.get("city") or "").lower()) or re.search(t_regex, (h.get("state") or "").lower())
-                    ]
-                    if city_matches:
-                        if is_emergency:
-                            city_matches.sort(
-                                key=lambda h: (1 if h.get("is_trauma_center") else 0, h.get("beds_icu_available", 0)),
-                                reverse=True,
-                            )
-                        else:
-                            city_matches.sort(key=lambda h: h.get("overall_rating", 4.0), reverse=True)
+        if not target_city and user_city:
+            clean_c = user_city.split(",")[0].strip()
+            if clean_c and clean_c.lower() not in ["all", "india", "all cities"]:
+                target_city = clean_c
 
-                        for h in city_matches[:3]:
+        if target_city:
+            try:
+                from app.services.memory_store import memory_store
+                if not memory_store._loaded:
+                    memory_store.load()
+
+                t_regex = r'\b' + re.escape(target_city.lower()) + r'\b'
+                city_matches = [
+                    h for h in memory_store._hospitals
+                    if re.search(t_regex, (h.get("city") or "").lower()) or re.search(t_regex, (h.get("state") or "").lower())
+                ]
+                if city_matches:
+                    # Match names from Gemini within target_city first
+                    for target in names:
+                        target_lower = target.lower()
+                        for h in city_matches:
+                            if h.get("slug") not in matched_slugs and (target_lower in h.get("name", "").lower() or h.get("name", "").lower() in target_lower):
+                                matched_slugs.add(h.get("slug"))
+                                results.append(self._to_recommendation(h, is_emergency, latitude, longitude))
+
+                    if is_emergency:
+                        city_matches.sort(
+                            key=lambda h: (1 if h.get("is_trauma_center") else 0, h.get("beds_icu_available", 0)),
+                            reverse=True,
+                        )
+                    else:
+                        city_matches.sort(key=lambda h: (h.get("overall_rating", 4.0), h.get("beds_icu_available", 0)), reverse=True)
+
+                    for h in city_matches:
+                        if h.get("slug") not in matched_slugs:
                             matched_slugs.add(h.get("slug"))
-                            results.append(self._to_recommendation(h, is_emergency))
+                            results.append(self._to_recommendation(h, is_emergency, latitude, longitude))
+                            if len(results) >= 3:
+                                break
+                    if results:
                         return results
             except Exception as e:
                 logger.warning("Universal city memory store lookup failed", error=str(e))
@@ -919,7 +1018,7 @@ class ClinicalChatbot:
             for h in REFERENCE_HOSPITALS:
                 if h["slug"] not in matched_slugs and (target_lower in h["name"].lower() or h["name"].lower() in target_lower):
                     matched_slugs.add(h["slug"])
-                    results.append(self._to_recommendation(h, is_emergency))
+                    results.append(self._to_recommendation(h, is_emergency, latitude, longitude))
 
         # If fewer than 2 matched, fill by specialty or trauma
         if len(results) < 2:
@@ -927,25 +1026,37 @@ class ClinicalChatbot:
                 if h["slug"] not in matched_slugs:
                     if (is_emergency and h.get("is_trauma")) or (specialty and specialty in h.get("specialties", [])):
                         matched_slugs.add(h["slug"])
-                        results.append(self._to_recommendation(h, is_emergency))
+                        results.append(self._to_recommendation(h, is_emergency, latitude, longitude))
                 if len(results) >= 3:
                     break
 
         # If still empty, supply top benchmark hospitals
         if not results:
             for h in REFERENCE_HOSPITALS[:2]:
-                results.append(self._to_recommendation(h, is_emergency))
+                results.append(self._to_recommendation(h, is_emergency, latitude, longitude))
 
         return results[:3]
 
-    def _to_recommendation(self, h: Dict[str, Any], is_emergency: bool) -> ChatHospitalRecommendation:
+    def _to_recommendation(
+        self,
+        h: Dict[str, Any],
+        is_emergency: bool,
+        lat: Optional[float] = None,
+        lng: Optional[float] = None,
+    ) -> ChatHospitalRecommendation:
+        dist = h.get("distance_km")
+        if lat and lng and h.get("latitude") and h.get("longitude"):
+            dist = haversine_km(lat, lng, h["latitude"], h["longitude"])
+        elif dist is None:
+            dist = 3.5
+
         return ChatHospitalRecommendation(
             id=h["id"] if "id" in h else f"hosp-{h['slug']}",
             name=h["name"],
             slug=h["slug"],
             type=h["type"],
             address=h["address"],
-            distance_km=h.get("distance_km", 4.5),
+            distance_km=dist,
             overall_rating=h.get("overall_rating", 4.7),
             beds_icu_available=h.get("beds_icu_available", 8),
             is_pmjay_empanelled=h.get("is_pmjay_empanelled", True),

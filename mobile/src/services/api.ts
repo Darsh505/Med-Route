@@ -29,12 +29,50 @@ function resolveBackendBaseUrl(): string {
 
 export const BASE_URL = resolveBackendBaseUrl();
 
-// Default user location (Bangalore, Indiranagar) — updated dynamically by HomeScreen
-export let USER_LAT = 12.9716;
-export let USER_LNG = 77.5946;
-export function setUserLocation(lat: number, lng: number) {
+// Default user location — updated dynamically by HomeScreen
+export let USER_LAT = 31.3260;
+export let USER_LNG = 75.5762;
+export let USER_CITY = "Jalandhar, Punjab";
+
+const cityListeners = new Set<(city: string) => void>();
+
+export function subscribeCityChange(listener: (city: string) => void) {
+  cityListeners.add(listener);
+  return () => {
+    cityListeners.delete(listener);
+  };
+}
+
+export function getUserCity(): string {
+  return USER_CITY;
+}
+
+export function setUserCity(city: string) {
+  if (!city) return;
+  USER_CITY = city;
+  const coords = resolveCityCoordinates(city);
+  if (coords) {
+    USER_LAT = coords.lat;
+    USER_LNG = coords.lng;
+  }
+  for (const listener of cityListeners) {
+    try {
+      listener(city);
+    } catch {}
+  }
+}
+
+export function setUserLocation(lat: number, lng: number, city?: string) {
   USER_LAT = lat;
   USER_LNG = lng;
+  if (city) {
+    USER_CITY = city;
+    for (const listener of cityListeners) {
+      try {
+        listener(city);
+      } catch {}
+    }
+  }
 }
 
 // Haversine formula — returns real geodesic distance in km
@@ -874,7 +912,8 @@ export const api = {
     message: string,
     history: Array<{ role: string; content: string }> = [],
     latitude: number = USER_LAT,
-    longitude: number = USER_LNG
+    longitude: number = USER_LNG,
+    city: string = USER_CITY
   ) {
     try {
       const controller = new AbortController();
@@ -883,7 +922,7 @@ export const api = {
       const res = await fetch(`${BASE_URL}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, history, latitude, longitude }),
+        body: JSON.stringify({ message, history, latitude, longitude, city }),
         signal: controller.signal,
       });
       clearTimeout(timer);
@@ -926,6 +965,13 @@ export const api = {
       if (q.includes(c)) {
         matchedCity = CITY_ALIASES[c] || c;
         break;
+      }
+    }
+
+    if (!matchedCity && city) {
+      const cleanC = city.split(",")[0].toLowerCase().trim();
+      if (cleanC && cleanC !== "all" && cleanC !== "india") {
+        matchedCity = cleanC;
       }
     }
 

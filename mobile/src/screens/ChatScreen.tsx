@@ -20,7 +20,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { colors } from "../theme/colors";
-import { api, MOCK_HOSPITALS, CITY_ALIASES, haversineKm, USER_LAT, USER_LNG, extractCityFromQuery } from "../services/api";
+import { api, MOCK_HOSPITALS, CITY_ALIASES, haversineKm, USER_LAT, USER_LNG, USER_CITY, getUserCity, subscribeCityChange, extractCityFromQuery } from "../services/api";
 import MedRouteLogo from "../components/MedRouteLogo";
 import LanguageSwitcher from "../components/LanguageSwitcher";
 import { localizeHospitalName, localizeAddress } from "../i18n/hospitalLocalization";
@@ -167,6 +167,15 @@ export default function ChatScreen({ navigation }: any) {
   }, [currentLang]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [activeCity, setActiveCity] = useState<string>(() => getUserCity() || "Jalandhar, Punjab");
+
+  React.useEffect(() => {
+    const unsub = subscribeCityChange((newCity) => {
+      setActiveCity(newCity);
+    });
+    return unsub;
+  }, []);
+
   const [isGeminiActive, setIsGeminiActive] = useState<boolean>(false);
 
   React.useEffect(() => {
@@ -203,7 +212,7 @@ export default function ChatScreen({ navigation }: any) {
         content: m.content,
       }));
 
-      const res = await api.sendChatMessage(textToSend, history);
+      const res = await api.sendChatMessage(textToSend, history, USER_LAT, USER_LNG, activeCity);
       const data = res?.data || res;
       if (data && data.reply) {
         if (data.ai_provider === "gemini") {
@@ -227,7 +236,7 @@ export default function ChatScreen({ navigation }: any) {
       }
     } catch {
       setIsGeminiActive(false);
-      const fallbackResponse = generateClientSideNLP(textToSend);
+      const fallbackResponse = generateClientSideNLP(textToSend, activeCity);
       setMessages((prev) => [...prev, fallbackResponse]);
     } finally {
       setLoading(false);
@@ -353,21 +362,26 @@ export default function ChatScreen({ navigation }: any) {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTitleRow}>
-          <MedRouteLogo size="sm" showBadge={false} />
+          <MedRouteLogo size="sm" showText={false} showBadge={false} />
           <View style={{ flex: 1, marginLeft: 8 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-              <Text style={styles.headerTitle}>{t("brand.name")} AI</Text>
-              <View
-                style={[
-                  styles.liveDot,
-                  {
-                    backgroundColor: isGeminiActive ? "#22C55E" : "#EF4444",
-                    width: 7,
-                    height: 7,
-                    borderRadius: 3.5,
-                  },
-                ]}
-              />
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                <Text style={styles.headerTitle}>{t("brand.name")} AI</Text>
+                <View
+                  style={[
+                    styles.liveDot,
+                    {
+                      backgroundColor: isGeminiActive ? "#22C55E" : "#EF4444",
+                      width: 7,
+                      height: 7,
+                      borderRadius: 3.5,
+                    },
+                  ]}
+                />
+              </View>
+              <View style={styles.headerCityBadge}>
+                <Text style={styles.headerCityText}>📍 {activeCity.split(",")[0].trim()}</Text>
+              </View>
             </View>
             <Text style={styles.headerSubtitle}>
               {currentLang === "hi"
@@ -817,12 +831,12 @@ function matchDiseaseFromQuery(query: string): DiseaseKBItem | null {
 
 function resolveMobileHospitalsForDisease(
   diseaseId: string,
-  userCity: string = "Hoshiarpur",
+  userCity: string = getUserCity() || USER_CITY,
   refLat: number = USER_LAT,
   refLng: number = USER_LNG,
   procedureKeywords: string[] = []
 ) {
-  const cityTerm = (userCity || "hoshiarpur").toLowerCase().trim();
+  const cityTerm = (userCity || "jalandhar").split(",")[0].toLowerCase().trim();
 
   let cityHospitals = MOCK_HOSPITALS.filter(
     (h) =>
@@ -891,18 +905,20 @@ function resolveMobileHospitalsForDisease(
 
 function resolveMobileHospitals(
   query: string,
-  category: "emergency" | "cardiac" | "orthopedic" | "renal" | "general" = "general"
+  category: "emergency" | "cardiac" | "orthopedic" | "renal" | "general" = "general",
+  userCity: string = getUserCity() || USER_CITY
 ) {
   const q = query.toLowerCase();
 
-  // Detect city from query
-  let matchedCity = extractCityFromQuery(q);
+  // Detect city from query or fallback to active userCity
+  let matchedCity = extractCityFromQuery(q) || userCity;
 
   let pool = MOCK_HOSPITALS;
   if (matchedCity) {
-    const reg = new RegExp(`\\b${matchedCity.toLowerCase()}\\b`, "i");
+    const rawCity = matchedCity.split(",")[0].trim();
+    const reg = new RegExp(`\\b${rawCity.toLowerCase()}\\b`, "i");
     const cityFiltered = pool.filter(
-      (h) => (h.city && reg.test(h.city)) || (h.state && reg.test(h.state))
+      (h) => (h.city && reg.test(h.city)) || (h.state && reg.test(h.state)) || (h.address && reg.test(h.address))
     );
     if (cityFiltered.length > 0) {
       pool = cityFiltered;
@@ -910,21 +926,24 @@ function resolveMobileHospitals(
   }
 
   // Score & sort based on category
-  const scored = pool.map((h) => ({
-    name: h.name,
-    slug: h.slug,
-    address: h.address,
-    distance_km: h.distance_km,
-    beds_icu_available: h.beds_icu_available ?? 6,
-    is_pmjay_empanelled: h.is_pmjay_empanelled ?? true,
-    emergency_phone: h.emergency_phone || h.phone || "108",
-    cost_indicative: h.cost_indicative,
-    rating: h.overall_rating,
-    specialties: h.specialties || [],
-    is_trauma: h.is_trauma_center,
-    patients_treated: h.total_patients_treated,
-    success_ratio: h.overall_success_ratio,
-  }));
+  const scored = pool.map((h) => {
+    const dist = parseFloat(haversineKm(USER_LAT, USER_LNG, h.latitude, h.longitude).toFixed(1));
+    return {
+      name: h.name,
+      slug: h.slug,
+      address: h.address,
+      distance_km: dist,
+      beds_icu_available: h.beds_icu_available ?? 6,
+      is_pmjay_empanelled: h.is_pmjay_empanelled ?? true,
+      emergency_phone: h.emergency_phone || h.phone || "108",
+      cost_indicative: h.cost_indicative,
+      rating: h.overall_rating,
+      specialties: h.specialties || [],
+      is_trauma: h.is_trauma_center,
+      patients_treated: h.total_patients_treated,
+      success_ratio: h.overall_success_ratio,
+    };
+  });
 
   if (category === "emergency") {
     scored.sort((a, b) => {
@@ -954,8 +973,9 @@ function resolveMobileHospitals(
   return scored.slice(0, 2);
 }
 
-function generateClientSideNLP(text: string): MessageItem {
+function generateClientSideNLP(text: string, activeCity: string = getUserCity() || USER_CITY): MessageItem {
   const q = text.toLowerCase().trim();
+  const rawCity = activeCity.split(",")[0].trim();
 
   // 0. Greeting & Introductory Queries
   const isGreeting =
@@ -1026,7 +1046,7 @@ function generateClientSideNLP(text: string): MessageItem {
 
   if (isEmergency) {
     const isCardiac = q.includes("chest") || q.includes("heart") || q.includes("dil");
-    const recs = resolveMobileHospitals(q, "emergency");
+    const recs = resolveMobileHospitals(q, "emergency", activeCity);
 
     return {
       id: "a-" + Date.now(),
@@ -1060,11 +1080,55 @@ function generateClientSideNLP(text: string): MessageItem {
     };
   }
 
-  // 2. Direct Clinical Disease & Procedure KB Matching
+  // 2. Fever, Infection & General Illness Triage
+  const isFever =
+    q.includes("fever") ||
+    q.includes("bukhar") ||
+    q.includes("temperature") ||
+    q.includes("pyrexia") ||
+    q.includes("chills") ||
+    q.includes("flu") ||
+    q.includes("viral");
+
+  if (isFever) {
+    const recs = resolveMobileHospitals(q, "general", activeCity);
+    return {
+      id: "a-" + Date.now(),
+      role: "assistant",
+      content:
+        `🌡️ **Clinical Triage: Fever Assessment (${rawCity})**\n\n` +
+        `• **Immediate Precautions**:\n` +
+        `  - Monitor oral temperature every 4 hours.\n` +
+        `  - Maintain high oral hydration (ORS, coconut water, boiled fluids).\n` +
+        `  - Lukewarm sponge baths if temperature exceeds 101°F (38.3°C).\n` +
+        `• **Red Flags for Urgent In-Patient Admission**:\n` +
+        `  - Persistent high spike >103°F (39.4°C) not responding to antipyretics.\n` +
+        `  - Difficulty breathing, persistent vomiting, altered sensorium, or petechial rash.\n` +
+        `  - Suspected Dengue/Malaria with retro-orbital headache or platelet drops.\n\n` +
+        `Top accredited multi-specialty hospitals in **${rawCity}** with active OPD/emergency fever triage:`,
+      triage_level: "routine",
+      recommended_hospitals: recs,
+      action_buttons: [
+        { type: "compare", label: `⚖️ Compare ${rawCity} Hospitals`, value: "/compare" },
+        { type: "sos", label: "🛏️ Live Beds", value: "/sos" },
+        ...(recs[0]?.emergency_phone
+          ? [{ type: "call_hospital", label: `📞 Call ${recs[0].name.split(" ")[0]}`, value: `tel:${recs[0].emergency_phone}` }]
+          : []),
+      ],
+      quick_suggestions: [
+        "What blood tests are required for persistent fever?",
+        "Warning signs of Dengue fever?",
+        `Are emergency beds available at ${recs[0]?.name ? recs[0].name.split(" ")[0] : rawCity}?`,
+      ],
+      timestamp: "Just now",
+    };
+  }
+
+  // 3. Direct Clinical Disease & Procedure KB Matching
   const matchedDisease = matchDiseaseFromQuery(q);
   if (matchedDisease) {
-    // Detect city from query or default to Hoshiarpur
-    let queryCity = extractCityFromQuery(q) || "Hoshiarpur";
+    // Detect city from query or default to activeCity
+    let queryCity = extractCityFromQuery(q) || activeCity;
 
     const diseaseHospitals = resolveMobileHospitalsForDisease(
       matchedDisease.id,
@@ -1106,7 +1170,7 @@ function generateClientSideNLP(text: string): MessageItem {
     };
   }
 
-  // 3. ICU & Bed Availability
+  // 4. ICU & Bed Availability
   if (
     q.includes("icu") ||
     q.includes("ventilator") ||
@@ -1115,13 +1179,13 @@ function generateClientSideNLP(text: string): MessageItem {
     q.includes("oxygen") ||
     q.includes("vacant")
   ) {
-    const recs = resolveMobileHospitals(q, "emergency");
+    const recs = resolveMobileHospitals(q, "emergency", activeCity);
     return {
       id: "a-" + Date.now(),
       role: "assistant",
       content:
-        `**Live ICU & Critical Care Bed Telemetry:**\n\n` +
-        `• Real-time hospital feeds confirm verified vacant ICU and ventilator beds in your region.\n` +
+        `**Live ICU & Critical Care Bed Telemetry (${rawCity}):**\n\n` +
+        `• Real-time hospital feeds confirm verified vacant ICU and ventilator beds in ${rawCity}.\n` +
         `• **Instant Digital Hold**: You can reserve an ICU bed for up to 90 minutes while the patient is en route.\n` +
         `• Direct zero-deposit pre-auth protocol is activated automatically upon reservation.\n\n` +
         `Hospitals with highest available ICU capacity in your area:`,
@@ -1140,7 +1204,7 @@ function generateClientSideNLP(text: string): MessageItem {
     };
   }
 
-  // 4. Cashless Pre-Auth & Insurance
+  // 5. Cashless Pre-Auth & Insurance
   if (
     q.includes("cashless") ||
     q.includes("pre-auth") ||
@@ -1151,12 +1215,12 @@ function generateClientSideNLP(text: string): MessageItem {
     q.includes("tpa") ||
     q.includes("zero deposit")
   ) {
-    const recs = resolveMobileHospitals(q, "general");
+    const recs = resolveMobileHospitals(q, "general", activeCity);
     return {
       id: "a-" + Date.now(),
       role: "assistant",
       content:
-        `**Medi Route 20-Minute Cashless Guarantee:**\n\n` +
+        `**Medi Route 20-Minute Cashless Guarantee (${rawCity}):**\n\n` +
         `• **How it works**:\n` +
         `  1. Present your **ABHA ID** or Insurance TPA E-Card at the admission desk.\n` +
         `  2. The hospital desk triggers a pre-auth request via Medi Route's direct IRDAI gateway.\n` +
@@ -1179,15 +1243,15 @@ function generateClientSideNLP(text: string): MessageItem {
     };
   }
 
-  // 5. General Clinical Advisory
-  const recs = resolveMobileHospitals(q, "general");
+  // 6. General Clinical Advisory
+  const recs = resolveMobileHospitals(q, "general", activeCity);
   return {
     id: "a-" + Date.now(),
     role: "assistant",
     content:
-      `**Medi Route Clinical Advisory:**\n\n` +
+      `**Medi Route Clinical Advisory (${rawCity}):**\n\n` +
       `Regarding your inquiry on **"${text}"**, our network connects you with verified clinical specialists and accredited facilities across India:\n\n` +
-      `• **Accredited Quality**: Connect with NABH/JCI accredited centers with transparent clinical audits.\n` +
+      `• **Accredited Quality**: Connect with NABH/JCI accredited centers with transparent clinical audits in ${rawCity}.\n` +
       `• **Tariff Transparency**: All surgery & treatment packages benchmarked against standard CGHS/PMJAY rates with ₹0 hidden charges.\n` +
       `• **20-Minute Cashless Sanction**: Dedicated Medi Route admission desks expedite pre-authorization without upfront deposit.\n\n` +
       `Recommended verified network facilities:`,
@@ -1256,6 +1320,19 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: 3,
     backgroundColor: colors.badgeCashless,
+  },
+  headerCityBadge: {
+    backgroundColor: "rgba(255, 255, 255, 0.18)",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.25)",
+  },
+  headerCityText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#FFFFFF",
   },
   headerSubtitle: {
     fontSize: 11,

@@ -22,7 +22,7 @@ import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "../components/LanguageSwitcher";
 import { colors } from "../theme/colors";
 import MedRouteLogo from "../components/MedRouteLogo";
-import { MOCK_HOSPITALS, MobileHospital, haversineKm, setUserLocation, resolveCityCoordinates, CITY_ALIASES } from "../services/api";
+import { MOCK_HOSPITALS, MobileHospital, haversineKm, setUserLocation, setUserCity, getUserCity, resolveCityCoordinates, CITY_ALIASES } from "../services/api";
 import { localizeHospital, localizeCity, localizeSpecialty } from "../i18n/hospitalLocalization";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -114,7 +114,7 @@ export default function HomeScreen({ navigation }: any) {
   const currentLang = i18n.language || "en";
 
   // Search & Filter State
-  const [cityInput, setCityInput] = useState("Hoshiarpur, Punjab");
+  const [cityInput, setCityInput] = useState(() => getUserCity() || "Jalandhar, Punjab");
   const [specialtyInput, setSpecialtyInput] = useState("");
   const [selectedBudget, setSelectedBudget] = useState("all");
 
@@ -423,10 +423,12 @@ export default function HomeScreen({ navigation }: any) {
               <Text style={styles.fieldLabel}>{t("home.activeCity")}</Text>
               <TouchableOpacity
                 onPress={() => {
-                  setCityInput("Hoshiarpur, Punjab");
-                  setUserLat(31.5273);
-                  setUserLng(75.9149);
-                  setUserLocation(31.5273, 75.9149);
+                  const defCity = "Jalandhar, Punjab";
+                  setCityInput(defCity);
+                  setUserCity(defCity);
+                  setUserLat(31.3260);
+                  setUserLng(75.5762);
+                  setUserLocation(31.3260, 75.5762, defCity);
                   setCitySuggestionsOpen(false);
                 }}
               >
@@ -440,6 +442,7 @@ export default function HomeScreen({ navigation }: any) {
                 value={cityInput}
                 onChangeText={(txt) => {
                   setCityInput(txt);
+                  setUserCity(txt);
                   setCitySuggestionsOpen(true);
                 }}
                 onFocus={() => setCitySuggestionsOpen(true)}
@@ -471,6 +474,13 @@ export default function HomeScreen({ navigation }: any) {
                         style={styles.citySuggestionItem}
                         onPress={() => {
                           setCityInput(city);
+                          setUserCity(city);
+                          const coords = resolveCityCoordinates(city);
+                          if (coords) {
+                            setUserLat(coords.lat);
+                            setUserLng(coords.lng);
+                            setUserLocation(coords.lat, coords.lng, city);
+                          }
                           setCitySuggestionsOpen(false);
                         }}
                       >
