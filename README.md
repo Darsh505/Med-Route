@@ -14,6 +14,52 @@
 
 ---
 
+## Technology Stack
+
+### Backend and Clinical Intelligence
+
+- **Language and framework:** Python 3.12+ with FastAPI 0.115 and Uvicorn for asynchronous REST APIs and WebSocket-ready services.
+- **Data access:** SQLAlchemy 2.0 with `asyncpg` for asynchronous PostgreSQL access, GeoAlchemy2 for spatial models, and Psycopg2 for synchronous migration workflows.
+- **Database:** PostgreSQL 16 with the PostGIS 3.4 extension, spatial GiST indexes, and Haversine distance calculations for hospital discovery and emergency routing.
+- **Clinical NLP and AI:** Google Gemini integration for structured triage and clinical intent extraction, with an offline rule-based ontology and deterministic emergency-first fallback.
+- **Caching and rate limiting:** Redis 7 with `redis-py`, hiredis, and asynchronous Redis support.
+- **Authentication and integrations:** Firebase Admin, JWT via `python-jose`, bcrypt password hashing, multipart form handling, HTTPX, and AIOHTTP.
+- **Migrations and validation:** Alembic migrations, Pydantic 2 schemas, and Pydantic Settings for typed configuration.
+- **Resilience and observability:** Tenacity retries, Structlog JSON logging, environment-based configuration, and an in-memory fallback store when database services are unavailable.
+- **Data processing:** Pandas, NumPy, and Geopy for registry normalization, clinical catalog processing, and location calculations.
+
+### Citizen Web Application
+
+- **Framework:** Next.js 16.3 with the App Router and React 19.2.
+- **Language and styling:** TypeScript 5 and Tailwind CSS 3.4 with a clinical design system.
+- **Maps and geospatial UI:** Leaflet 1.9 with OpenStreetMap/CartoDB map tiles and custom hospital and emergency markers.
+- **Internationalization and services:** `next-intl` for localized experiences and Firebase Web SDK for client integrations.
+- **Primary workflows:** Clinical NLP search, explainable hospital ranking, facility comparison, transparent tariffs, interactive maps, chatbot access, and emergency SOS routing.
+
+### Institutional Admin Console
+
+- **Framework:** Next.js 16.3 with React 19 and a dedicated development server on port 3001.
+- **UI system:** Tailwind CSS 4, shadcn/ui, Base UI, `class-variance-authority`, `clsx`, and `tailwind-merge`.
+- **Operations and visualization:** Recharts for occupancy and claims analytics, Lucide React for icons, Sonner for notifications, and Vercel Analytics.
+- **Administrative workflows:** Hospital and user management, booking operations, claims review, emergency triage feeds, bed occupancy monitoring, and settings management.
+
+### Mobile Application
+
+- **Framework:** React Native 0.86 with Expo SDK 57 and TypeScript.
+- **Navigation:** React Navigation 7 using native stack and bottom-tab navigators.
+- **Device capabilities:** Expo Location, deep linking, Expo Constants, Expo Status Bar, and React Native Safe Area Context.
+- **State, storage, and localization:** AsyncStorage for offline persistence, `react-i18next` and i18next for multilingual support, and resilient API services for disconnected operation.
+- **Interface:** React Native SVG and Expo Vector Icons with web preview support through React Native Web.
+
+### Infrastructure and Quality
+
+- **Containerization:** Docker and Docker Compose for PostgreSQL/PostGIS, Redis, FastAPI, the citizen web app, and the admin console.
+- **Deployment configuration:** Render infrastructure-as-code, production Dockerfiles, Gunicorn configuration, and Expo EAS settings.
+- **Testing:** Pytest, pytest-asyncio, pytest-cov, HTTPX test clients, TypeScript checks, and Next.js production builds.
+- **Repository structure:** A monorepo containing the backend, web portal, admin console, mobile client, deployment configuration, database documentation, and judge defense materials.
+
+---
+
 ## Executive Summary
 
 During critical medical decisions and emergency trauma events in India, patients and caregivers face acute information asymmetry:
