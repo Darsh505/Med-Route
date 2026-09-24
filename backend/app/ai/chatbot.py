@@ -543,31 +543,75 @@ class ClinicalChatbot:
     """Clinical NLP Chatbot Engine with Gemini AI and Rule-Based Triage Fallback."""
 
     def __init__(self, api_key: Optional[str] = None):
-        self.api_key = settings.GEMINI_API_KEY if api_key is None else api_key
-        self.gemini_model = None
+        raw_keys = []
+        if api_key is not None:
+            if api_key.strip():
+                raw_keys.extend(api_key.split(","))
+        else:
+            if settings.GEMINI_API_KEY:
+                raw_keys.extend(settings.GEMINI_API_KEY.split(","))
+            if settings.GEMINI_API_KEYS:
+                raw_keys.extend(settings.GEMINI_API_KEYS.split(","))
 
-        if self.api_key:
+        self.api_keys: List[str] = [k.strip() for k in raw_keys if k and k.strip()]
+        self.current_key_idx = 0
+        self.model_name = settings.GEMINI_MODEL or "gemini-2.5-flash"
+
+        if self.api_keys:
+            logger.info("Clinical Gemini Chatbot engine initialized with key pool", pool_size=len(self.api_keys), model=self.model_name)
+        else:
+            logger.info("Clinical Gemini Chatbot running in offline/rule-based mode")
+
+    async def _generate_content_with_failover(self, full_prompt: str) -> str:
+        """Executes Gemini generation with automatic key rotation on rate limits or errors."""
+        if not self.api_keys:
+            raise RuntimeError("No Gemini API keys configured")
+
+        import asyncio
+        import google.generativeai as genai
+
+        num_keys = len(self.api_keys)
+        last_error = None
+
+        for attempt in range(num_keys):
+            idx = (self.current_key_idx + attempt) % num_keys
+            active_key = self.api_keys[idx]
+
             try:
-                import google.generativeai as genai
-                genai.configure(api_key=self.api_key)
-                self.gemini_model = genai.GenerativeModel(
-                    model_name=settings.GEMINI_MODEL or "gemini-2.5-flash-lite",
+                genai.configure(api_key=active_key)
+                model = genai.GenerativeModel(
+                    model_name=self.model_name,
                     system_instruction=GEMINI_CHAT_SYSTEM_PROMPT,
                 )
-                logger.info("Clinical Gemini Chatbot engine initialized")
+                response = await asyncio.wait_for(
+                    model.generate_content_async(
+                        full_prompt,
+                        generation_config={"temperature": 0.2, "max_output_tokens": 1000},
+                    ),
+                    timeout=12.0,
+                )
+                self.current_key_idx = idx
+                return response.text.strip()
             except Exception as e:
-                logger.warning("Gemini chatbot init failed; falling back to clinical rules", error=str(e))
+                last_error = e
+                logger.warning(
+                    "Gemini API key failed, rotating to next key in pool",
+                    key_index=idx,
+                    total_keys=num_keys,
+                    error=str(e),
+                )
+                continue
+
+        raise last_error or RuntimeError("All Gemini API keys exhausted or rate-limited")
 
     async def chat(self, request: ChatRequest) -> ChatResponse:
         """Process conversational query and return clinical dispatch response."""
-        user_text = request.message.strip()
-
-        # Try Gemini if configured
-        if self.gemini_model:
+        # Try Gemini if any API keys are configured
+        if self.api_keys:
             try:
                 return await self._chat_with_gemini(request)
             except Exception as e:
-                logger.warning("Gemini chat failed, switching to clinical rule-based engine", error=str(e))
+                logger.warning("Gemini key pool exhausted or failed, switching to clinical rule-based engine", error=str(e))
 
         # Fallback to rich rule-based clinical engine
         return self._chat_with_rules(request)
@@ -596,16 +640,7 @@ class ClinicalChatbot:
 
         full_prompt = "\n".join(prompt_parts)
 
-        import asyncio
-        response = await asyncio.wait_for(
-            self.gemini_model.generate_content_async(
-                full_prompt,
-                generation_config={"temperature": 0.2, "max_output_tokens": 1000},
-            ),
-            timeout=12.0,
-        )
-
-        raw = response.text.strip()
+        raw = await self._generate_content_with_failover(full_prompt)
         raw = re.sub(r"^```json\s*", "", raw)
         raw = re.sub(r"^```\s*", "", raw)
         raw = re.sub(r"\s*```$", "", raw)

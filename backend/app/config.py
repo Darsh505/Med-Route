@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     GEMINI_API_KEY: str = ""
+    GEMINI_API_KEYS: str = ""  # Optional comma-separated backup keys for auto-failover
     GEMINI_MODEL: str = "gemini-2.5-flash"
 
     # Firebase Auth
