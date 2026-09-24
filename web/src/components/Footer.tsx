@@ -59,9 +59,14 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/portal/admin" className="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors">
+                <a
+                  href={process.env.NEXT_PUBLIC_ADMIN_URL || "https://admin-med-route.vercel.app/"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors"
+                >
                   Hospital Provider Portal
-                </Link>
+                </a>
               </li>
             </ul>
           </div>

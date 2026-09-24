@@ -48,13 +48,15 @@ export default function PortalPage() {
             </div>
           </div>
 
-          <Link
-            href="/portal/admin"
+          <a
+            href={process.env.NEXT_PUBLIC_ADMIN_URL || "https://admin-med-route.vercel.app/"}
+            target="_blank"
+            rel="noopener noreferrer"
             className="px-5 py-2.5 bg-white text-black hover:bg-slate-200 text-xs font-bold rounded-xl transition-all shadow-md shrink-0 flex items-center gap-2"
           >
             <span>Launch Admin Portal</span>
             <span className="material-symbols-outlined text-sm">arrow_forward</span>
-          </Link>
+          </a>
         </div>
 
         {/* Citizen Profile & Health Services Grid */}

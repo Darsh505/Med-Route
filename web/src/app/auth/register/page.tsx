@@ -45,7 +45,7 @@ export default function RegisterPage() {
       setSuccessMessage("Account created successfully! Redirecting...");
       setTimeout(() => {
         if (role === "admin") {
-          router.push("/admin");
+          window.location.href = process.env.NEXT_PUBLIC_ADMIN_URL || "https://admin-med-route.vercel.app/";
         } else {
           router.push("/");
         }

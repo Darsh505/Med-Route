@@ -32,7 +32,7 @@ export default function LoginPage() {
       setSuccessMessage("Authentication successful. Redirecting...");
       setTimeout(() => {
         if (email.includes("admin")) {
-          router.push("/admin");
+          window.location.href = process.env.NEXT_PUBLIC_ADMIN_URL || "https://admin-med-route.vercel.app/";
         } else {
           router.push("/");
         }

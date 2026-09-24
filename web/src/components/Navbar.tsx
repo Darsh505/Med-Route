@@ -193,13 +193,15 @@ export default function Navbar() {
               {t("navbar.emergencyCashless")}
             </Link>
 
-            <Link
-              href="/portal/admin"
+            <a
+              href={process.env.NEXT_PUBLIC_ADMIN_URL || "https://admin-med-route.vercel.app/"}
+              target="_blank"
+              rel="noopener noreferrer"
               className="px-space-md py-1.5 transition-all text-title-md rounded-lg font-semibold text-on-surface-variant hover:text-secondary hover:bg-surface-container flex items-center gap-1 min-w-fit"
             >
               <span className="material-symbols-outlined text-[16px]">admin_panel_settings</span>
               <span>{t("navbar.adminPortal")}</span>
-            </Link>
+            </a>
           </nav>
         </div>
       </div>
@@ -260,14 +262,16 @@ export default function Navbar() {
             {t("navbar.emergencyCashlessAdmission")}
           </Link>
 
-          <Link
-            href="/portal/admin"
+          <a
+            href={process.env.NEXT_PUBLIC_ADMIN_URL || "https://admin-med-route.vercel.app/"}
+            target="_blank"
+            rel="noopener noreferrer"
             className="px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant font-semibold flex items-center gap-1.5"
             onClick={() => setMobileMenuOpen(false)}
           >
             <span className="material-symbols-outlined text-[18px]">admin_panel_settings</span>
             <span>{t("navbar.adminTelemetryPortal")}</span>
-          </Link>
+          </a>
 
           {/* Mobile Language Switcher */}
           <div className="px-space-md py-space-xs">

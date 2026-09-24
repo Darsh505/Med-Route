@@ -9,8 +9,8 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/admin",
-        destination: "/portal/admin",
-        permanent: true,
+        destination: process.env.NEXT_PUBLIC_ADMIN_URL || "https://admin-med-route.vercel.app/",
+        permanent: false,
       },
       {
         source: "/sos",

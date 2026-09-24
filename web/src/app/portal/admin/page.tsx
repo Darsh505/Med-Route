@@ -402,13 +402,14 @@ export default function AdminPortalPage() {
           </nav>
 
           <a
-            href={process.env.NEXT_PUBLIC_ADMIN_URL || "http://localhost:3001"}
+            href={process.env.NEXT_PUBLIC_ADMIN_URL || "https://admin-med-route.vercel.app/"}
             target="_blank"
             rel="noopener noreferrer"
-            title="Open Dedicated Admin Dashboard Console on port 3001"
+            title="Open Dedicated Admin Dashboard Console"
             className="hidden md:inline-flex items-center gap-1 text-xs text-cyan-400 hover:text-white px-2.5 py-1 rounded border border-cyan-800/80 hover:border-cyan-600 transition-colors font-mono"
           >
-            <span>Console (:3001)</span>
+            <span>Admin Console</span>
+            <span className="material-symbols-outlined text-[13px]">open_in_new</span>
           </a>
           <Link
             href="/"
