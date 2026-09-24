@@ -27,6 +27,8 @@ EXAMPLE:
   )
 """
 
+from __future__ import annotations
+from typing import Optional, List, Dict, Any
 import json
 import re
 try:
