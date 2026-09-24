@@ -32,7 +32,7 @@ class Settings(BaseSettings):
 
     GEMINI_API_KEY: str = ""
     GEMINI_API_KEYS: str = ""  # Optional comma-separated backup keys for auto-failover
-    GEMINI_MODEL: str = "gemini-2.5-flash"
+    GEMINI_MODEL: str = "gemini-3.6-flash"
 
     # Firebase Auth
     FIREBASE_PROJECT_ID: str = ""

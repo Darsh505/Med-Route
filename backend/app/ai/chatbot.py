@@ -586,19 +586,24 @@ class ClinicalChatbot:
                 response = await asyncio.wait_for(
                     model.generate_content_async(
                         full_prompt,
-                        generation_config={"temperature": 0.2, "max_output_tokens": 1000},
+                        generation_config={
+                            "temperature": 0.2,
+                            "max_output_tokens": 2048,
+                            "response_mime_type": "application/json",
+                        },
                     ),
-                    timeout=12.0,
+                    timeout=25.0,
                 )
                 self.current_key_idx = idx
                 return response.text.strip()
             except Exception as e:
                 last_error = e
+                err_detail = f"{type(e).__name__}: {str(e)}" if str(e) else type(e).__name__
                 logger.warning(
                     "Gemini API key failed, rotating to next key in pool",
                     key_index=idx,
                     total_keys=num_keys,
-                    error=str(e),
+                    error=err_detail,
                 )
                 continue
 
