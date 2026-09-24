@@ -33,12 +33,13 @@ async def clinical_chat(request: ChatRequest):
 @router.get("/status")
 async def get_chatbot_status():
     """Returns real-time status of Gemini AI engine."""
-    is_active = clinical_chatbot.gemini_model is not None and bool(clinical_chatbot.api_key)
+    is_active = len(clinical_chatbot.api_keys) > 0
     return APIResponse(
         data={
             "gemini_active": is_active,
-            "model": "gemini-2.5-flash-lite" if is_active else None,
+            "model": clinical_chatbot.model_name if is_active else None,
             "provider": "gemini" if is_active else "clinical_rules",
+            "key_pool_size": len(clinical_chatbot.api_keys),
         },
         message="Chatbot AI engine status",
     )

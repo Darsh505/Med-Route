@@ -124,6 +124,7 @@ app.include_router(chatbot.router)
 
 # Health Check
 @app.get("/health", tags=["System"])
+@app.get("/api/health", tags=["System"])
 async def health_check():
     from app.database import USE_MEMORY_DB
     return {

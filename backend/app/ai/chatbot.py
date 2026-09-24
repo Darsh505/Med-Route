@@ -562,6 +562,14 @@ class ClinicalChatbot:
         else:
             logger.info("Clinical Gemini Chatbot running in offline/rule-based mode")
 
+    @property
+    def api_key(self) -> str:
+        return self.api_keys[0] if self.api_keys else ""
+
+    @property
+    def gemini_model(self):
+        return True if self.api_keys else None
+
     async def _generate_content_with_failover(self, full_prompt: str) -> str:
         """Executes Gemini generation with automatic key rotation on rate limits or errors."""
         if not self.api_keys:
