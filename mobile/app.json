@@ -22,7 +22,9 @@
       "permissions": [
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",
-        "android.permission.CALL_PHONE"
+        "android.permission.CALL_PHONE",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
       ],
       "adaptiveIcon": {
         "backgroundColor": "#1B4D89",
@@ -37,6 +39,11 @@
           "locationAlwaysAndWhenInUsePermission": "Allow Med Route to use your location to locate the nearest emergency trauma center."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "cc062978-cc53-4f8c-8795-e5d0c8fc3acc"
+      }
+    }
   }
 }
