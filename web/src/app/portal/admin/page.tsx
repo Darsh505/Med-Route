@@ -105,7 +105,7 @@ export default function AdminPortalPage() {
         if (fresh && fresh.length > 0) setHospitals(fresh);
       });
 
-      const res = await fetch("http://localhost:8000/api/admin/review-queue", {
+      const res = await fetch("https://monte-huge-erp-put.trycloudflare.com/api/admin/review-queue", {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("medroute_token") || ""}`,
           "x-admin-key": "medroute-admin-superkey",
@@ -281,7 +281,7 @@ export default function AdminPortalPage() {
 
     // Attempt backend sync
     try {
-      await fetch(`http://localhost:8000/api/admin/verify/${itemId}?action=${action}`, {
+      await fetch(`https://monte-huge-erp-put.trycloudflare.com/api/admin/verify/${itemId}?action=${action}`, {
         method: "PATCH",
         headers: { Authorization: `Bearer ${localStorage.getItem("medroute_token") || ""}` },
       });

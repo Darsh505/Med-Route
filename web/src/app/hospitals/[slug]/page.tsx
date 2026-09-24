@@ -122,7 +122,7 @@ export default function HospitalDetailPage({ params }: { params: Promise<{ slug:
   useEffect(() => {
     let isMounted = true;
     async function fetchHospitalData() {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://monte-huge-erp-put.trycloudflare.com";
 
       try {
         const res = await fetch(`${API_URL}/api/hospitals/${slug}`);

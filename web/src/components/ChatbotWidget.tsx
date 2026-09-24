@@ -164,7 +164,7 @@ export default function ChatbotWidget() {
   const [isGeminiActive, setIsGeminiActive] = useState<boolean>(false);
 
   useEffect(() => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://monte-huge-erp-put.trycloudflare.com";
     fetch(`${apiUrl}/api/chat/status`)
       .then((res) => res.json())
       .then((json) => {
@@ -221,7 +221,7 @@ export default function ChatbotWidget() {
         content: m.content,
       }));
 
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://monte-huge-erp-put.trycloudflare.com";
       const userLat = coords?.lat ?? 31.5273;
       const userLng = coords?.lng ?? 75.9149;
 

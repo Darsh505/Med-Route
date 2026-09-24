@@ -280,7 +280,7 @@ export function saveHospitalTelemetryOverride(
   }
 
   // Dispatch to central backend API on port 8000
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://monte-huge-erp-put.trycloudflare.com";
   try {
     fetch(`${apiUrl}/api/admin/hospitals/${encodeURIComponent(hospitalId)}`, {
       method: "PATCH",
@@ -295,7 +295,7 @@ export function saveHospitalTelemetryOverride(
 
 export async function syncLiveHospitalsTelemetry(): Promise<HospitalOption[]> {
   if (typeof window === "undefined") return ALL_HOSPITALS;
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://monte-huge-erp-put.trycloudflare.com";
   try {
     const res = await fetch(`${apiUrl}/api/admin/hospitals?per_page=1000`, {
       headers: { "x-admin-key": "medroute-admin-superkey" },

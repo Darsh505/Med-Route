@@ -8,7 +8,7 @@
  * Automatically synchronizes changes across the Citizen Web App and Mobile Client.
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://monte-huge-erp-put.trycloudflare.com";
 
 const HEADERS = {
   "Content-Type": "application/json",
