@@ -6,6 +6,7 @@ import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
+  TextInput,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
@@ -18,6 +19,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../theme/colors";
 import { spacing, borderRadius, shadows } from "../theme/spacing";
 import { authService, MobileUser } from "../services/auth";
+import { getBackendBaseUrl, setBackendBaseUrl, DEFAULT_LAN_IP } from "../services/api";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "../components/LanguageSwitcher";
 
@@ -25,6 +27,40 @@ export default function ProfileScreen({ navigation }: any) {
   const { t } = useTranslation();
   const [user, setUser] = useState<MobileUser | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Backend connection & health state
+  const [serverUrl, setServerUrl] = useState(() => getBackendBaseUrl());
+  const [isServerConnected, setIsServerConnected] = useState(false);
+  const [editingUrl, setEditingUrl] = useState(false);
+  const [tempUrl, setTempUrl] = useState(() => getBackendBaseUrl());
+
+  const checkServerHealth = async () => {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 3000);
+      const res = await fetch(`${getBackendBaseUrl()}/api/health`, { signal: controller.signal });
+      clearTimeout(timer);
+      setIsServerConnected(res.ok);
+    } catch {
+      setIsServerConnected(false);
+    }
+  };
+
+  const handleSaveUrl = async () => {
+    const updated = await setBackendBaseUrl(tempUrl);
+    setServerUrl(updated);
+    setEditingUrl(false);
+    checkServerHealth();
+  };
+
+  const handleResetLan = async () => {
+    const lanUrl = `http://${DEFAULT_LAN_IP}:8000`;
+    setTempUrl(lanUrl);
+    const updated = await setBackendBaseUrl(lanUrl);
+    setServerUrl(updated);
+    setEditingUrl(false);
+    checkServerHealth();
+  };
 
   const loadUser = async () => {
     setLoading(true);
@@ -38,8 +74,10 @@ export default function ProfileScreen({ navigation }: any) {
   useEffect(() => {
     const unsubscribe = navigation.addListener("focus", () => {
       loadUser();
+      checkServerHealth();
     });
     loadUser();
+    checkServerHealth();
     return unsubscribe;
   }, [navigation]);
 
@@ -220,6 +258,78 @@ export default function ProfileScreen({ navigation }: any) {
             <Text style={styles.policyDesc}>
               100% cashless coverage for eligible golden cardholders with zero top-up.
             </Text>
+          </View>
+        </View>
+
+        {/* Backend & Database Connection */}
+        <Text style={styles.sectionTitle}>Backend & Database Connection</Text>
+        <View style={styles.cardSection}>
+          <View style={{ padding: spacing.md }}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <Text style={{ fontSize: 13, fontWeight: "700", color: colors.textPrimary }}>FastAPI & Database Sync</Text>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: isServerConnected ? "#DCFCE7" : "#FEE2E2", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 }}>
+                <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: isServerConnected ? "#16A34A" : "#DC2626" }} />
+                <Text style={{ fontSize: 11, fontWeight: "800", color: isServerConnected ? "#15803D" : "#B91C1C" }}>
+                  {isServerConnected ? "Connected" : "Local Fallback"}
+                </Text>
+              </View>
+            </View>
+            <Text style={{ fontSize: 11, color: colors.textSecondary, marginBottom: 8 }}>
+              Active Server Endpoint:
+            </Text>
+            {editingUrl ? (
+              <View style={{ marginBottom: 10 }}>
+                <TextInput
+                  style={{ backgroundColor: colors.background, padding: 8, borderRadius: 8, borderWidth: 1, borderColor: colors.primary, fontSize: 12, color: colors.textPrimary, marginBottom: 8 }}
+                  value={tempUrl}
+                  onChangeText={setTempUrl}
+                  autoCapitalize="none"
+                  placeholder="http://10.210.75.11:8000"
+                />
+                <View style={{ flexDirection: "row", gap: 8 }}>
+                  <TouchableOpacity
+                    style={{ flex: 1, backgroundColor: colors.primary, paddingVertical: 8, borderRadius: 8, alignItems: "center" }}
+                    onPress={handleSaveUrl}
+                  >
+                    <Text style={{ color: "#FFFFFF", fontSize: 12, fontWeight: "700" }}>Save</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={{ flex: 1, backgroundColor: colors.surfaceIce, paddingVertical: 8, borderRadius: 8, alignItems: "center" }}
+                    onPress={handleResetLan}
+                  >
+                    <Text style={{ color: colors.secondary, fontSize: 12, fontWeight: "700" }}>Reset LAN</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, alignItems: "center" }}
+                    onPress={() => setEditingUrl(false)}
+                  >
+                    <Text style={{ color: colors.textSecondary, fontSize: 12 }}>Cancel</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : (
+              <>
+                <View style={{ backgroundColor: colors.background, padding: 8, borderRadius: 8, borderWidth: 1, borderColor: colors.borderLight, marginBottom: 10 }}>
+                  <Text style={{ fontSize: 12, fontFamily: Platform.OS === "ios" ? "Courier" : "monospace", color: colors.textPrimary }}>
+                    {serverUrl}
+                  </Text>
+                </View>
+                <View style={{ flexDirection: "row", gap: 8 }}>
+                  <TouchableOpacity
+                    style={{ flex: 1, backgroundColor: colors.primary, paddingVertical: 8, borderRadius: 8, alignItems: "center" }}
+                    onPress={checkServerHealth}
+                  >
+                    <Text style={{ color: "#FFFFFF", fontSize: 12, fontWeight: "700" }}>Check Connection</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={{ flex: 1, backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border, paddingVertical: 8, borderRadius: 8, alignItems: "center" }}
+                    onPress={() => { setTempUrl(serverUrl); setEditingUrl(true); }}
+                  >
+                    <Text style={{ color: colors.primary, fontSize: 12, fontWeight: "700" }}>Configure URL</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
           </View>
         </View>
 

@@ -1,8 +1,12 @@
 import { Platform } from "react-native";
 import Constants from "expo-constants";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import rawAllHospitals from "../data/allHospitals.json";
 
-// Auto-detect laptop IP when running in Expo Go (e.g. "192.168.1.6")
+// Default PC Wi-Fi LAN IP — accessible by physical phones connected to same Wi-Fi
+export const DEFAULT_LAN_IP = "10.210.75.11";
+const STORAGE_KEY_API_URL = "MEDROUTE_CUSTOM_API_URL";
+
 function resolveBackendBaseUrl(): string {
   if (process.env.EXPO_PUBLIC_API_URL) {
     return process.env.EXPO_PUBLIC_API_URL;
@@ -19,15 +23,38 @@ function resolveBackendBaseUrl(): string {
     }
   }
 
-  // On standard Android Emulator (AVD), 10.0.2.2 reaches the host PC's localhost:8000
+  // On physical Android device over Wi-Fi, reach host PC via Wi-Fi LAN IP
   if (Platform.OS === "android") {
-    return "http://10.0.2.2:8000";
+    return `http://${DEFAULT_LAN_IP}:8000`;
   }
 
   return "http://localhost:8000";
 }
 
-export const BASE_URL = resolveBackendBaseUrl();
+export let BASE_URL = resolveBackendBaseUrl();
+
+// Initialize custom URL if previously saved by user in Profile Screen
+AsyncStorage.getItem(STORAGE_KEY_API_URL).then((saved) => {
+  if (saved && saved.trim()) {
+    BASE_URL = saved.trim().replace(/\/+$/, "");
+  }
+}).catch(() => {});
+
+export function getBackendBaseUrl(): string {
+  return BASE_URL;
+}
+
+export async function setBackendBaseUrl(newUrl: string): Promise<string> {
+  const clean = (newUrl || "").trim().replace(/\/+$/, "");
+  if (clean) {
+    BASE_URL = clean;
+    await AsyncStorage.setItem(STORAGE_KEY_API_URL, clean);
+  } else {
+    BASE_URL = resolveBackendBaseUrl();
+    await AsyncStorage.removeItem(STORAGE_KEY_API_URL);
+  }
+  return BASE_URL;
+}
 
 // Default user location — updated dynamically by HomeScreen
 export let USER_LAT = 31.3260;
