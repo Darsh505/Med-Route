@@ -19,7 +19,12 @@ function resolveBackendBaseUrl(): string {
     }
   }
 
-  return Platform.OS === "android" ? "http://192.168.1.6:8000" : "http://localhost:8000";
+  // On standard Android Emulator (AVD), 10.0.2.2 reaches the host PC's localhost:8000
+  if (Platform.OS === "android") {
+    return "http://10.0.2.2:8000";
+  }
+
+  return "http://localhost:8000";
 }
 
 export const BASE_URL = resolveBackendBaseUrl();
