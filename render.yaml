@@ -5,16 +5,20 @@ services:
     rootDir: backend
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.0
       - key: APP_ENV
         value: production
       - key: GEMINI_MODEL
-        value: gemini-2.5-flash-lite
+        value: gemini-3.6-flash
+      - key: GEMINI_API_KEYS
+        sync: false
       - key: SEED_ON_STARTUP
         value: "true"
       - key: ACCESS_TOKEN_EXPIRE_MINUTES
         value: "120"
       - key: REFRESH_TOKEN_EXPIRE_DAYS
         value: "30"
+
